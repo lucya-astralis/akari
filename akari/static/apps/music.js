@@ -108,7 +108,7 @@
       const main = $('[data-main]');
       const audio = new Audio();
       audio.preload = 'metadata';
-      audio.crossOrigin = 'anonymous';
+
       audio.volume = Math.min(1, Math.max(0, +store.get('akari-music-vol', 0.8)));
 
       const lists = { local: [], server: [] };
@@ -375,49 +375,69 @@
       };
 
       /* ---------- the full view, and its spectrum ---------- */
-      let ctx = null, analyser = null, bins = null, raf = 0;
-      const wakeViz = () => {
-        if (ctx || !window.AudioContext) { ctx?.resume?.(); return; }
+      /* The sound never goes through Web Audio: routed through an AudioContext
+         (createMediaElementSource) it plays only as smoothly as the page keeps
+         the buffer fed, and a busy page made it crackle and run fast and slow.
+         The element plays on its own; the spectrum only listens to a copy of
+         its sound (captureStream), and only while the full view is open. Where
+         there is no captureStream (Safari, Firefox) the bars breathe gently. */
+      let ctx = null, analyser = null, bins = null, tapNode = null, raf = 0, lastDraw = 0, size = '';
+      const tap = () => {
+        untap();
+        if (!audio.captureStream || !window.AudioContext || audio.paused) return;
         try {
-          ctx = new AudioContext();
-          const node = ctx.createMediaElementSource(audio);
+          const stream = audio.captureStream();
+          if (!stream.getAudioTracks().length) return;           // no track yet: again on "playing"
+          ctx = ctx || new AudioContext();
+          ctx.resume?.();
+          tapNode = ctx.createMediaStreamSource(stream);
           analyser = ctx.createAnalyser();
           analyser.fftSize = 256;
           analyser.smoothingTimeConstant = 0.78;
-          node.connect(analyser);
-          analyser.connect(ctx.destination);
+          tapNode.connect(analyser);                              // to the analyser only, never to the speakers
           bins = new Uint8Array(analyser.frequencyBinCount);
-        } catch { ctx = null; analyser = null; }
+        } catch { untap(); }
       };
-      const draw = () => {
+      const untap = () => {
+        try { tapNode?.disconnect(); } catch {}
+        tapNode = null; analyser = null;
+      };
+      const draw = now => {
         raf = 0;
-        if ($('[data-full]').hidden) return;
+        if ($('[data-full]').hidden || win.el.hidden) return;
+        raf = requestAnimationFrame(draw);
+        if (now - lastDraw < 33) return;                          // 30 pictures a second are plenty
+        lastDraw = now;
         const cv = $('[data-viz]'), g = cv.getContext('2d');
-        const w = cv.width = cv.clientWidth * devicePixelRatio, h = cv.height = cv.clientHeight * devicePixelRatio;
+        const want = `${cv.clientWidth}x${cv.clientHeight}x${devicePixelRatio}`;
+        if (want !== size) { size = want; cv.width = cv.clientWidth * devicePixelRatio; cv.height = cv.clientHeight * devicePixelRatio; }
+        const w = cv.width, h = cv.height;
         g.clearRect(0, 0, w, h);
-        const n = 48, gap = 3 * devicePixelRatio, bw = (w - gap * (n - 1)) / n;
+        const n = 48, gap = 3 * devicePixelRatio, bw = (w - gap * (n - 1)) / n, r = Math.min(bw / 2, 3 * devicePixelRatio);
         if (analyser) analyser.getByteFrequencyData(bins);
         // the accent as a plain colour: canvas knows no light-dark() (accent.js resolves it)
-        if (!draw.col || performance.now() - draw.at > 1000) { draw.col = window.AkariAccent?.hex() || '#8a8aa0'; draw.at = performance.now(); }
-        const col = draw.col;
+        if (!draw.col || now - draw.at > 1000) { draw.col = window.AkariAccent?.hex() || '#8a8aa0'; draw.at = now; }
+        g.fillStyle = draw.col;
+        const t = now / 1000;
         for (let i = 0; i < n; i++) {
           // low frequencies on the left, spread over the bins that carry sound
-          const v = analyser ? bins[Math.min(bins.length - 1, Math.floor(Math.pow(i / n, 1.6) * bins.length * 0.82))] / 255 : 0;
-          const bh = Math.max(3 * devicePixelRatio, (audio.paused ? 0.06 : v) * h);
-          g.fillStyle = col;
+          let v = analyser ? bins[Math.min(bins.length - 1, Math.floor(Math.pow(i / n, 1.6) * bins.length * 0.82))] / 255
+            : 0.18 + 0.14 * Math.sin(t * 2.1 + i * 0.45) * Math.sin(t * 1.3 + i * 0.17);   // no tap: breathing
+          if (audio.paused) v = 0.05;
+          const bh = Math.max(3 * devicePixelRatio, v * h), x = i * (bw + gap);
           g.globalAlpha = 0.35 + 0.65 * (1 - i / n);
-          const r = Math.min(bw / 2, 3 * devicePixelRatio);
           g.beginPath();
-          g.roundRect?.(i * (bw + gap), h - bh, bw, bh, [r, r, 0, 0]) ?? g.rect(i * (bw + gap), h - bh, bw, bh);
+          if (g.roundRect) g.roundRect(x, h - bh, bw, bh, [r, r, 0, 0]); else g.rect(x, h - bh, bw, bh);
           g.fill();
         }
-        raf = requestAnimationFrame(draw);
       };
       const setFull = on => {
         $('[data-full]').hidden = !on;
         win.body.classList.toggle('is-full', on);
-        if (on && !raf) raf = requestAnimationFrame(draw);
+        if (on) { tap(); if (!raf) raf = requestAnimationFrame(draw); } else untap();
       };
+      const wakeViz = () => {};                                   // kept for the callers: nothing to wake any more
+      audio.addEventListener('playing', () => { if (!$('[data-full]').hidden) tap(); });
 
       /* ---------- the bar, the times, the volume ---------- */
       const line = $('[data-line]'), seek = $('[data-seek]');
