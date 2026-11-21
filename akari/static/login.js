@@ -28,10 +28,18 @@
     if (who.avatar) { const i = new Image(); i.src = who.avatar; i.alt = ''; el.append(i); } else el.textContent = who.initial;
   };
 
+  // the language, switched right here (the page reloads in it)
+  const L = window.AkariI18n;
+  if (L) {
+    $('#lang').textContent = L.lang().toUpperCase();
+    $('#lang').addEventListener('click', () => L.set(L.lang() === 'de' ? 'en' : 'de'));
+  } else $('#lang').hidden = true;
+
   const tick = () => {
     const d = new Date();
     $('#time').textContent = d.toLocaleTimeString(window.AkariI18n?.locale() || 'de-DE', { hour: '2-digit', minute: '2-digit' });
     $('#date').textContent = d.toLocaleDateString(window.AkariI18n?.locale() || 'de-DE', { weekday: 'long', day: 'numeric', month: 'long' });
+    $('#time').setAttribute('datetime', d.toISOString());
   };
   tick(); setInterval(tick, 1000);
 
@@ -104,10 +112,9 @@
     if (st.signed_in && !st.desktop) return chooser(st.signed_in, true);
     accounts = st.accounts;
     $('#who').innerHTML = accounts.map((a, i) => `
-      <button class="who__one" role="listitem" data-i="${i}">
+      <button class="who__one" role="listitem" data-i="${i}" style="--i:${i}">
         <span class="f-avatar f-avatar--lg">${esc(a.initial)}</span>
-        <b>${esc(a.fullname)}</b>
-        <small>${a.active ? '<span class="f-status">angemeldet</span>' : esc(a.name)}</small>
+        <span class="who__txt"><b>${esc(a.fullname)}</b>${a.active ? '<small><span class="f-status">angemeldet</span></small>' : ''}</span>
       </button>`).join('');
     accounts.forEach((a, i) => face($('#who').children[i]?.querySelector('.f-avatar'), a));
     if (accounts.length === 1) pick(accounts[0]); else show('#pick');

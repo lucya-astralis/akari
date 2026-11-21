@@ -24,23 +24,25 @@
 <main class="greeter f-nova" id="greeter">
   <header class="greeter__top">
     <span class="greeter__os"><svg class="am" viewBox="0 0 95.64 100" aria-hidden="true"><use href="#am"/></svg><span id="os-name">Akari OS</span></span>
-    <button class="bar__btn f-tip" data-tip="Farbschema wechseln" data-theme-toggle aria-label="Farbschema wechseln"><svg><use href="#i-sun"/></svg></button>
+    <span class="greeter__tools">
+      <button class="greeter__lang f-tip" id="lang" data-tip="Sprache wechseln" aria-label="Sprache wechseln" translate="no">DE</button>
+      <button class="greeter__tool f-tip" data-tip="Farbschema wechseln" data-theme-toggle aria-label="Farbschema wechseln"><svg><use href="#i-sun"/></svg></button>
+    </span>
   </header>
 
   <section class="greeter__clock" aria-live="off">
-    <time class="greeter__time" id="time">--:--</time>
     <span class="greeter__date" id="date"></span>
+    <time class="greeter__time" id="time">--:--</time>
   </section>
 
   <!-- choose who -->
-  <section class="greeter__card f-glass f-glass--hi f-glass--deep" id="pick" hidden>
-    <h1 class="f-h3">Wer bist du?</h1>
+  <section class="greeter__card greeter__card--bare" id="pick" hidden>
+    <h1 class="sr">Wer bist du?</h1>
     <div class="who" id="who" role="list"></div>
   </section>
 
   <!-- password -->
-  <form class="greeter__card f-glass f-glass--hi f-glass--deep" id="login" hidden autocomplete="on">
-    <button type="button" class="f-btn f-btn--ghost f-btn--icon f-btn--sm greeter__back" id="back" aria-label="Anderes Konto"><svg><use href="#i-back"/></svg></button>
+  <form class="greeter__card greeter__card--bare greeter__card--login" id="login" hidden autocomplete="on">
     <span class="f-avatar f-avatar--lg" id="login-avatar">A</span>
     <div class="greeter__name"><b class="f-subtitle" id="login-name">–</b><small class="f-dim" id="login-user"></small></div>
     <input type="text" name="username" id="username" autocomplete="username" hidden>
@@ -52,6 +54,7 @@
       </span>
       <small id="pw-msg" hidden></small>
     </label>
+    <button type="button" class="greeter__back" id="back">Anderes Konto</button>
   </form>
 
   <!-- which desktop -->

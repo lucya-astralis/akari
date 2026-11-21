@@ -1,7 +1,7 @@
-PRETTY_NAME="Akari OS 0.4"
+PRETTY_NAME="Akari OS 0.5"
 NAME="Akari OS"
-VERSION_ID="0.4"
-VERSION="0.4 (trixie)"
+VERSION_ID="0.5"
+VERSION="0.5 (trixie)"
 VERSION_CODENAME=trixie
 ID=akari
 ID_LIKE=debian

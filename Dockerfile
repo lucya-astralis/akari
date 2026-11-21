@@ -29,6 +29,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN apt-get update && apt-get install -y --no-install-recommends x11-utils wmctrl \
  && rm -rf /var/lib/apt/lists/*
 
+# Japanese: CJK fonts (Noto Sans/Serif CJK, also Chinese and Korean) so Linux apps
+# draw kanji and kana, and the locales ja_JP.UTF-8 and en_US.UTF-8 next to de_DE
+RUN apt-get update && apt-get install -y --no-install-recommends fonts-noto-cjk \
+ && rm -rf /var/lib/apt/lists/* \
+ && sed -i -e 's/^# *ja_JP.UTF-8/ja_JP.UTF-8/' -e 's/^# *en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen && locale-gen
+
 # media in the taskbar: a session bus per desktop, playerctl follows the MPRIS players on it
 RUN apt-get update && apt-get install -y --no-install-recommends dbus-daemon playerctl \
  && rm -rf /var/lib/apt/lists/*

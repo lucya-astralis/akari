@@ -84,7 +84,7 @@ window.AKARI_EN = {
     'Ein Editor hat Text, der noch nicht gesichert ist. Er geht verloren, wenn du jetzt wechselst.': 'An editor has unsaved text. It is lost if you switch now.',
     'Der Workspace antwortet nicht.': 'The workspace does not answer.',
     // login
-    'Akari OS · Anmelden': 'Akari OS · Sign in', 'Wer bist du?': 'Who are you?', 'Anderes Konto': 'Other account', 'Anmelden': 'Sign in',
+    'Akari OS · Anmelden': 'Akari OS · Sign in', 'Wer bist du?': 'Who are you?', 'Sprache wechseln': 'Change language', 'angemeldet': 'signed in', 'Anderes Konto': 'Other account', 'Anmelden': 'Sign in',
     'Welcher Desktop?': 'Which desktop?', 'Neuer Desktop, z. B. Arbeit': 'New desktop, e.g. Work', 'Name des neuen Desktops': 'Name of the new desktop',
     'Akari OS einrichten': 'Set up Akari OS',
     'Das erste Konto darf später weitere anlegen. Es ist ein echter Linux-Benutzer mit eigenem Home.': 'The first account can create more later. It is a real Linux user with its own home.',

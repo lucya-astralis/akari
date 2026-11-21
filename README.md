@@ -4,7 +4,12 @@ Ein Desktop im Browser mit einem echten Linux darunter, auf Debian trixie,
 gebaut in [Facet 1.8](../facet). Gedacht als Tool für Lucent: Lucent verwaltet
 es (installieren, koppeln, Zustand), Akari OS hat seine eigene Oberfläche.
 
-**Stand 0.5.5:** die Leiste nach macOS-Art: aktive Apps nur noch als Symbol mit
+**Stand 0.5.6:** Anmeldebildschirm nach macOS-Art: Datum und große Uhr oben,
+die Konten unten als kurze Liste, ein gewähltes Konto wächst und bekommt eine
+Pille fürs Passwort; Sprache und Farbschema oben rechts. Japanisch vorinstalliert
+(Noto CJK, Locale ja_JP.UTF-8).
+
+**0.5.5:** die Leiste nach macOS-Art: aktive Apps nur noch als Symbol mit
 Strich darunter (kein Fenstername mehr), minimierte Fenster in einem eigenen Bereich
 rechts der Apps, ein Medienbereich in der Status-Pille (Cover, Titel, Künstler,
 Zurück, Pause, Weiter). Jeder Desktop hat dafür einen eigenen D-Bus, playerctl
