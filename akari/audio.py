@@ -263,16 +263,31 @@ def _auth(s: dict) -> dict:
     return {"u": s["user"], "t": s["token"], "s": s["salt"], "v": API, "c": "akari", "f": "json"}
 
 
+def _why(e: Exception, url: str) -> str:
+    """What went wrong reaching a server, in words a person can act on."""
+    host = httpx.URL(url).host
+    text = str(e).lower()
+    if isinstance(e, httpx.ConnectError) and ("name or service" in text or "nodename" in text or "getaddrinfo" in text or "resolve" in text):
+        return f"Den Namen {host} gibt es nicht. Stimmt die Adresse?"
+    if isinstance(e, httpx.ConnectError) and ("certificate" in text or "ssl" in text):
+        return f"{host} hat kein gültiges Zertifikat."
+    if isinstance(e, httpx.TimeoutException):
+        return f"{host} antwortet nicht rechtzeitig."
+    if isinstance(e, httpx.ConnectError):
+        return f"{host} ist nicht erreichbar (Port zu oder Rechner aus)."
+    return "Der Musik-Server antwortet nicht."
+
+
 async def _call(s: dict, method: str, **params) -> dict:
     try:
         async with httpx.AsyncClient(timeout=10, follow_redirects=True) as c:
             r = await c.get(f"{s['url']}/rest/{method}", params={**_auth(s), **params})
-    except httpx.HTTPError:
-        raise HTTPException(502, "Der Musik-Server antwortet nicht.") from None
+    except httpx.HTTPError as e:
+        raise HTTPException(502, _why(e, s["url"])) from None
     try:
         body = r.json()["subsonic-response"]
     except (ValueError, KeyError):
-        raise HTTPException(502, "Das ist kein Subsonic-Server.") from None
+        raise HTTPException(502, f"Unter {s['url']} antwortet kein Subsonic-Server (Navidrome, Airsonic, Gonic …).") from None
     if body.get("status") != "ok":
         err = body.get("error") or {}
         if err.get("code") in (40, 41, 44):
@@ -293,13 +308,40 @@ def sub_state() -> dict:
     return {"url": s["url"], "user": s["user"], "name": s.get("name")} if s else {}
 
 
+async def _is_subsonic(url: str) -> bool:
+    try:
+        async with httpx.AsyncClient(timeout=6, follow_redirects=True) as c:
+            r = await c.get(f"{url}/rest/ping", params={"f": "json", "v": API, "c": "akari"})
+        return "subsonic-response" in r.json()
+    except (httpx.HTTPError, ValueError):
+        return False
+
+
 @router.put("/subsonic")
 async def sub_connect(body: SubIn) -> dict:
-    url = body.url.strip().rstrip("/")
-    if not url.startswith(("http://", "https://")):
-        url = "https://" + url
+    raw = body.url.strip().rstrip("/")
+    if not raw.startswith(("http://", "https://")):
+        raw = "https://" + raw
+    u = httpx.URL(raw)
+    user = body.user.strip()
+    url = str(u.copy_with(username=None, password=None)).rstrip("/")
+    # "music@lucya.sh": an @ makes "music" a user name and lucya.sh the host. Most
+    # often a subdomain was meant (music.lucya.sh): whichever of the two answers as
+    # Subsonic is taken, and the part before the @ fills an empty user field.
+    if u.userinfo:
+        name = u.username
+        candidates = [str(u.copy_with(username=None, password=None, host=f"{name}.{u.host}")).rstrip("/"), url]
+        found = next((c for c in candidates if await _is_subsonic(c)), None)
+        if not found:
+            raise HTTPException(502, f"Weder unter {candidates[0]} noch unter {candidates[1]} antwortet ein Subsonic-Server. "
+                                     "Ein @ gehört nicht in die Adresse.")
+        url = found
+        if not user and found == candidates[1]:
+            user = name
+    if not user:
+        raise HTTPException(422, "Der Benutzer fehlt.")
     salt = secrets.token_hex(8)
-    s = {"url": url, "user": body.user.strip(), "salt": salt,
+    s = {"url": url, "user": user, "salt": salt,
          "token": hashlib.md5((body.password + salt).encode()).hexdigest()}   # noqa: S324 (what Subsonic asks for)
     ping = await _call(s, "ping")
     s["name"] = ping.get("type") or "Subsonic"

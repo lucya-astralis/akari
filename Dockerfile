@@ -77,6 +77,13 @@ COPY requirements.txt /opt/akari/requirements.txt
 RUN python3 -m venv /opt/venv \
  && /opt/venv/bin/pip install --no-cache-dir --retries 10 --timeout 60 -r /opt/akari/requirements.txt
 
+# network tools for finding out why something is not reachable: ping and
+# tracepath (ICMP datagram sockets, no NET_RAW needed), dig/host, curl, wget,
+# nc, ip/ss, traceroute, mtr, whois
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      iputils-ping iputils-tracepath bind9-dnsutils curl wget netcat-openbsd iproute2 traceroute mtr-tiny whois \
+ && rm -rf /var/lib/apt/lists/*
+
 # sudo for accounts that manage (group akari-admin, see /etc/sudoers.d/akari)
 RUN apt-get update && apt-get install -y --no-install-recommends sudo \
  && rm -rf /var/lib/apt/lists/* \

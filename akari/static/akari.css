@@ -1060,100 +1060,206 @@ img.app-art, img.win__icon{ object-fit:contain; border-radius:22% }
 :root:not([data-mirror]):not([data-nova="both"]) .desk > .desk__logo{ justify-items:end; padding-right:clamp(120px, 16vw, 300px) }
 :root[data-mirror]:not([data-nova="both"]) .desk > .desk__logo{ justify-items:start; padding-left:clamp(120px, 16vw, 300px) }
 
+/* the taskbar and control centre: a track without a cover in its own colour */
+.tb__cover[style*="--mh"], .qc__cover[style*="--mh"]{ background:linear-gradient(135deg, oklch(.72 .15 var(--mh)), oklch(.48 .19 calc(var(--mh) + 50))) }
+
 /* ---------- Musik ----------
-   Now playing on top (cover, title, bar, buttons, volume), the library below;
-   side by side once the window is wide. A track without a picture gets a
-   colour of its own (--h, from its album). */
-.mu{ container-type:inline-size; display:grid; grid-template-rows:auto minmax(0, 1fr); overflow:hidden; background:var(--surface) }
-.mu__now{ display:grid; justify-items:center; gap:var(--s-3); padding:var(--s-5) var(--s-5) var(--s-4); border-bottom:var(--hair) solid var(--stroke-1) }
-.mu__art{ position:relative; width:min(190px, 52cqw); aspect-ratio:1; border-radius:18px; overflow:hidden; display:grid; place-items:center;
-  background:linear-gradient(135deg, oklch(.72 .15 var(--h, 300)), oklch(.48 .19 calc(var(--h, 300) + 50)));
-  color:rgb(255 255 255 / .9); box-shadow:0 18px 40px -12px oklch(.45 .19 var(--h, 300) / .55), var(--shadow-4);
-  transform:scale(.94); transition:transform var(--dur-4) var(--spring), box-shadow var(--dur-4) var(--ease) }
-.mu__art.is-playing{ transform:none }
-.mu__art.is-empty{ background:var(--surface-2); color:var(--text-ghost); box-shadow:none }
-.mu__art svg{ width:34%; height:34% }
-.mu__art img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover }
-.mu__art img[hidden]{ display:none }
-.mu__meta{ display:grid; justify-items:center; gap:2px; max-width:100%; text-align:center }
-.mu__meta b{ font-size:var(--fs-500); font-weight:600; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
-.mu__meta small{ color:var(--text-dim); max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
-.mu__seek{ width:100%; display:grid; gap:2px }
-.mu__bar{ width:100% }
-.mu__times{ display:flex; justify-content:space-between; font:500 var(--fs-100)/1 var(--mono); color:var(--text-ghost); font-variant-numeric:tabular-nums }
-.mu__ctl{ display:flex; align-items:center; justify-content:center; gap:var(--s-3) }
+   A sidebar, the main view and a player bar along the bottom; the full view of
+   what plays covers the window, the queue slides in from the right. A track
+   without a picture gets a colour of its own (--h, from its album). */
+.mu{ container-type:inline-size; position:relative; display:grid; grid-template-columns:212px minmax(0, 1fr); grid-template-rows:minmax(0, 1fr) auto;
+  grid-template-areas:"side main" "bar bar"; overflow:hidden; background:var(--surface); --mu-viz:var(--acc) }
+.mu__side{ grid-area:side; display:flex; flex-direction:column; gap:var(--s-4); min-height:0; padding:var(--s-4) var(--s-3); background:var(--surface-2);
+  border-right:var(--hair) solid var(--stroke-1) }
+.mu__brand{ display:flex; align-items:center; gap:var(--s-2); padding:0 var(--s-2) }
+.mu__brand svg{ width:26px; height:26px } .mu__brand b{ font-size:var(--fs-400); font-weight:600 }
+.mu__nav{ display:grid; gap:2px }
+.mu__nav button{ display:flex; align-items:center; gap:var(--s-3); padding:8px var(--s-3); border:0; border-radius:var(--r-control); background:none;
+  color:var(--text-dim); font:500 var(--fs-300) var(--sans); text-align:left; cursor:pointer; transition:background-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease) }
+.mu__nav button:hover{ background:var(--surface); color:var(--text) }
+.mu__nav button.is-on{ background:var(--surface); color:var(--text); box-shadow:var(--shadow-1) }
+.mu__nav button.is-on svg{ color:var(--acc) }
+.mu__nav svg{ width:18px; height:18px; flex:none }
+.mu__nav .f-tip[data-tip]::after{ display:none }
+.mu__source{ margin-top:auto; display:grid; gap:var(--s-2); padding:var(--s-3) var(--s-2) 0; border-top:var(--hair) solid var(--stroke-1) }
+.mu__label{ font:600 var(--fs-100)/1 var(--mono); letter-spacing:.1em; text-transform:uppercase; color:var(--text-ghost) }
+.mu__seg{ display:flex; padding:2px; border-radius:var(--r-pill); background:var(--surface) }
+.mu__seg button{ flex:1; padding:5px 10px; border:0; border-radius:var(--r-pill); background:none; color:var(--text-dim); font:500 var(--fs-200)/1.3 var(--sans); cursor:pointer }
+.mu__seg button[aria-selected="true"]{ background:var(--acc-soft); color:var(--acc) }
+.mu__srv{ font:500 var(--fs-100)/1.4 var(--mono); color:var(--text-ghost); overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.mu__srv:empty{ display:none }
+
+.mu__main{ grid-area:main; min-height:0; overflow:auto; padding:var(--s-5) var(--s-6) var(--s-6); display:grid; align-content:start; gap:var(--s-4); outline:none }
+.mu__head{ display:flex; align-items:center; gap:var(--s-3) }
+.mu__head h2, .mu__h{ margin:0; font:700 var(--fs-600)/1.15 var(--sans); letter-spacing:-.02em }
+.mu__h{ font-size:var(--fs-500); margin-top:var(--s-2) }
+.mu__head p{ margin:2px 0 0; color:var(--text-dim); font-size:var(--fs-200) }
+.mu__hint{ margin:0; color:var(--text-dim) }
+.mu__chips{ display:flex; flex-wrap:wrap; gap:var(--s-2) }
+.mu__chip{ display:flex; align-items:center; gap:var(--s-2); padding:7px 14px; border:0; border-radius:var(--r-pill); background:var(--surface-2); color:var(--text-dim);
+  font:500 var(--fs-200) var(--sans); cursor:pointer; transition:background-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease) }
+.mu__chip svg{ width:15px; height:15px }
+.mu__chip:hover{ color:var(--text) }
+.mu__chip.is-on{ background:var(--acc-soft); color:var(--acc) }
+.mu__search .f-input{ font-size:15px }
+.mu__actions{ display:flex; flex-wrap:wrap; gap:var(--s-2) }
+
+/* covers */
+.mu__cover{ position:relative; display:grid; place-items:center; overflow:hidden; aspect-ratio:1; border-radius:10px; flex:none; color:rgb(255 255 255 / .9);
+  background:linear-gradient(135deg, oklch(.72 .15 var(--h, 300)), oklch(.48 .19 calc(var(--h, 300) + 50))) }
+.mu__cover img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover }
+.mu__cover svg{ width:34%; height:34% }
+.mu__cover.is-empty{ background:var(--surface-2); color:var(--text-ghost) }
+.mu__cover--xs{ width:36px; border-radius:7px }
+.mu__cover--sm{ width:44px; border-radius:9px }
+.mu__cover--card{ width:100%; border-radius:12px; box-shadow:var(--shadow-4) }
+.mu__cover--album{ width:clamp(120px, 22cqw, 210px); border-radius:14px; box-shadow:0 18px 36px -16px oklch(.4 .18 var(--h, 300) / .6), var(--shadow-4) }
+
+/* album cards */
+.mu__grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(148px, 1fr)); gap:var(--s-5) var(--s-4) }
+.mu__card{ position:relative; display:grid; gap:4px; padding:0; border:0; background:none; color:var(--text); text-align:left; font:inherit; cursor:pointer; min-width:0 }
+.mu__card b{ margin-top:6px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.mu__card small{ color:var(--text-dim); font-size:var(--fs-200); overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.mu__card .mu__cover{ transition:transform var(--dur-2) var(--spring), box-shadow var(--dur-2) var(--ease) }
+.mu__card:hover .mu__cover--card{ transform:translateY(-3px); box-shadow:var(--shadow-16) }
+.mu__card:focus-visible{ outline:none } .mu__card:focus-visible .mu__cover{ outline:2px solid var(--acc); outline-offset:3px }
+.mu__play{ position:absolute; right:8px; top:calc(100% - 4.6em - 46px); width:40px; height:40px; display:grid; place-items:center; border-radius:50%;
+  background:var(--acc-fill); color:var(--on-acc); box-shadow:0 6px 16px -6px var(--acc); opacity:0; transform:translateY(6px) scale(.9);
+  transition:opacity var(--dur-2) var(--ease), transform var(--dur-2) var(--spring) }
+.mu__play svg{ width:18px; height:18px }
+.mu__card:hover .mu__play, .mu__card:focus-visible .mu__play{ opacity:1; transform:none }
+.mu__grid--artists{ grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)) }
+.mu__card--artist{ justify-items:center; text-align:center }
+.mu__face{ width:100%; aspect-ratio:1; border-radius:50%; display:grid; place-items:center; font:700 clamp(28px, 6cqw, 44px)/1 var(--sans); color:#fff;
+  background:radial-gradient(circle at 30% 25%, oklch(.78 .13 var(--h)), oklch(.46 .18 calc(var(--h) + 40))); box-shadow:var(--shadow-4) }
+.mu__card--artist b, .mu__card--artist small{ max-width:100% }
+
+/* an album's page */
+.mu__album{ display:flex; align-items:flex-end; gap:var(--s-5); flex-wrap:wrap }
+.mu__album > div{ display:grid; gap:var(--s-1); min-width:0 }
+.mu__album h2{ margin:2px 0 0; font:700 clamp(22px, 4cqw, 36px)/1.1 var(--sans); letter-spacing:-.025em; text-wrap:balance }
+.mu__album p{ margin:0 0 var(--s-2); color:var(--text-dim); font-size:var(--fs-200) }
+.mu__link{ justify-self:start; padding:0; border:0; background:none; color:var(--acc); font:600 var(--fs-300) var(--sans); cursor:pointer }
+.mu__link:hover{ text-decoration:underline }
+.mu__round{ width:36px; height:36px; display:grid; place-items:center; flex:none; padding:0; border:0; border-radius:50%; background:var(--surface-2); color:var(--text); cursor:pointer }
+.mu__round:hover{ background:var(--surface-3) }
+.mu__round svg{ width:18px; height:18px }
+.mu__round--back{ justify-self:start }
+
+/* track lists */
+.mu__songs{ display:grid }
+.mu__song{ display:grid; grid-template-columns:36px minmax(0, 1.4fr) minmax(0, 1fr) 32px 44px; align-items:center; gap:var(--s-3); padding:5px var(--s-2);
+  border-radius:var(--r-control); cursor:pointer; transition:background-color var(--dur-1) var(--ease) }
+.mu__song:hover{ background:var(--surface-2) }
+.mu__song:focus-visible{ outline:2px solid var(--acc); outline-offset:-2px }
+.mu__song.is-cur{ background:var(--acc-soft) } .mu__song.is-cur b{ color:var(--acc) }
+.mu__no{ position:relative; display:grid; place-items:center; width:36px; height:36px; color:var(--text-ghost); font:500 var(--fs-200) var(--mono); font-variant-numeric:tabular-nums }
+.mu__st{ display:grid; gap:1px; min-width:0 }
+.mu__st b{ font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.mu__st small, .mu__sa{ color:var(--text-dim); font-size:var(--fs-200); overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.mu__song time{ text-align:right; font:500 var(--fs-100) var(--mono); color:var(--text-ghost); font-variant-numeric:tabular-nums }
+.mu__fav{ width:30px; height:30px; display:grid; place-items:center; padding:0; border:0; border-radius:50%; background:none; color:var(--text-ghost); cursor:pointer; opacity:0;
+  transition:opacity var(--dur-1) var(--ease), color var(--dur-1) var(--ease), transform var(--dur-2) var(--spring) }
+.mu__fav svg{ width:16px; height:16px }
+.mu__song:hover .mu__fav, .mu__fav.is-on, .mu__fav:focus-visible{ opacity:1 }
+.mu__fav.is-on{ color:#e0457b } .mu__fav:active{ transform:scale(.85) }
+.mu__eq{ position:absolute; inset:0; display:none; align-items:end; justify-content:center; gap:3px; padding-bottom:10px; border-radius:7px; background:rgb(0 0 0 / .38) }
+.mu__song.is-cur .mu__eq{ display:flex }
+.mu__eq i{ width:3px; height:6px; border-radius:2px; background:#fff }
+.mu__song.is-playing .mu__eq i{ animation:mu-eq .9s ease-in-out infinite alternate }
+.mu__song.is-playing .mu__eq i:nth-child(2){ animation-delay:-.3s } .mu__song.is-playing .mu__eq i:nth-child(3){ animation-delay:-.6s }
+@keyframes mu-eq{ to{ height:17px } }
+
+/* empty, connect */
+.mu__empty{ display:grid; justify-items:center; align-content:center; gap:var(--s-3); padding:var(--s-8, 48px) var(--s-6); text-align:center }
+.mu__empty > svg{ width:36px; height:36px; color:var(--text-ghost) }
+.mu__empty p{ margin:0; max-width:40ch; color:var(--text-dim); font-size:var(--fs-200); line-height:1.5 }
+.mu__connect{ display:grid; gap:var(--s-3); max-width:420px; padding-top:var(--s-4) }
+.mu__connect > svg{ width:30px; height:30px; color:var(--acc) }
+.mu__connect h2{ margin:0; font:700 var(--fs-500) var(--sans) }
+.mu__connect p{ margin:0; color:var(--text-dim); font-size:var(--fs-200); line-height:1.5 }
+.mu__connect .f-input{ font-size:14px }
+.mu__connect-foot{ display:flex; align-items:center; justify-content:space-between; gap:var(--s-3) }
+.mu__connect-foot .f-dim{ font-size:var(--fs-200); color:var(--err) }
+
+/* the player bar */
+.mu__bar{ grid-area:bar; position:relative; z-index:3; display:grid; grid-template-columns:minmax(0, 1fr) auto minmax(0, 1fr); align-items:center; gap:var(--s-4);
+  padding:var(--s-3) var(--s-5); background:color-mix(in oklab, var(--surface) 88%, var(--surface-2)); border-top:var(--hair) solid var(--stroke-1) }
+.mu__line{ position:absolute; left:0; right:0; top:-2px; height:4px; cursor:pointer; background:transparent }
+.mu__line::before{ content:""; position:absolute; inset:1px 0; background:var(--stroke-1) }
+.mu__line i{ position:absolute; left:0; top:1px; bottom:1px; width:var(--p, 0%); background:var(--acc); border-radius:0 2px 2px 0 }
+.mu__line:hover{ height:8px; top:-4px } .mu__line:hover::before{ inset:2px 0 } .mu__line:hover i{ top:2px; bottom:2px }
+.mu__line:focus-visible{ outline:2px solid var(--acc); outline-offset:1px }
+.mu__mini{ display:flex; align-items:center; gap:var(--s-3); min-width:0; justify-self:start; max-width:100%; padding:4px; border:0; border-radius:12px; background:none; color:var(--text);
+  text-align:left; font:inherit; cursor:pointer }
+.mu__mini:hover{ background:var(--surface-2) }
+.mu__minitxt{ display:grid; gap:1px; min-width:0 }
+.mu__minitxt b{ font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.mu__minitxt small{ color:var(--text-dim); font-size:var(--fs-200); overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.mu__ctl{ display:flex; align-items:center; justify-content:center; gap:var(--s-2) }
+.mu__right{ display:flex; align-items:center; justify-content:flex-end; gap:var(--s-2); min-width:0 }
+.mu__time{ font:500 var(--fs-100) var(--mono); color:var(--text-dim); font-variant-numeric:tabular-nums; white-space:nowrap }
+.mu__right .mu__volrange{ width:96px; flex:none }
 .mu__btn{ position:relative; width:36px; height:36px; display:grid; place-items:center; padding:0; border:0; border-radius:50%; background:none; color:var(--text-dim); cursor:pointer;
   transition:background-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease), transform var(--dur-2) var(--spring) }
 .mu__btn:hover{ background:var(--surface-2); color:var(--text) }
 .mu__btn:active{ transform:scale(.9) }
 .mu__btn:focus-visible{ outline:2px solid var(--acc); outline-offset:2px }
 .mu__btn svg{ width:18px; height:18px }
-.mu__btn--md{ color:var(--text) } .mu__btn--md svg{ width:22px; height:22px }
-.mu__btn--play{ width:54px; height:54px; background:var(--acc-fill); color:var(--on-acc); box-shadow:0 8px 20px -8px var(--acc) }
+.mu__btn--md{ color:var(--text) } .mu__btn--md svg{ width:21px; height:21px }
+.mu__btn--play{ width:46px; height:46px; background:var(--acc-fill); color:var(--on-acc); box-shadow:0 8px 20px -8px var(--acc) }
 .mu__btn--play:hover{ background:var(--acc-fill); color:var(--on-acc); transform:scale(1.05) }
-.mu__btn--play svg{ width:24px; height:24px }
-.mu__btn--sm{ width:30px; height:30px } .mu__btn--sm svg{ width:17px; height:17px }
+.mu__btn--play svg{ width:22px; height:22px }
+.mu__btn--sm{ width:32px; height:32px } .mu__btn--sm svg{ width:17px; height:17px }
 .mu__btn[aria-pressed="true"]{ color:var(--acc) }
 .mu__btn[aria-pressed="true"]::after{ content:""; position:absolute; bottom:3px; width:4px; height:4px; border-radius:50%; background:var(--acc) }
 .mu__one{ position:absolute; top:5px; right:4px; font:700 8px/1 var(--mono); font-style:normal; color:var(--acc); display:none }
 .mu__btn[data-mode="one"] .mu__one{ display:block }
-.mu__vol{ display:flex; align-items:center; gap:var(--s-2); width:min(240px, 100%) }
-.mu__vol .range{ flex:1 }
-.mu__lib{ display:flex; flex-direction:column; min-height:0 }
-.mu__lib > .mu__list, .mu__lib > .mu__empty, .mu__lib > .mu__connect{ flex:1; min-height:0 }
-.mu__libhead{ display:flex; align-items:center; gap:var(--s-2); padding:var(--s-3) var(--s-4) var(--s-2) }
-.mu__search{ flex:1 } .mu__search .f-input{ font-size:14px }
-.mu__list{ overflow:auto; display:grid; align-content:start; padding:0 var(--s-2) var(--s-3) }
-.mu__list[hidden]{ display:none }
-.mu__row{ display:grid; grid-template-columns:40px minmax(0, 1fr); align-items:center; gap:var(--s-3); padding:6px var(--s-2); border:0; border-radius:var(--r-control);
-  background:none; color:var(--text); text-align:left; font:inherit; cursor:pointer; transition:background-color var(--dur-1) var(--ease) }
-.mu__row:hover{ background:var(--surface-2) }
-.mu__row:focus-visible{ outline:2px solid var(--acc); outline-offset:-2px }
-.mu__row.is-cur{ background:var(--acc-soft) }
-.mu__row.is-cur b{ color:var(--acc) }
-.mu__thumb{ position:relative; width:40px; height:40px; border-radius:9px; overflow:hidden; display:grid; place-items:center; color:rgb(255 255 255 / .9);
-  background:linear-gradient(135deg, oklch(.72 .15 var(--h, 300)), oklch(.5 .18 calc(var(--h, 300) + 50))) }
-.mu__thumb svg{ width:18px; height:18px }
-.mu__thumb img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover }
-.mu__txt{ display:grid; gap:1px; min-width:0 }
-.mu__txt b{ font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
-.mu__txt small{ color:var(--text-dim); font-size:var(--fs-200); overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
-/* the one playing: three bars over its picture */
-.mu__eq{ position:absolute; inset:0; display:none; align-items:end; justify-content:center; gap:3px; padding-bottom:11px; background:rgb(0 0 0 / .38) }
-.mu__row.is-cur .mu__eq{ display:flex }
-.mu__eq i{ width:3px; height:6px; border-radius:2px; background:#fff }
-.mu__row.is-playing .mu__eq i{ animation:mu-eq .9s ease-in-out infinite alternate }
-.mu__row.is-playing .mu__eq i:nth-child(2){ animation-delay:-.3s } .mu__row.is-playing .mu__eq i:nth-child(3){ animation-delay:-.6s }
-@keyframes mu-eq{ to{ height:17px } }
-.mu__none{ padding:var(--s-6) var(--s-4); text-align:center; color:var(--text-dim) }
-.mu__empty{ display:grid; justify-items:center; align-content:center; gap:var(--s-3); padding:var(--s-6) var(--s-6); text-align:center }
-.mu__empty[hidden]{ display:none }
-.mu__empty > svg{ width:34px; height:34px; color:var(--text-ghost) }
-.mu__empty p{ margin:0; max-width:36ch; color:var(--text-dim); font-size:var(--fs-200); line-height:1.5 }
-@container (min-width: 640px){
-  .mu{ grid-template-rows:none; grid-template-columns:minmax(280px, 40%) minmax(0, 1fr) }
-  .mu__now{ align-content:center; border-bottom:0; border-right:var(--hair) solid var(--stroke-1) }
-}
-:root[data-motion="reduced"] .mu__row.is-playing .mu__eq i{ animation:none; height:12px }
-/* the taskbar and control centre: a track without a cover in its own colour */
-.tb__cover[style*="--mh"], .qc__cover[style*="--mh"]{ background:linear-gradient(135deg, oklch(.72 .15 var(--mh)), oklch(.48 .19 calc(var(--mh) + 50))) }
-/* Musik: the two sources, the server's strip, connecting */
-.mu__libhead{ flex-wrap:wrap }
-.mu__src{ display:flex; padding:2px; border-radius:var(--r-pill); background:var(--surface-2); flex:none }
-.mu__src button{ padding:4px 12px; border:0; border-radius:var(--r-pill); background:none; color:var(--text-dim); font:500 var(--fs-200)/1.4 var(--sans); cursor:pointer }
-.mu__src button[aria-selected="true"]{ background:var(--surface); color:var(--text); box-shadow:var(--shadow-1) }
-.mu__src button:focus-visible{ outline:2px solid var(--acc); outline-offset:1px }
-.mu__search{ min-width:140px }
-.mu__server{ display:flex; align-items:center; justify-content:space-between; gap:var(--s-2); padding:0 var(--s-4) var(--s-2); font-size:var(--fs-200) }
-.mu__server[hidden]{ display:none }
-.mu__server .f-status{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
-.mu__row{ grid-template-columns:40px minmax(0, 1fr) auto }
-.mu__len{ font:500 var(--fs-100) var(--mono); color:var(--text-ghost); font-variant-numeric:tabular-nums; padding-right:var(--s-2) }
-.mu__connect{ display:grid; gap:var(--s-3); align-content:start; padding:var(--s-4) var(--s-5) var(--s-5); overflow:auto }
-.mu__connect[hidden]{ display:none }
-.mu__connect > svg{ width:28px; height:28px; color:var(--acc) }
-.mu__connect > b{ font-size:var(--fs-400) }
-.mu__connect p{ margin:0; color:var(--text-dim); font-size:var(--fs-200); line-height:1.5 }
-.mu__connect .f-input{ font-size:14px }
-.mu__connect-foot{ display:flex; align-items:center; justify-content:space-between; gap:var(--s-3) }
-.mu__connect-foot .f-dim{ font-size:var(--fs-200) }
+
+/* the full view: what plays, big, on its own colour */
+.mu__full{ position:absolute; inset:0; z-index:5; display:grid; place-items:center; overflow:hidden; background:var(--surface);
+  animation:mu-rise var(--dur-3) var(--spring) both }
+.mu__full[hidden]{ display:none }
+@keyframes mu-rise{ from{ opacity:0; transform:translateY(24px) } }
+.mu__fullbg{ position:absolute; inset:-60px; background:radial-gradient(ellipse at 50% 30%, oklch(.6 .16 var(--h, 300) / .5), transparent 65%) center / cover no-repeat;
+  filter:blur(60px) saturate(1.2); opacity:.4; pointer-events:none }
+.mu__fullbg[style*="url"]{ background-size:cover; opacity:.28 }
+.mu__round--l, .mu__round--r{ position:absolute; top:var(--s-4); z-index:2; width:40px; height:40px; background:color-mix(in oklab, var(--surface-2) 80%, transparent) }
+.mu__round--l{ left:var(--s-4) } .mu__round--r{ right:var(--s-4) }
+.mu__stage{ position:relative; z-index:1; display:grid; justify-items:center; gap:var(--s-4); width:min(560px, 86%); padding:var(--s-6) 0 }
+.mu__cover--xl{ width:min(260px, 42cqh, 60cqw); border-radius:18px; box-shadow:0 30px 60px -24px oklch(.35 .18 var(--h, 300) / .7), var(--shadow-16);
+  transform:scale(.95); transition:transform var(--dur-4) var(--spring) }
+.mu__cover--xl.is-playing{ transform:none }
+.mu__fullmeta{ display:grid; justify-items:center; gap:2px; text-align:center; max-width:100% }
+.mu__fullmeta b{ font:700 var(--fs-600)/1.15 var(--sans); letter-spacing:-.02em; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.mu__fullmeta span{ font-size:var(--fs-400); color:var(--text) } .mu__fullmeta small{ color:var(--text-dim) }
+.mu__viz{ width:100%; height:84px }
+.mu__seek{ display:grid; grid-template-columns:auto minmax(0, 1fr) auto; align-items:center; gap:var(--s-3); width:100%;
+  font:500 var(--fs-100) var(--mono); color:var(--text-dim); font-variant-numeric:tabular-nums }
+.mu__ctl--xl{ gap:var(--s-4) }
+.mu__ctl--xl .mu__btn--play{ width:62px; height:62px } .mu__ctl--xl .mu__btn--play svg{ width:26px; height:26px }
+
+/* the queue */
+.mu__queue{ position:absolute; z-index:6; top:0; right:0; bottom:0; width:min(320px, 86%); display:grid; grid-template-rows:auto minmax(0, 1fr);
+  background:var(--surface); border-left:var(--hair) solid var(--stroke-1); box-shadow:var(--shadow-28); animation:mu-slide var(--dur-3) var(--spring) both }
+.mu__queue[hidden]{ display:none }
+@keyframes mu-slide{ from{ transform:translateX(30px); opacity:0 } }
+.mu__queue header{ display:flex; align-items:center; justify-content:space-between; padding:var(--s-4) var(--s-3) var(--s-2) var(--s-5) }
+.mu__qlist{ overflow:auto; display:grid; align-content:start; padding:0 var(--s-2) var(--s-3) }
+.mu__qrow{ display:grid; grid-template-columns:36px minmax(0, 1fr); align-items:center; gap:var(--s-3); padding:6px var(--s-2); border:0; border-radius:var(--r-control);
+  background:none; color:var(--text); text-align:left; font:inherit; cursor:pointer }
+.mu__qrow:hover{ background:var(--surface-2) } .mu__qrow.is-cur{ background:var(--acc-soft) } .mu__qrow.is-cur b{ color:var(--acc) }
+
+/* narrow windows: the sidebar becomes a strip of icons on top, the bar keeps the essentials */
+.mu.is-narrow{ grid-template-columns:minmax(0, 1fr); grid-template-rows:auto minmax(0, 1fr) auto; grid-template-areas:"side" "main" "bar" }
+.mu.is-narrow .mu__side{ flex-direction:row; align-items:center; gap:var(--s-2); padding:var(--s-2) var(--s-3); border-right:0; border-bottom:var(--hair) solid var(--stroke-1); overflow-x:auto }
+.mu.is-narrow .mu__brand b, .mu.is-narrow .mu__nav span, .mu.is-narrow .mu__label, .mu.is-narrow .mu__srv{ display:none }
+.mu.is-narrow .mu__nav{ display:flex; gap:2px } .mu.is-narrow .mu__nav button{ padding:8px }
+.mu.is-narrow .mu__nav .f-tip[data-tip]::after{ display:block }
+.mu.is-narrow .mu__source{ margin:0 0 0 auto; padding:0; border:0 }
+.mu.is-narrow .mu__main{ padding:var(--s-4) }
+.mu.is-narrow .mu__bar{ grid-template-columns:minmax(0, 1fr) auto; padding:var(--s-2) var(--s-3) }
+.mu.is-narrow .mu__right, .mu.is-narrow .mu__ctl [data-act="shuffle"], .mu.is-narrow .mu__ctl [data-act="repeat"]{ display:none }
+.mu.is-narrow .mu__song{ grid-template-columns:36px minmax(0, 1fr) 32px 40px } .mu.is-narrow .mu__sa{ display:none }
+.mu.is-narrow .mu__grid{ grid-template-columns:repeat(auto-fill, minmax(118px, 1fr)); gap:var(--s-4) var(--s-3) }
+:root[data-motion="reduced"] .mu__song.is-playing .mu__eq i{ animation:none; height:12px }
