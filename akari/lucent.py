@@ -339,8 +339,12 @@ async def _page_overview() -> dict:
 
 def _page_accounts() -> dict:
     accts = accounts.all()
+    first = not accts       # a fresh Akari from the store: the first account is made here
     return {
-        "title": "Konten", "lead": "Jedes Konto ist ein Linux-Benutzer mit eigenem Home. Verwalten heißt: sudo und apt.",
+        "title": "Konten",
+        "lead": ("Noch gibt es kein Konto. Das erste darf verwalten und ist gleich mit deinem Lucent-Konto verknüpft: "
+                 "danach meldest du dich in Akari mit Lucent an.") if first
+                else "Jedes Konto ist ein Linux-Benutzer mit eigenem Home. Verwalten heißt: sudo und apt.",
         "sections": [{"id": "konten", "title": "Konten", "kind": "cards", "shape": "square", "items": [{
             "title": a.fullname, "sub": a.name, "initials": _initials(a), "badges": _badges(a),
             **({"img": f"avatar/{a.name}", "img_alt": a.fullname} if a.avatar else {}),
@@ -358,13 +362,14 @@ def _page_accounts() -> dict:
                 {"id": "loeschen", "label": "Löschen", "icon": "trash", "danger": True, "values": {"name": a.name},
                  "confirm": f"Das Konto {a.name}, sein Home und alles darin sind danach weg."},
             ]} for a in accts]}],
-        "actions": [{"id": "neu", "label": "Konto anlegen", "icon": "plus", "submit": "Anlegen", "fields": [
+        "actions": [{"id": "neu", "label": "Erstes Konto anlegen" if first else "Konto anlegen", "icon": "plus", "submit": "Anlegen",
+                     "fields": [
             {"name": "fullname", "label": "Name", "type": "text", "placeholder": "So, wie die Person heißt"},
             {"name": "name", "label": "Benutzername", "type": "text", "required": True,
              "help": "Kleinbuchstaben, Ziffern, - und _. So heißt das Konto im Terminal."},
-            {"name": "password", "label": "Passwort", "type": "password", "required": True},
-            {"name": "admin", "label": "Darf verwalten (sudo, apt, Konten)", "type": "checkbox"},
-        ]}],
+            {"name": "password", "label": "Passwort", "type": "password", "required": True,
+             "help": f"Mindestens {accounts.PW_MIN} Zeichen. Für die Anmeldung ohne Lucent, sudo und SSH."},
+        ] + ([] if first else [{"name": "admin", "label": "Darf verwalten (sudo, apt, Konten)", "type": "checkbox"}])}],
     }
 
 
@@ -435,9 +440,29 @@ async def _end(name: str) -> None:
     await agents.stop(a.uid)
 
 
+async def _first_account(p: dict, body: "DoIn") -> dict:
+    """An Akari installed from Lucent's store has no setup link anyone could
+    read from its log. So while it has no account at all, the Lucent person
+    who may change it (Lucent checks that) makes the first one: it may manage,
+    and it is linked to that person, who then signs in with Lucent."""
+    by = body.by if isinstance(body.by, dict) else {}
+    if not by.get("sub"):
+        raise HTTPException(403, "Das erste Konto legt eine Lucent-Person an, die Lucent nennt.")
+    v = {k: str(x) for k, x in (body.values or {}).items()}
+    try:
+        a = await asyncio.to_thread(accounts.create, v.get("name", ""), v.get("fullname", ""), v.get("password", ""), True)
+        await asyncio.to_thread(accounts.set_lucent, a.name, f"{p['issuer']}#{by['sub']}", by.get("email"))
+    except accounts.AccountError as e:
+        raise HTTPException(422, str(e)) from None
+    return {"notice": f"Erstes Konto {a.name} angelegt. Es darf verwalten und ist mit deinem Lucent-Konto verknüpft: "
+                      "in Akari „Mit Lucent anmelden“."}
+
+
 @router.post("/lucent/v1/pages/{pid}/do/{aid}")
 async def do(pid: str, aid: str, body: DoIn, request: Request) -> dict:
     p = _require(request)
+    if pid == "konten" and aid == "neu" and accounts.needs_setup():
+        return await _first_account(p, body)
     me = _need_admin(p, body.by)
     v = {k: str(x) for k, x in (body.values or {}).items()}
     name = v.get("name", "")

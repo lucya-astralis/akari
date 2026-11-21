@@ -111,4 +111,7 @@ ENV PYTHONPATH=/opt/akari PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 LANG=de_D
 WORKDIR /data
 VOLUME /data
 EXPOSE 8130
+# healthy once akarid answers (lucya-aio waits for this before it pairs Akari with Lucent)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD ["/opt/venv/bin/python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8130/api/login/state', timeout=3)"]
 CMD ["/opt/venv/bin/python", "-m", "akari"]

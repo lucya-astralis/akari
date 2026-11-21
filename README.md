@@ -145,6 +145,22 @@ Deutsch ist die Quelle, `akari/static/i18n/en.js` die englische Fassung
 (genaue Texte und Muster für Texte mit Werten). Gewählt wird unter Einstellungen →
 Darstellung → Sprache, sonst gilt die Sprache des Browsers.
 
+## Aus Lucents Store
+
+Akari OS steht im Store von lucya.systems. Lucent installiert es über den
+Helfer lucya-aio aus `ghcr.io/lucya-astralis/akari:stable` (gebaut von
+`.github/workflows/image.yml` bei jedem Push auf main) und fragt nach den
+Rechten:
+
+- **Gesperrt** (Vorgabe): nur lesbares System, `no-new-privileges`. Konten,
+  Desktops, Apps und SSH gehen, sudo und apt nicht.
+- **Mit sudo und apt**: beschreibbares System, setuid erlaubt; was Admins
+  installieren, kommt nach einem Update von selbst wieder.
+
+Beide behalten genau die zehn Capabilities aus `compose.yaml` und sonst nichts.
+Das erste Konto legt Lucent an (Akari OS → Konten → Erstes Konto anlegen): Es
+darf verwalten und ist gleich mit der Lucent-Person verknüpft.
+
 ## Lucent
 
 Koppeln: in Lucent unter **Tools** einen Code erzeugen, dann in Akari unter
