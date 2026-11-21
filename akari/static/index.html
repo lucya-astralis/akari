@@ -139,6 +139,10 @@
   <symbol id="i-globe" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.5 2.6 3.6 5.4 3.6 8.5s-1.1 5.9-3.6 8.5c-2.5-2.6-3.6-5.4-3.6-8.5s1.1-5.9 3.6-8.5z"/></g></symbol>
   <symbol id="i-window" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" d="M3.5 5h17v14h-17zM3.5 9h17"/></symbol>
   <symbol id="i-edit" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" d="M4.5 19.5l1-4L15.5 5.5l3 3-10 10zM13.5 7.5l3 3"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" d="M19.5 14.6A8 8 0 0 1 9.4 4.5a8 8 0 1 0 10.1 10.1z"/></symbol>
+  <symbol id="i-auto" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/></g><path fill="currentColor" d="M12 4a8 8 0 0 1 0 16z"/></symbol>
+  <symbol id="i-pointer" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" d="M5.5 3.5v15l4-3.6 2.8 6.6 3-1.3-2.8-6.4h5.4z"/></symbol>
+  <symbol id="i-motion" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 8h10M3 12h14M3 16h8"/><circle cx="18.5" cy="16" r="2.5"/></g></symbol>
   <symbol id="i-sun" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></g></symbol>
   <symbol id="i-palette" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3.5a8.5 8.5 0 1 0 0 17c1.2 0 1.8-.8 1.8-1.7 0-1.2-1-1.5-1-2.6 0-1 .8-1.7 1.8-1.7h2.2a3.7 3.7 0 0 0 3.7-3.7C20.5 6.8 16.7 3.5 12 3.5z"/><circle cx="8" cy="11" r="1"/><circle cx="11" cy="7.5" r="1"/><circle cx="15.5" cy="8.5" r="1"/></g></symbol>
   <symbol id="i-dock" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" d="M3.5 4.5h17v15h-17zM7 16h10"/></symbol>
@@ -242,22 +246,66 @@
     </footer>
   </div>
 
-  <!-- quick settings -->
+  <!-- quick settings: a control centre of modules -->
   <div class="pop pop--quick f-glass f-glass--hi f-glass--deep" id="pop-quick" role="dialog" aria-label="Schnelleinstellungen" hidden>
-    <div class="f-seg quick__theme" role="radiogroup" aria-label="Farbschema">
-      <span class="f-seg__thumb"></span>
-      <input type="radio" name="qtheme" id="qt-system" value="system"><label for="qt-system">System</label>
-      <input type="radio" name="qtheme" id="qt-light" value="light"><label for="qt-light">Hell</label>
-      <input type="radio" name="qtheme" id="qt-dark" value="dark"><label for="qt-dark">Dunkel</label>
+    <div class="qc">
+      <section class="qc__mod qc__mod--theme" aria-label="Farbschema">
+        <span class="qc__label">Darstellung</span>
+        <div class="qc__theme" role="radiogroup" aria-label="Farbschema">
+          <input type="radio" name="qtheme" id="qt-system" value="system"><label for="qt-system" class="f-tip" data-tip="Wie das System"><svg><use href="#i-auto"/></svg></label>
+          <input type="radio" name="qtheme" id="qt-light" value="light"><label for="qt-light" class="f-tip" data-tip="Hell"><svg><use href="#i-sun"/></svg></label>
+          <input type="radio" name="qtheme" id="qt-dark" value="dark"><label for="qt-dark" class="f-tip" data-tip="Dunkel"><svg><use href="#i-moon"/></svg></label>
+        </div>
+        <b class="qc__value" data-qc-theme>System</b>
+      </section>
+      <button class="qc__mod qc__mod--big" data-qpref="dnd" aria-pressed="false">
+        <span class="qc__orb"><svg><use href="#i-bell"/></svg></span>
+        <span><b>Nicht stören</b><small data-qc-dnd>Aus</small></span>
+      </button>
+
+      <section class="qc__mod qc__mod--wide" aria-label="Akzentfarbe">
+        <span class="qc__head"><span class="qc__label">Akzent</span><b class="qc__value" data-qc-tint>Facet</b></span>
+        <div class="qc__tints" id="quick-tints" role="radiogroup" aria-label="Akzentfarbe"></div>
+      </section>
+
+      <section class="qc__mod qc__mod--wide" data-qc-nova aria-label="Nova">
+        <span class="qc__head"><span class="qc__label">Nova</span>
+          <label class="f-switch qc__switch"><input type="checkbox" data-qc-wall><i></i><span class="sr">Nova als Hintergrund</span></label></span>
+        <div class="qc__row" data-qc-nova-opts>
+          <div class="qc__pills" role="radiogroup" aria-label="Licht von">
+            <input type="radio" name="qnova" id="qn-left" value="left"><label for="qn-left">Links</label>
+            <input type="radio" name="qnova" id="qn-both" value="both"><label for="qn-both">Beide</label>
+            <input type="radio" name="qnova" id="qn-right" value="right"><label for="qn-right">Rechts</label>
+          </div>
+          <div class="qc__pills" role="radiogroup" aria-label="Logo auf Nova">
+            <input type="radio" name="qlogo" id="ql-none" value="none"><label for="ql-none" class="f-tip" data-tip="Kein Logo">–</label>
+            <input type="radio" name="qlogo" id="ql-akari" value="akari"><label for="ql-akari" class="f-tip" data-tip="Akari OS"><svg class="am" viewBox="0 0 95.64 100"><use href="#am"/></svg></label>
+            <input type="radio" name="qlogo" id="ql-lucya" value="lucya"><label for="ql-lucya" class="f-tip" data-tip="lucya.systems"><svg viewBox="0 0 964 543"><use href="#lm"/></svg></label>
+          </div>
+        </div>
+      </section>
+
+      <div class="qc__toggles">
+        <button class="qc__toggle" data-qpref="icons"><span class="qc__orb"><svg><use href="#i-folder"/></svg></span><small>Symbole</small></button>
+        <button class="qc__toggle" data-qpref="widgets"><span class="qc__orb"><svg><use href="#i-pulse"/></svg></span><small>Widgets</small></button>
+        <button class="qc__toggle" data-qpref="cursors"><span class="qc__orb"><svg><use href="#i-pointer"/></svg></span><small>Cursor</small></button>
+        <button class="qc__toggle" data-qpref="motion"><span class="qc__orb"><svg><use href="#i-motion"/></svg></span><small>Ruhig</small></button>
+      </div>
+
+      <section class="qc__mod qc__mod--wide qc__media" data-qc-media hidden aria-label="Was gerade spielt">
+        <button class="qc__cover" data-qmedia="show" aria-label="Zum Player"><img alt="" hidden draggable="false"><svg><use href="#i-music"/></svg></button>
+        <span class="qc__track"><b translate="no"></b><small translate="no"></small></span>
+        <span class="qc__mctl">
+          <button data-qmedia="previous" aria-label="Zurück"><svg><use href="#i-prev"/></svg></button>
+          <button data-qmedia="play-pause" aria-label="Pause"><svg><use href="#i-pause"/></svg></button>
+          <button data-qmedia="next" aria-label="Weiter"><svg><use href="#i-next"/></svg></button>
+        </span>
+      </section>
     </div>
-    <div class="quick__tints" id="quick-tints"></div>
-    <div class="quick__tiles">
-      <button class="quick__tile" data-qpref="dnd"><svg><use href="#i-bell"/></svg><span>Nicht stören</span></button>
-      <button class="quick__tile" data-qpref="wallpaper"><svg><use href="#i-image"/></svg><span>Hintergrund</span></button>
-      <button class="quick__tile" data-qpref="icons"><svg><use href="#i-folder"/></svg><span>Symbole</span></button>
-      <button class="quick__tile" data-qpref="widgets"><svg><use href="#i-pulse"/></svg><span>Widgets</span></button>
-    </div>
-    <button class="f-btn f-btn--ghost f-btn--sm quick__more" data-open="settings"><svg><use href="#i-gear"/></svg>Alle Einstellungen</button>
+    <footer class="qc__foot">
+      <span class="qc__desk"><svg><use href="#i-window"/></svg><span data-qc-desk translate="no">–</span></span>
+      <button class="f-btn f-btn--ghost f-btn--sm" data-open="settings"><svg><use href="#i-gear"/></svg>Alle Einstellungen</button>
+    </footer>
   </div>
 
   <!-- notifications -->
@@ -453,7 +501,7 @@
           <div class="acct">
             <button class="acct__face" data-avatar-pick aria-label="Bild ändern"><span class="f-avatar f-avatar--lg" data-avatar>A</span><span class="acct__edit"><svg><use href="#i-image"/></svg></span></button>
             <span class="opt__txt"><b data-fullname translate="no">–</b><small data-acct-note translate="no">–</small>
-              <span class="opt__btns acct__btns"><button class="f-btn f-btn--sm" data-avatar-pick>Bild ändern …</button><button class="f-btn f-btn--sm f-btn--ghost" data-avatar-drop hidden>Bild entfernen</button></span></span>
+              <span class="opt__btns acct__btns"><button class="f-btn f-btn--sm" data-avatar-pick>Bild ändern …</button><button class="f-btn f-btn--sm f-btn--danger" data-avatar-drop hidden>Bild entfernen</button></span></span>
           </div>
         </div>
         <span class="f-label grp__label">Name</span>

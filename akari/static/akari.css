@@ -235,7 +235,10 @@ button{ font:inherit; color:inherit }
 /* account */
 .grp--form{ gap:var(--s-5); padding:var(--s-5) var(--s-5) 0 }
 .grp--form > * + *{ border-top:0 }
-.acct{ display:flex; align-items:center; gap:var(--s-5) }
+.acct{ display:flex; align-items:center; gap:var(--s-5); padding:var(--s-5) var(--s-6) var(--s-5) var(--s-5) }
+.acct .opt__txt{ min-width:0 }
+.acct .f-avatar{ width:72px; height:72px }
+.acct__btns{ display:flex; flex-wrap:wrap; gap:var(--s-2) }
 .acct .opt__txt b{ font-size:var(--fs-500); line-height:var(--lh-500); font-weight:600 }
 .grp--form .f-input{ font-size:16px }
 .grp__foot{ display:flex; align-items:center; justify-content:space-between; gap:var(--s-4); margin:0 calc(var(--s-5) * -1);
@@ -669,18 +672,80 @@ body.is-leaving .desk{ transition:opacity var(--dur-2) var(--ease), filter var(-
 .launch__app[hidden]{ display:none }
 .launch__acts{ min-width:0; padding:0; border:0; background:none; box-shadow:none }
 .pop--win{ min-width:200px }
-.pop--quick{ width:300px; padding:var(--s-4); display:grid; gap:var(--s-4) }
-.quick__theme{ display:flex } .quick__theme label{ flex:1; text-align:center }
-.quick__tints{ display:grid; grid-template-columns:repeat(5, auto); justify-content:space-between; gap:var(--s-2) }
-.quick__tints button{ padding:2px; border:2px solid transparent; border-radius:50%; background:none; cursor:pointer }
-.quick__tints button[aria-checked="true"]{ border-color:var(--acc) }
-.quick__tints .f-swatch{ width:24px; height:24px; display:block }
-.quick__tiles{ display:grid; grid-template-columns:1fr 1fr; gap:var(--s-2) }
-.quick__tile{ display:flex; align-items:center; gap:var(--s-3); padding:var(--s-3) var(--s-4); border:0; border-radius:var(--r-card); background:var(--surface-2);
-  color:var(--text); font-weight:500; text-align:left; cursor:pointer; transition:background-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease) }
-.quick__tile svg{ width:18px; height:18px; flex:none }
-.quick__tile[aria-pressed="true"]{ background:var(--acc-fill); color:var(--on-acc) }
-.quick__more{ justify-self:start }
+/* the control centre: modules on a grid of two columns */
+.pop--quick{ width:340px; padding:var(--s-3); display:grid; gap:var(--s-3) }
+.qc{ display:grid; grid-template-columns:1fr 1fr; gap:var(--s-2) }
+.qc__mod{ display:grid; align-content:start; gap:var(--s-2); padding:var(--s-3); border:0; border-radius:calc(var(--r-overlay) - var(--s-2));
+  background:color-mix(in oklab, var(--surface-2) 82%, transparent); color:var(--text); text-align:left; font:inherit }
+.qc__mod[hidden]{ display:none }
+.qc__mod--wide{ grid-column:1 / -1 }
+.qc__label{ font:600 var(--fs-100)/1 var(--mono); letter-spacing:.08em; text-transform:uppercase; color:var(--text-ghost) }
+.qc__value{ font-size:var(--fs-200); font-weight:600 }
+.qc__head{ display:flex; align-items:center; justify-content:space-between; gap:var(--s-2) }
+/* theme: three round buttons */
+.qc__theme{ display:flex; gap:var(--s-2) }
+.qc__theme input{ position:absolute; opacity:0; pointer-events:none }
+.qc__theme label{ width:34px; height:34px; display:grid; place-items:center; border-radius:50%; background:var(--surface); color:var(--text-dim); cursor:pointer;
+  box-shadow:var(--shadow-1); transition:background-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease), transform var(--dur-2) var(--spring) }
+.qc__theme label:hover{ color:var(--text) }
+.qc__theme label:active{ transform:scale(.92) }
+.qc__theme svg{ width:17px; height:17px }
+.qc__theme input:checked + label{ background:var(--acc-fill); color:var(--on-acc) }
+.qc__theme input:focus-visible + label{ outline:2px solid var(--acc); outline-offset:2px }
+/* a big toggle: an orb and its words */
+.qc__mod--big{ cursor:pointer; align-content:space-between; transition:background-color var(--dur-1) var(--ease), transform var(--dur-2) var(--spring) }
+.qc__mod--big:active{ transform:scale(.97) }
+.qc__mod--big b{ display:block; font-size:var(--fs-300) } .qc__mod--big small{ color:var(--text-dim); font-size:var(--fs-200) }
+.qc__orb{ width:34px; height:34px; display:grid; place-items:center; border-radius:50%; background:var(--surface); color:var(--text-dim); box-shadow:var(--shadow-1);
+  transition:background-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease) }
+.qc__orb svg{ width:17px; height:17px }
+[aria-pressed="true"] > .qc__orb{ background:var(--acc-fill); color:var(--on-acc) }
+.qc__mod--big[aria-pressed="true"] small{ color:var(--acc) }
+/* accent */
+.qc__tints{ display:grid; grid-template-columns:repeat(5, 1fr); gap:var(--s-2); justify-items:center }
+.qc__tints button{ padding:2px; border:2px solid transparent; border-radius:50%; background:none; cursor:pointer; transition:transform var(--dur-2) var(--spring) }
+.qc__tints button:hover{ transform:scale(1.1) }
+.qc__tints button[aria-checked="true"]{ border-color:var(--acc) }
+.qc__tints .f-swatch{ width:26px; height:26px; display:block }
+/* Nova: two rows of pills */
+.qc__row{ display:grid; grid-template-columns:1.6fr 1fr; gap:var(--s-2); transition:opacity var(--dur-2) var(--ease) }
+.qc__row.is-off{ opacity:.4; pointer-events:none }
+.qc__pills{ display:flex; padding:2px; border-radius:var(--r-pill); background:var(--surface) ; box-shadow:var(--shadow-1) }
+.qc__pills input{ position:absolute; opacity:0; pointer-events:none }
+.qc__pills label{ flex:1; min-height:28px; display:grid; place-items:center; padding:0 var(--s-2); border-radius:var(--r-pill); cursor:pointer;
+  font-size:var(--fs-200); font-weight:500; color:var(--text-dim); transition:background-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease) }
+.qc__pills label:hover{ color:var(--text) }
+.qc__pills input:checked + label{ background:var(--acc-soft); color:var(--acc) }
+.qc__pills input:focus-visible + label{ outline:2px solid var(--acc); outline-offset:1px }
+.qc__pills svg{ height:13px; width:auto; fill:currentColor }
+.qc__pills svg.am{ height:13px; width:12px }
+.qc__switch{ transform:scale(.85); transform-origin:right center }
+/* four small toggles */
+.qc__toggles{ grid-column:1 / -1; display:grid; grid-template-columns:repeat(4, 1fr); gap:var(--s-2) }
+.qc__toggle{ display:grid; justify-items:center; gap:var(--s-1); padding:var(--s-2) 0; border:0; border-radius:calc(var(--r-overlay) - var(--s-2));
+  background:color-mix(in oklab, var(--surface-2) 82%, transparent); color:var(--text-dim); font:inherit; cursor:pointer; transition:transform var(--dur-2) var(--spring) }
+.qc__toggle:active{ transform:scale(.95) }
+.qc__toggle small{ font-size:var(--fs-100) }
+.qc__toggle[aria-pressed="true"] small{ color:var(--text) }
+/* now playing */
+.qc__media{ grid-template-columns:auto minmax(0, 1fr) auto; align-items:center; gap:var(--s-3) }
+.qc__cover{ position:relative; width:44px; height:44px; padding:0; border:0; border-radius:var(--r-control); overflow:hidden; display:grid; place-items:center; cursor:pointer;
+  background:linear-gradient(135deg, var(--acc-fill), color-mix(in oklab, var(--acc-fill) 40%, var(--surface-3))); color:var(--on-acc) }
+.qc__cover img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover }
+.qc__cover img[hidden]{ display:none }
+.qc__cover svg{ width:20px; height:20px }
+.qc__track{ display:grid; gap:2px; min-width:0 }
+.qc__track b, .qc__track small{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.qc__track small{ color:var(--text-dim); font-size:var(--fs-200) }
+.qc__mctl{ display:flex }
+.qc__mctl button{ width:30px; height:30px; display:grid; place-items:center; border:0; border-radius:50%; background:none; color:var(--text); cursor:pointer }
+.qc__mctl button:hover{ background:var(--surface) }
+.qc__mctl svg{ width:16px; height:16px }
+/* the foot: which desktop, all settings */
+.qc__foot{ display:flex; align-items:center; justify-content:space-between; gap:var(--s-2); padding:0 var(--s-1) }
+.qc__desk{ display:flex; align-items:center; gap:var(--s-2); min-width:0; color:var(--text-dim); font-size:var(--fs-200) }
+.qc__desk svg{ width:14px; height:14px; flex:none }
+.qc__desk span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
 .pop--bell{ width:340px; max-height:min(480px, 70vh); display:grid; grid-template-rows:auto minmax(0,1fr); padding:var(--s-3) var(--s-2) var(--s-2) }
 .bell__head{ display:flex; align-items:center; justify-content:space-between; padding:0 var(--s-2) var(--s-2) var(--s-3) }
 .bell__list{ overflow:auto; display:grid; gap:var(--s-1); align-content:start }
@@ -905,7 +970,7 @@ body.is-leaving .desk{ transition:opacity var(--dur-2) var(--ease), filter var(-
 .w-cal__grid .is-dow{ color:var(--text-ghost); font:500 var(--fs-100)/1.6 var(--mono); text-transform:uppercase }
 .w-cal__grid .is-today{ background:var(--acc-fill); color:var(--on-acc); font-weight:600 }
 .widget--storage{ display:grid; gap:var(--s-2) }
-.opt[hidden], .quick__tile[hidden]{ display:none }
+.opt[hidden]{ display:none }
 /* the start menu grows out of the left edge of the taskbar */
 .pop--launch{ transform-origin:bottom left }
 :root[data-bar="top"] .pop--launch{ transform-origin:top left }
@@ -989,3 +1054,8 @@ img.app-art, img.win__icon{ object-fit:contain; border-radius:22% }
 :root[data-bar-align="left"] .taskbar{ justify-content:flex-start }
 :root[data-bar-align="right"] .taskbar{ justify-content:flex-end }
 :root[data-bar-align="split"] .taskbar{ justify-content:space-between }
+
+/* the logo stands where Nova's light is not: light from the left, logo on the right;
+   from the right, on the left; from both sides, in the middle */
+:root:not([data-mirror]):not([data-nova="both"]) .desk > .desk__logo{ justify-items:end; padding-right:clamp(120px, 16vw, 300px) }
+:root[data-mirror]:not([data-nova="both"]) .desk > .desk__logo{ justify-items:start; padding-left:clamp(120px, 16vw, 300px) }

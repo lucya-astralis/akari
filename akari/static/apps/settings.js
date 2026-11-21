@@ -128,7 +128,7 @@
         $('[data-avatar-drop]', el).hidden = !me.avatar;
         $$('[data-name]', el).forEach(n => n.textContent = me.fullname);
         $$('[data-fullname]', el).forEach(n => n.textContent = me.fullname);
-        $('[data-acct-note]', el).textContent = `${me.name} · UID ${me.uid}${me.admin ? ' · darf Konten verwalten' : ''}`;
+        $('[data-acct-note]', el).textContent = `${me.name} · UID ${me.uid}${me.admin ? ` · ${Akari.t('darf Konten verwalten')}` : ''}`;
         $('[data-nav] [data-admin]', el).hidden = !me.admin;
         const n = $('[data-sys="user"]', el); if (n) n.textContent = `${me.fullname} (${me.name}, UID ${me.uid})`;
       };

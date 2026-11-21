@@ -660,26 +660,45 @@
     ]);
   });
 
-  // quick settings
+  // quick settings: a control centre of modules
   const popQuick = $('#pop-quick'), btnQuick = $('#tb-quick');
   const TINTS = [['', 277, 'Facet'], ['blau', 250, 'Blau'], ['cyan', 215, 'Cyan'], ['gruen', 150, 'Grün'], ['bernstein', 70, 'Bernstein'], ['rot', 25, 'Rot'], ['pink', 350, 'Pink'],
     ['custom', 0, 'Eigene', 'swatch--custom'], ['rainbow', 0, 'Regenbogen', 'swatch--rainbow'], ['spectrum', 0, 'Farbverlauf', 'swatch--spectrum']];
   $('#quick-tints').innerHTML = TINTS.map(([id, h, name, cls]) =>
     `<button role="radio" data-qtint="${id}" aria-label="${name}" class="f-tip" data-tip="${name}"><span class="f-swatch ${cls || ''}"${cls ? '' : ` data-h="${h}"`}></span></button>`).join('');
+  // on or off, as each pref means it (some are on unless switched off)
+  const qOn = k => (k === 'widgets' || k === 'cursors' ? P[k] !== false : !!P[k]);
   const syncQuick = () => {
-    const th = $(`input[name="qtheme"][value="${P.theme || 'system'}"]`, popQuick); if (th) th.checked = true;
-    $$('[data-qtint]', popQuick).forEach(b => b.setAttribute('aria-checked', b.dataset.qtint === P.tint));
-    $$('[data-qpref]', popQuick).forEach(b => b.setAttribute('aria-pressed', b.dataset.qpref === 'widgets' ? P.widgets !== false : !!P[b.dataset.qpref]));
-    $('[data-qpref="wallpaper"]', popQuick).hidden = !!P.wallpaperV;   // Nova on or off means nothing under a picture
+    const theme = P.theme || 'system';
+    const th = $(`input[name="qtheme"][value="${theme}"]`, popQuick); if (th) th.checked = true;
+    $('[data-qc-theme]', popQuick).textContent = t({ system: 'Wie das System', light: 'Hell', dark: 'Dunkel' }[theme]);
+    $$('[data-qtint]', popQuick).forEach(b => b.setAttribute('aria-checked', b.dataset.qtint === (P.tint || '')));
+    $('[data-qc-tint]', popQuick).textContent = t(TINTS.find(x => x[0] === (P.tint || ''))?.[2] || 'Facet');
+    $$('[data-qpref]', popQuick).forEach(b => b.setAttribute('aria-pressed', qOn(b.dataset.qpref)));
+    $('[data-qc-dnd]', popQuick).textContent = t(P.dnd ? 'An' : 'Aus');
+    // Nova: means nothing under a picture of one's own
+    $('[data-qc-nova]', popQuick).hidden = !!P.wallpaperV;
+    $('[data-qc-wall]', popQuick).checked = P.wallpaper !== false;
+    $('[data-qc-nova-opts]', popQuick).classList.toggle('is-off', P.wallpaper === false);
+    const nv = $(`input[name="qnova"][value="${novaSide()}"]`, popQuick); if (nv) nv.checked = true;
+    const nl = $(`input[name="qlogo"][value="${P.novaLogo || 'none'}"]`, popQuick); if (nl) nl.checked = true;
+    $('[data-qc-desk]', popQuick).textContent = $('#bar-desk span')?.textContent || t('Schreibtisch');
     requestAnimationFrame(() => Facet.layout());
   };
   btnQuick.addEventListener('click', () => togglePop(popQuick, btnQuick, syncQuick));
-  popQuick.addEventListener('change', e => { if (e.target.name === 'qtheme') Facet.setTheme(e.target.value, e.target.nextElementSibling); });
+  popQuick.addEventListener('change', e => {
+    const i = e.target;
+    if (i.name === 'qtheme') { Facet.setTheme(i.value, i.nextElementSibling); set('theme', i.value); }
+    if (i.name === 'qnova') set('nova', i.value);
+    if (i.name === 'qlogo') set('novaLogo', i.value);
+    if (i.hasAttribute('data-qc-wall')) set('wallpaper', i.checked);
+    syncQuick();
+  });
   popQuick.addEventListener('click', e => {
     const tint = e.target.closest('[data-qtint]');
     if (tint) { set('tint', tint.dataset.qtint); syncQuick(); }
     const tile = e.target.closest('[data-qpref]');
-    if (tile) { set(tile.dataset.qpref, !P[tile.dataset.qpref]); syncQuick(); }
+    if (tile) { set(tile.dataset.qpref, !qOn(tile.dataset.qpref)); syncQuick(); }
     if (e.target.closest('[data-open]')) closePops();
   });
   on('prefs', () => { if (!popQuick.hidden) syncQuick(); });
@@ -1004,6 +1023,25 @@
     $('use', main).setAttribute('href', isOn ? '#i-pause' : '#i-play');
     main.setAttribute('aria-label', t(isOn ? 'Pause' : 'Abspielen'));
     media.classList.toggle('is-paused', !isOn);
+  });
+  // the same in the control centre
+  const qMedia = $('[data-qc-media]');
+  on('media', m => {
+    const p = m.playing || null;
+    qMedia.hidden = !p;
+    if (!p) return;
+    $('b', qMedia).textContent = p.title || p.player;
+    $('small', qMedia).textContent = p.artist || p.album || p.player;
+    const img = $('.qc__cover img', qMedia);
+    if (p.art) { img.onload = () => { img.hidden = false; }; img.onerror = () => { img.hidden = true; }; img.src = `/api/media/art?v=${encodeURIComponent(p.art)}`; }
+    else { img.hidden = true; img.removeAttribute('src'); }
+    $('[data-qmedia="play-pause"] use', qMedia).setAttribute('href', p.status === 'playing' ? '#i-pause' : '#i-play');
+  });
+  qMedia.addEventListener('click', e => {
+    const b = e.target.closest('[data-qmedia]');
+    if (!b) return;
+    if (b.dataset.qmedia === 'show') { closePops(); return $('#tb-media [data-media="show"]').click(); }
+    api(`/api/media/${b.dataset.qmedia}`, { method: 'POST', quiet: true }).catch(() => {});
   });
   media.addEventListener('click', e => {
     const b = e.target.closest('[data-media]');
