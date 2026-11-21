@@ -671,7 +671,7 @@ body.is-leaving .desk{ transition:opacity var(--dur-2) var(--ease), filter var(-
 .pop--win{ min-width:200px }
 .pop--quick{ width:300px; padding:var(--s-4); display:grid; gap:var(--s-4) }
 .quick__theme{ display:flex } .quick__theme label{ flex:1; text-align:center }
-.quick__tints{ display:flex; justify-content:space-between }
+.quick__tints{ display:grid; grid-template-columns:repeat(5, auto); justify-content:space-between; gap:var(--s-2) }
 .quick__tints button{ padding:2px; border:2px solid transparent; border-radius:50%; background:none; cursor:pointer }
 .quick__tints button[aria-checked="true"]{ border-color:var(--acc) }
 .quick__tints .f-swatch{ width:24px; height:24px; display:block }
@@ -934,3 +934,58 @@ img.app-art, img.win__icon{ object-fit:contain; border-radius:22% }
 :root[data-motion="reduced"]::view-transition-group(*),
 :root[data-motion="reduced"]::view-transition-old(*),
 :root[data-motion="reduced"]::view-transition-new(*){ animation:none !important }
+
+/* ---------- a mark on Nova (Darstellung → Logo) ----------
+   In the middle of the free space above the bar, behind icons, widgets and
+   windows; lit like Nova itself. Only on Nova, never on a picture. */
+.desk > .desk__logo{ position:absolute; inset:0 0 var(--tb-space) 0; z-index:0; display:grid; place-items:center; pointer-events:none }
+.desk__mark{ display:none; grid-area:1 / 1; filter:drop-shadow(0 0 42px var(--nova-glow)) drop-shadow(0 2px 10px rgb(0 0 0 / .12));
+  animation:logo-in 1.2s cubic-bezier(.22, 1, .36, 1) both }
+.desk__mark--akari{ width:clamp(96px, 22vmin, 260px); height:auto; aspect-ratio:95.64 / 100 }
+.desk__mark--lucya{ width:clamp(150px, 32vmin, 360px); height:auto; aspect-ratio:964 / 543; color:color-mix(in oklab, var(--text) 78%, transparent) }
+:root[data-nova-logo="akari"]:not([data-wall-image], [data-wallpaper="off"]) .desk__mark--akari{ display:block }
+:root[data-nova-logo="lucya"]:not([data-wall-image], [data-wallpaper="off"]) .desk__mark--lucya{ display:block }
+@keyframes logo-in{ from{ opacity:0; transform:scale(.92); filter:blur(8px) } }
+:root[data-motion="reduced"] .desk__mark{ animation:none }
+
+/* ---------- starting: no glides until the real look is on (boot.js) ---------- */
+:root.is-booting, :root.is-booting *, :root.is-booting *::before, :root.is-booting *::after{ transition:none !important }
+
+/* ---------- two more accents: a hue of one's own, and the rainbow ----------
+   Facet's tint takes any hue (--tint-h) and keeps its lightness and chroma, so
+   contrast holds for every colour. Eigene: the hue from the slider. Regenbogen:
+   the hue walks round the wheel once a minute, in single degrees (cheap: Nova
+   repaints a few times a second, not every frame). */
+:root[data-tint="custom"]{ --tint-h:var(--akari-h, 300) }
+@keyframes akari-rainbow{ from{ --tint-h:0 } to{ --tint-h:360 } }
+:root[data-tint="rainbow"]{ animation:akari-rainbow 60s steps(360) infinite }
+:root[data-tint="rainbow"][data-motion="reduced"]{ animation:none; --tint-h:300 }
+.swatch--rainbow{ background:conic-gradient(from 90deg, oklch(.62 .17 0), oklch(.62 .17 60), oklch(.62 .17 120), oklch(.62 .17 180),
+  oklch(.62 .17 240), oklch(.62 .17 300), oklch(.62 .17 360)) }
+.swatch--custom{ background:
+  radial-gradient(circle at 50% 50%, oklch(.62 .17 var(--akari-h, 300)) 0 42%, transparent 44%),
+  conic-gradient(from 90deg, oklch(.75 .12 0), oklch(.75 .12 90), oklch(.75 .12 180), oklch(.75 .12 270), oklch(.75 .12 360)) }
+.hue{ width:100%; padding-top:var(--s-2) }
+.hue[hidden]{ display:none }
+.range--hue{ width:100%; background:linear-gradient(90deg, oklch(.62 .17 0), oklch(.62 .17 60), oklch(.62 .17 120), oklch(.62 .17 180),
+  oklch(.62 .17 240), oklch(.62 .17 300), oklch(.62 .17 359)) !important; --v:0% }
+
+/* Farbverlauf: the rainbow's second mode. Not one hue after the other but several
+   at once: Nova's ground, shards, lines and glow each a quarter turn apart, and
+   all of them walking slowly on (the accent is the first of them). */
+:root[data-tint="spectrum"]{ animation:akari-rainbow 120s steps(720) infinite;
+  --nova-a:     light-dark(oklch(.86 .08 var(--tint-h)), oklch(.42 .19 var(--tint-h)));
+  --nova-b:     light-dark(oklch(.93 .045 calc(var(--tint-h) + 70)), oklch(.27 .12 calc(var(--tint-h) + 70)));
+  --nova-c:     light-dark(oklch(.96 .016 calc(var(--tint-h) + 140)), oklch(.14 .05 calc(var(--tint-h) + 140)));
+  --nova-shard: light-dark(oklch(.64 .17 calc(var(--tint-h) + 90) / .30), oklch(.60 .18 calc(var(--tint-h) + 90) / .58));
+  --nova-shard-2: light-dark(oklch(.50 .20 calc(var(--tint-h) + 180) / .16), oklch(.45 .19 calc(var(--tint-h) + 180) / .40));
+  --nova-line:  light-dark(oklch(.60 .21 calc(var(--tint-h) + 210) / .60), oklch(.74 .16 calc(var(--tint-h) + 210) / .92));
+  --nova-halo:  light-dark(oklch(.64 .17 calc(var(--tint-h) + 260) / .18), oklch(.72 .16 calc(var(--tint-h) + 260) / .26));
+  --nova-glow:  light-dark(oklch(.82 .11 calc(var(--tint-h) + 300) / .55), oklch(.55 .22 calc(var(--tint-h) + 300) / .46)) }
+:root[data-tint="spectrum"][data-motion="reduced"]{ animation:none; --tint-h:300 }
+.swatch--spectrum{ background:linear-gradient(135deg, oklch(.66 .17 300) 0 25%, oklch(.70 .15 200) 25% 50%, oklch(.74 .15 120) 50% 75%, oklch(.70 .17 30) 75%) }
+
+/* ---------- the bar's alignment: left, centre (default), right, split ---------- */
+:root[data-bar-align="left"] .taskbar{ justify-content:flex-start }
+:root[data-bar-align="right"] .taskbar{ justify-content:flex-end }
+:root[data-bar-align="split"] .taskbar{ justify-content:space-between }

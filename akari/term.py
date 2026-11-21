@@ -15,6 +15,7 @@ import fcntl
 import json
 import os
 import pty
+import re
 import signal
 import struct
 import termios
@@ -72,6 +73,15 @@ async def term(ws: WebSocket) -> None:
         except ValueError:
             return default
 
+    # the desktop's accent colour, for fastfetch's greeting (akari.zsh); remembered in
+    # ~/.config/akari/accent, so an ssh login greets in the same colour
+    accent = (ws.query_params.get("accent") or "").lower()
+    if re.fullmatch(r"#[0-9a-f]{6}", accent):
+        with contextlib.suppress(OSError):
+            (config.CONFIG / "accent").write_text(accent + "\n")
+    else:
+        accent = ""
+
     # the desktop's default display: whatever starts here with a window shows up in Akari
     xenv = {}
     did = desktops.current(ws)
@@ -106,6 +116,7 @@ async def term(ws: WebSocket) -> None:
                 "XDG_RUNTIME_DIR": os.environ.get("XDG_RUNTIME_DIR", "/tmp"),
                 "XDG_CURRENT_DESKTOP": "Akari", "XDG_SESSION_TYPE": "x11",
                 **xenv,
+                **({"AKARI_ACCENT": accent} if accent else {}),
             }
             os.execvpe(config.SHELL, argv, env)
         finally:

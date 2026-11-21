@@ -35,7 +35,7 @@
 
   /* ---------- preferences: in the home folder, cached for a fast first paint ---------- */
   const DEFAULTS = {
-    theme: 'system', tint: '', wallpaper: true, mirror: false, motion: false, lite: false, cursors: true,
+    theme: 'system', tint: '', wallpaper: true, mirror: false, motion: false, lite: false, cursors: true, novaLogo: 'none', tintH: 300,
     dock: 'm', autohide: false, icons: true, seconds: false, date: true, dnd: false, widgets: true, bar: 'bottom', grid: true, pinned: null,
   };
   let P = { ...DEFAULTS };
@@ -43,25 +43,41 @@
   let saveT;
   const save = () => {
     if (!prefsLoaded) return;
-    try { localStorage.setItem('akari-prefs-last', JSON.stringify({ tint: P.tint, nova: novaSide(), wallpaper: P.wallpaper !== false && !P.wallpaperV, cursors: P.cursors !== false })); } catch {}
+    try { localStorage.setItem('akari-prefs-last', JSON.stringify({ tint: P.tint, nova: novaSide(), wallpaper: P.wallpaper !== false && !P.wallpaperV, cursors: P.cursors !== false, tintH: P.tintH })); } catch {}
     clearTimeout(saveT);
     saveT = setTimeout(() => api('/api/prefs', { method: 'PUT', json: P, quiet: true }).catch(() => {}), 400);
   };
   const set = (k, v) => { P[k] = v; save(); apply(); emit('prefs'); };
 
+  if (window.Facet && !Facet.layout.akari) {
+    const layout = Facet.layout;
+    Facet.layout = () => {
+      const marks = document.querySelectorAll('.f-seg__thumb, .f-tabs__ink');
+      marks.forEach(m => { m.style.transition = 'none'; });
+      layout();
+      void document.body.offsetWidth;
+      requestAnimationFrame(() => marks.forEach(m => { m.style.transition = ''; }));
+    };
+    Facet.layout.akari = true;
+  }
   const novaSide = () => (['left', 'right', 'both'].includes(P.nova) ? P.nova : (P.mirror ? 'right' : 'left'));
   const flag = (name, on, val = '') => on ? root.setAttribute(name, val) : root.removeAttribute(name);
   const apply = () => {
     if (P.tint) root.dataset.tint = P.tint; else delete root.dataset.tint;
+    // a hue of the person's own (Akzent → Eigene): the tint's hue, Facet keeps lightness and chroma
+    if (P.tint === 'custom') root.style.setProperty('--akari-h', +P.tintH || 0); else root.style.removeProperty('--akari-h');
+    dispatchEvent(new Event('akari:hue'));   // accent.js paints the cursors anew
     flag('data-wallpaper', !P.wallpaper, 'off');
     // Nova's light: from the left, the right or both sides (before 0.6.1: mirror on or off)
     flag('data-mirror', novaSide() === 'right');
     flag('data-nova', novaSide() === 'both', 'both');
+    flag('data-nova-logo', ['akari', 'lucya'].includes(P.novaLogo), P.novaLogo);
     flag('data-motion', P.motion, 'reduced');
     flag('data-cursors', P.cursors === false, 'off');   // the own cursor set (cursors.css)
     root.classList.toggle('fx-lite', P.lite);
     root.dataset.dock = P.dock;
     root.dataset.bar = P.bar === "top" ? "top" : "bottom";
+    root.dataset.barAlign = ['left', 'right', 'split'].includes(P.barAlign) ? P.barAlign : 'center';
     flag('data-autohide', P.autohide);
     $('#icons').hidden = !P.icons;
     tick();
@@ -646,9 +662,10 @@
 
   // quick settings
   const popQuick = $('#pop-quick'), btnQuick = $('#tb-quick');
-  const TINTS = [['', 277, 'Facet'], ['blau', 250, 'Blau'], ['cyan', 215, 'Cyan'], ['gruen', 150, 'Grün'], ['bernstein', 70, 'Bernstein'], ['rot', 25, 'Rot'], ['pink', 350, 'Pink']];
-  $('#quick-tints').innerHTML = TINTS.map(([id, h, name]) =>
-    `<button role="radio" data-qtint="${id}" aria-label="${name}" class="f-tip" data-tip="${name}"><span class="f-swatch" data-h="${h}"></span></button>`).join('');
+  const TINTS = [['', 277, 'Facet'], ['blau', 250, 'Blau'], ['cyan', 215, 'Cyan'], ['gruen', 150, 'Grün'], ['bernstein', 70, 'Bernstein'], ['rot', 25, 'Rot'], ['pink', 350, 'Pink'],
+    ['custom', 0, 'Eigene', 'swatch--custom'], ['rainbow', 0, 'Regenbogen', 'swatch--rainbow'], ['spectrum', 0, 'Farbverlauf', 'swatch--spectrum']];
+  $('#quick-tints').innerHTML = TINTS.map(([id, h, name, cls]) =>
+    `<button role="radio" data-qtint="${id}" aria-label="${name}" class="f-tip" data-tip="${name}"><span class="f-swatch ${cls || ''}"${cls ? '' : ` data-h="${h}"`}></span></button>`).join('');
   const syncQuick = () => {
     const th = $(`input[name="qtheme"][value="${P.theme || 'system'}"]`, popQuick); if (th) th.checked = true;
     $$('[data-qtint]', popQuick).forEach(b => b.setAttribute('aria-checked', b.dataset.qtint === P.tint));
@@ -1035,11 +1052,12 @@
     const remote = await api('/api/prefs', { quiet: true }).catch(() => null);
     P = { ...DEFAULTS, ...(remote || {}) };
     prefsLoaded = true;
-    try { localStorage.setItem('akari-prefs-last', JSON.stringify({ tint: P.tint, nova: novaSide(), wallpaper: P.wallpaper !== false && !P.wallpaperV, cursors: P.cursors !== false })); } catch {}
+    try { localStorage.setItem('akari-prefs-last', JSON.stringify({ tint: P.tint, nova: novaSide(), wallpaper: P.wallpaper !== false && !P.wallpaperV, cursors: P.cursors !== false, tintH: P.tintH })); } catch {}
     Facet.setTheme(P.theme || 'system');
     apply();
     emit('prefs');
     await Promise.all([loadSession(), loadSystem()]);
+    window.AkariBoot?.done();      // the real look is on: from now on colours may glide
     window.Akari.ready = true;
     emit('ready');
     // back from "Mit Lucent verknüpfen": say how it went, then forget the address

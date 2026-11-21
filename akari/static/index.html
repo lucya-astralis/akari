@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Akari OS</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script src="boot.js"></script>
 <link rel="stylesheet" href="facet.css">
 <link rel="stylesheet" href="/vendor/xterm/xterm.css">
 <link rel="stylesheet" href="akari.css">
@@ -15,6 +16,7 @@
 <script src="/vendor/xterm/xterm.js" defer></script>
 <script src="/vendor/xterm/addons/fit/xterm-addon-fit.js" defer></script>
 <script src="/vendor/xterm/addons/canvas/xterm-addon-canvas.js" defer></script>
+<script src="accent.js" defer></script>
 <script src="akari.js" defer></script>
 <script src="desk.js" defer></script>
 <script src="apps/settings.js" defer></script>
@@ -172,6 +174,11 @@
 </svg>
 
 <div class="desk f-nova" id="desk">
+  <!-- a mark on Nova (Darstellung → Logo): Akari OS or lucya.systems -->
+  <div class="desk__logo" aria-hidden="true">
+    <svg class="desk__mark desk__mark--akari am" viewBox="0 0 95.64 100"><use href="#am"/></svg>
+    <svg class="desk__mark desk__mark--lucya" viewBox="0 0 964 543"><use href="#lm"/></svg>
+  </div>
   <div class="icons" id="icons"></div>
   <div class="widgets" id="widgets"></div>
   <div class="windows" id="windows"></div>
@@ -331,6 +338,12 @@
               <button role="radio" data-tint="bernstein" data-label="Bernstein" class="f-tip" data-tip="Bernstein"><span class="f-swatch" data-h="70"></span></button>
               <button role="radio" data-tint="rot" data-label="Rot" class="f-tip" data-tip="Rot"><span class="f-swatch" data-h="25"></span></button>
               <button role="radio" data-tint="pink" data-label="Pink" class="f-tip" data-tip="Pink"><span class="f-swatch" data-h="350"></span></button>
+              <button role="radio" data-tint="custom" data-label="Eigene Farbe" class="f-tip" data-tip="Eigene"><span class="f-swatch swatch--custom"></span></button>
+              <button role="radio" data-tint="rainbow" data-label="Regenbogen" class="f-tip" data-tip="Regenbogen"><span class="f-swatch swatch--rainbow"></span></button>
+              <button role="radio" data-tint="spectrum" data-label="Farbverlauf" class="f-tip" data-tip="Farbverlauf"><span class="f-swatch swatch--spectrum"></span></button>
+            </div>
+            <div class="hue" data-hue hidden>
+              <input type="range" class="range range--hue" min="0" max="359" step="1" data-hue-in aria-label="Farbton">
             </div>
           </div>
         </div>
@@ -344,6 +357,15 @@
               <input type="radio" name="nova" id="nv-left" value="left"><label for="nv-left">Links</label>
               <input type="radio" name="nova" id="nv-right" value="right"><label for="nv-right">Rechts</label>
               <input type="radio" name="nova" id="nv-both" value="both"><label for="nv-both">Beiden Seiten</label>
+            </div>
+          </div>
+          <div class="opt" data-nova-opt>
+            <span class="opt__txt"><b>Logo</b><small>Ein Zeichen mitten auf Nova.</small></span>
+            <div class="f-seg" role="radiogroup" aria-label="Logo auf Nova">
+              <span class="f-seg__thumb"></span>
+              <input type="radio" name="novaLogo" id="nl-none" value="none"><label for="nl-none">Keins</label>
+              <input type="radio" name="novaLogo" id="nl-akari" value="akari"><label for="nl-akari" translate="no">Akari OS</label>
+              <input type="radio" name="novaLogo" id="nl-lucya" value="lucya"><label for="nl-lucya" translate="no">lucya.systems</label>
             </div>
           </div>
         </div>
@@ -383,6 +405,16 @@
               <span class="f-seg__thumb"></span>
               <input type="radio" name="bar" id="bp-bottom" value="bottom"><label for="bp-bottom">Unten</label>
               <input type="radio" name="bar" id="bp-top" value="top"><label for="bp-top">Oben</label>
+            </div>
+          </div>
+          <div class="opt">
+            <span class="opt__txt"><b>Ausrichtung</b><small>Geteilt: Apps links, Status rechts.</small></span>
+            <div class="f-seg" role="radiogroup" aria-label="Ausrichtung der Leiste">
+              <span class="f-seg__thumb"></span>
+              <input type="radio" name="barAlign" id="ba-left" value="left"><label for="ba-left">Links</label>
+              <input type="radio" name="barAlign" id="ba-center" value="center"><label for="ba-center">Mitte</label>
+              <input type="radio" name="barAlign" id="ba-right" value="right"><label for="ba-right">Rechts</label>
+              <input type="radio" name="barAlign" id="ba-split" value="split"><label for="ba-split">Geteilt</label>
             </div>
           </div>
           <div class="opt">

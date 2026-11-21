@@ -64,6 +64,8 @@
         const th = $(`input[name="theme"][value="${P.theme || 'system'}"]`, el); if (th) th.checked = true;
         const dk = $(`input[name="dock"][value="${P.dock}"]`, el); if (dk) dk.checked = true;
         const nv = $(`input[name="nova"][value="${Akari.novaSide()}"]`, el); if (nv) nv.checked = true;
+        const nl = $(`input[name="novaLogo"][value="${P.novaLogo || 'none'}"]`, el); if (nl) nl.checked = true;
+        const ba = $(`input[name="barAlign"][value="${['left', 'right', 'split'].includes(P.barAlign) ? P.barAlign : 'center'}"]`, el); if (ba) ba.checked = true;
         const bp = $(`input[name="bar"][value="${P.bar === 'top' ? 'top' : 'bottom'}"]`, el); if (bp) bp.checked = true;
         const lg = $(`input[name="lang"][value="${Akari.locale().startsWith('en') ? 'en' : 'de'}"]`, el); if (lg) lg.checked = true;
         $('[data-wall-drop]', el).hidden = !P.wallpaperV;
@@ -86,6 +88,9 @@
           <div class="opt"><span class="opt__txt"><b>${esc(Akari.t(w.title))}</b></span>
             <label class="f-switch"><input type="checkbox" data-widget="${id}"${on.includes(id) ? ' checked' : ''}><i></i><span class="sr">${esc(Akari.t(w.title))}</span></label></div>`).join('');
         $$('[data-swatches] button', el).forEach(b => b.setAttribute('aria-checked', b.dataset.tint === P.tint));
+        const hue = $('[data-hue]', el), hin = $('[data-hue-in]', el);
+        hue.hidden = P.tint !== 'custom';
+        if (document.activeElement !== hin) hin.value = +P.tintH || 0;
         $('[data-tint-name]', el).textContent = $(`[data-swatches] button[data-tint="${P.tint}"]`, el)?.dataset.label || 'Facet · Violett';
         requestAnimationFrame(() => Facet.layout());
       };
@@ -94,11 +99,16 @@
         if (i.name === 'theme') return Facet.setTheme(i.value, i.nextElementSibling);
         if (i.name === 'dock') return Akari.set('dock', i.value);
         if (i.name === 'bar') return Akari.set('bar', i.value);
+        if (i.name === 'barAlign') return Akari.set('barAlign', i.value);
         if (i.name === 'nova') return Akari.set('nova', i.value);
+        if (i.name === 'novaLogo') return Akari.set('novaLogo', i.value);
         if (i.name === 'lang') return window.AkariI18n?.set(i.value);
         if (i.dataset.widget) return i.checked ? Akari.desk?.addWidget(i.dataset.widget) : Akari.desk?.removeWidget(i.dataset.widget);
         if (i.dataset.pref) Akari.set(i.dataset.pref, i.checked);
       });
+      // Eigene: a hue to pick; it shows while dragging and is kept when let go
+      $('[data-hue-in]', el).addEventListener('input', e => { document.documentElement.style.setProperty('--akari-h', e.target.value); dispatchEvent(new Event('akari:hue')); });
+      $('[data-hue-in]', el).addEventListener('change', e => Akari.set('tintH', +e.target.value));
       const sw = $('[data-swatches]', el);
       sw.addEventListener('click', e => {
         const b = e.target.closest('button'); if (!b) return;

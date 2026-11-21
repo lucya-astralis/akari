@@ -21,6 +21,7 @@
     if (side === 'right') document.documentElement.setAttribute('data-mirror', '');
     if (side === 'both') document.documentElement.setAttribute('data-nova', 'both');
     if (p.cursors === false) document.documentElement.setAttribute('data-cursors', 'off');
+    if (p.tint === 'custom' && Number.isFinite(+p.tintH)) document.documentElement.style.setProperty('--akari-h', +p.tintH);
   } catch {}
 
   // an account's face: its picture if it has one, else its initial
@@ -182,5 +183,5 @@
     }
   });
 
-  load();
+  load().finally(() => window.AkariBoot?.done());
 })();

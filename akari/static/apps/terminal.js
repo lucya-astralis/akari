@@ -48,7 +48,7 @@
 
       const proto = location.protocol === 'https:' ? 'wss' : 'ws';
       // args.run: a terminal program from its .desktop file (htop, vim), else the login shell
-      const ws = new WebSocket(`${proto}://${location.host}/api/term?cols=${term.cols}&rows=${term.rows}${args.run ? `&run=${encodeURIComponent(args.run)}` : ''}`);
+      const ws = new WebSocket(`${proto}://${location.host}/api/term?cols=${term.cols}&rows=${term.rows}${args.run ? `&run=${encodeURIComponent(args.run)}` : ''}&accent=${encodeURIComponent(window.AkariAccent?.hex() || '')}`);
       if (args.title) win.setTitle(args.title);
       ws.binaryType = 'arraybuffer';
       const enc = new TextEncoder();

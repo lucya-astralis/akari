@@ -37,7 +37,15 @@ setopt autocd interactive_comments no_beep
 # a new terminal (or an ssh login) greets with fastfetch, before the prompt draws
 if [[ -o interactive && -o login && -z $AKARI_QUIET ]] && \
    [[ $TERM_PROGRAM == "Akari Terminal" || -n $SSH_CONNECTION ]] && (( $+commands[fastfetch] )); then
-  fastfetch
+  # in the desktop's accent colour: the terminal passes it on, ssh takes the last one used
+  _akari_acc=${AKARI_ACCENT:-$(cat ~/.config/akari/accent 2>/dev/null)}
+  if [[ $_akari_acc =~ '^#[0-9a-fA-F]{6}$' ]]; then
+    _akari_acc="38;2;$((16#${_akari_acc:1:2}));$((16#${_akari_acc:3:2}));$((16#${_akari_acc:5:2}))"
+    fastfetch --logo-color-1 "$_akari_acc" --color-keys "$_akari_acc"
+  else
+    fastfetch
+  fi
+  unset _akari_acc
 fi
 
 source $ZSH/oh-my-zsh.sh
