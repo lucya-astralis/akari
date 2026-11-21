@@ -35,6 +35,7 @@
         if (page === 'ssh') loadSsh();
         if (page === 'software') loadSoftware();
         if (page === 'konto') fillMe();
+        if (page === 'lucent') loadLucent();
         requestAnimationFrame(() => Facet.layout());
       };
       el.addEventListener('click', e => {
@@ -293,6 +294,52 @@
           : st === 'done' ? 'Nach dem letzten Update wieder eingespielt.' : '');
       };
 
+      /* lucent: pairing (admins) and linking the own account */
+      const luForm = $('[data-form="lucent"]', el);
+      let lu = null;
+      const loadLucent = async () => {
+        try { lu = await Akari.api('/api/lucent'); } catch { return; }
+        const p = lu.paired;
+        $('[data-lu-paired]', el).hidden = !p;
+        $('[data-lu-admin]', el).hidden = !lu.admin;
+        luForm.hidden = !!p || !lu.admin;
+        $('[data-lu-nonadmin]', el).hidden = !!p || lu.admin;
+        $('[data-lu-me]', el).hidden = $('[data-lu-me-label]', el).hidden = !p;
+        if (p) {
+          const since = new Date(p.since * 1000).toLocaleDateString(window.AkariI18n?.locale() || 'de-DE', { day: 'numeric', month: 'long', year: 'numeric' });
+          $('[data-lu-state]', el).textContent = `${p.issuer}, seit ${since}. Akari ist dort als ${p.ui_url} eingetragen.`;
+          $('[data-lu-me-state]', el).textContent = lu.me.linked
+            ? `Verknüpft mit ${lu.me.email || 'deinem Lucent-Konto'}. Am Anmeldebildschirm: „Mit Lucent anmelden“.`
+            : 'Einmal verknüpfen, dann meldest du dich mit deinem Lucent-Konto an. Lucent fragt dich dafür nach der Anmeldung.';
+          $('[data-lu-link]', el).textContent = Akari.t(lu.me.linked ? 'Lösen' : 'Verknüpfen');
+        }
+        if (!luForm.elements.ui_url.value) luForm.elements.ui_url.value = location.origin;
+        requestAnimationFrame(() => Facet.layout());
+      };
+      luForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const st = $('[data-state]', luForm), f = luForm.elements;
+        st.textContent = Akari.t('Kopple …');
+        try {
+          await Akari.api('/api/lucent/pair', { method: 'POST', json: { lucent_url: f.lucent_url.value, code: f.code.value, ui_url: f.ui_url.value, base_url: f.base_url.value || null } });
+          st.textContent = ''; f.code.value = '';
+          Akari.notify('Mit Lucent gekoppelt.');
+          loadLucent();
+        } catch (err) { st.textContent = err.message; }
+      });
+      $('[data-lu-leave]', el).addEventListener('click', async () => {
+        const ok = await Akari.ask({ title: 'Von Lucent entkoppeln?', text: 'Lucent sieht Akari danach nicht mehr, und niemand meldet sich mehr mit Lucent an. Verknüpfte Konten bleiben verknüpft, für ein neues Koppeln.', ok: 'Entkoppeln', danger: true });
+        if (!ok) return;
+        await Akari.api('/api/lucent', { method: 'DELETE' }).catch(() => {});
+        loadLucent();
+      });
+      $('[data-lu-link]', el).addEventListener('click', async () => {
+        if (!lu?.me.linked) { location.href = '/auth/lucent?link=1'; return; }
+        await Akari.api('/api/lucent/link', { method: 'DELETE' }).catch(() => {});
+        Akari.notify('Von Lucent gelöst.');
+        loadLucent();
+      });
+
       /* ssh */
       const sshOn = $('[data-ssh-on]', el), sshPw = $('[data-ssh-pw]', el), keyBox = $('[data-ssh-keys]', el);
       const loadSsh = async () => {
@@ -362,6 +409,7 @@
         set('processes', s.processes.toLocaleString(window.AkariI18n?.locale() || 'de-DE'));
         set('apps', s.apps.map(a => a.title).join(', ') || 'keine');
         set('managed', s.managed_by || 'Noch nicht mit Lucent gekoppelt');
+        Akari.api('/api/lucent', { quiet: true }).then(r => { if (r.paired) set('managed', `Lucent, ${r.paired.issuer}`); }).catch(() => {});
         const meter = (k, v) => { const m = $(`[data-sys-meter="${k}"]`, el); if (m) m.style.setProperty('--v', `${Math.max(1, Math.round(v * 100))}%`); };
         meter('disk', s.disk.used / s.disk.total);
         if (s.memory?.total) meter('memory', 1 - s.memory.available / s.memory.total);

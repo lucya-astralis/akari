@@ -11,6 +11,7 @@ locked ('!'), and su/sudo cannot work anyway under no-new-privileges."""
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import hmac
 import json
@@ -49,6 +50,8 @@ class Account:
     ssh_pw: str | None = None      # crypt hash of the password for /etc/shadow (sudo checks it, sshd too)
     ssh_password: bool = False     # may this account sign in over ssh with that password?
     avatar: int = 0                # when the picture last changed (0: none, the initial is shown)
+    lucent_sub: str | None = None  # the Lucent person this account is linked to ("<issuer>#<sub>")
+    lucent_email: str | None = None
 
     @property
     def home(self) -> Path:
@@ -178,7 +181,49 @@ def init() -> None:
     os.chmod(config.RUN, 0o711)
     if FILE.exists():
         os.chmod(FILE, 0o600)
+    adopt_etc()
     sync()
+
+
+ETC = Path("/etc")
+
+
+def adopt_etc() -> bool:
+    """Put /etc/passwd and friends back into Akari's hands after dpkg.
+
+    A package that makes a system user (polkitd, messagebus …) has useradd
+    write /etc/passwd, and that replaces the link into /data/system with a
+    plain file: accounts made afterwards are unknown to Linux. Here the new
+    system entries go into the image's seed, the links come back, and the
+    files are written again. Called at start, after software is put back,
+    and by the apt hook after every dpkg run."""
+    akari = {a.name for a in all()}
+    changed = False
+    for name in ("passwd", "group", "shadow", "gshadow"):
+        path = ETC / name
+        if path.is_symlink() or not path.exists():
+            continue
+        seed_file = config.ETC_SEED / name
+        seed = _seed(name)
+        known = {l.split(":", 1)[0] for l in seed}
+        extra = [l for l in path.read_text(encoding="utf-8").splitlines()
+                 if l.strip() and l.split(":", 1)[0] not in known and l.split(":", 1)[0] not in akari]
+        if extra and seed_file.exists():
+            st = seed_file.stat()
+            tmp = seed_file.with_name(f".{name}.tmp")
+            tmp.write_text("\n".join(seed + extra) + "\n", encoding="utf-8")
+            os.chmod(tmp, st.st_mode & 0o777)
+            os.chown(tmp, st.st_uid, st.st_gid)
+            os.replace(tmp, seed_file)
+        link = path.with_name(f".{name}.akari-link")
+        with contextlib.suppress(FileNotFoundError):
+            link.unlink()
+        os.symlink(config.SYSTEM / name, link)
+        os.replace(link, path)
+        changed = True
+    if changed:
+        sync()
+    return changed
 
 
 # ---------- changes ----------
@@ -268,6 +313,27 @@ def set_avatar(name: str, version: int) -> Account:
         acct.avatar = version
         _save(accts)
         return acct
+
+
+def set_lucent(name: str, sub: str | None, email: str | None = None) -> Account:
+    """Link an account to a Lucent person (sign-in with Lucent), or unlink it (sub None).
+    One Lucent person is linked to one account at most."""
+    with _lock:
+        accts = _load()
+        acct = accts.get(name)
+        if not acct:
+            raise AccountError("Dieses Konto gibt es nicht.")
+        if sub:
+            other = next((a for a in accts.values() if a.lucent_sub == sub and a.name != name), None)
+            if other:
+                raise AccountError(f"Diese Lucent-Person ist schon mit {other.name} verknüpft.")
+        acct.lucent_sub, acct.lucent_email = (sub, email) if sub else (None, None)
+        _save(accts)
+        return acct
+
+
+def by_lucent(sub: str) -> Account | None:
+    return next((a for a in all() if a.lucent_sub and hmac.compare_digest(a.lucent_sub, sub)), None)
 
 
 def ensure_shadow(name: str, password: str) -> None:

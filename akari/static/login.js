@@ -111,6 +111,17 @@
     if (st.setup) return show(token ? '#setup' : '#need-token');
     if (st.signed_in && !st.desktop) return chooser(st.signed_in, true);
     accounts = st.accounts;
+    $('#lucent-in').hidden = $('#lucent-in2').hidden = !st.lucent;
+    // back from Lucent without a session: say why
+    const lu = new URLSearchParams(location.search).get('lucent');
+    if (lu) {
+      history.replaceState(null, '', '/');
+      const why = {
+        unbekannt: 'Dieses Lucent-Konto ist mit keinem Konto hier verknüpft. Melde dich einmal mit Passwort an und verknüpfe es unter Einstellungen → Lucent.',
+        abgelehnt: 'Lucent hat die Anmeldung abgelehnt.', abgelaufen: 'Die Anmeldung über Lucent hat zu lange gedauert. Noch einmal, bitte.',
+      }[lu] || 'Anmelden mit Lucent hat nicht geklappt.';
+      setTimeout(() => { $('#date').textContent = window.AkariI18n?.t?.(why) || why; $('#date').classList.add('is-note'); }, 0);
+    }
     $('#who').innerHTML = accounts.map((a, i) => `
       <button class="who__one" role="listitem" data-i="${i}" style="--i:${i}">
         <span class="f-avatar f-avatar--lg">${esc(a.initial)}</span>

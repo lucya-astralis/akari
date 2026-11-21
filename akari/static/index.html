@@ -301,6 +301,7 @@
         <a class="f-nav__item" href="#konten" data-page="konten" data-keys="konten benutzer anlegen löschen verwalten admin" data-admin hidden><svg><use href="#i-users"/></svg>Konten</a>
         <a class="f-nav__item" href="#software" data-page="software" data-keys="software pakete apt sudo installieren programme"><svg><use href="#i-box"/></svg>Software</a>
         <a class="f-nav__item" href="#ssh" data-page="ssh" data-keys="ssh schlüssel key fernzugriff terminal port passwort"><svg><use href="#i-term"/></svg>SSH</a>
+        <a class="f-nav__item" href="#lucent" data-page="lucent" data-keys="lucent koppeln verwalten anmelden sso verknüpfen lucya"><svg><use href="#i-net"/></svg>Lucent</a>
         <a class="f-nav__item" href="#workspace" data-page="workspace" data-keys="version system kernel speicher platz container debian apps über info"><svg><use href="#i-box"/></svg>Workspace</a>
       </nav>
       <p class="set__none f-dim" data-none hidden>Nichts gefunden.</p>
@@ -486,6 +487,27 @@
             <span class="opt__txt"><b>Anmeldung mit Passwort erlauben</b><small>Mit deinem Akari-Passwort statt eines Schlüssels. Bequemer, aber angreifbar, sobald der Port im Netz steht.</small></span>
             <label class="f-switch"><input type="checkbox" data-ssh-pw><i></i><span class="sr">Anmeldung mit Passwort erlauben</span></label>
           </div>
+        </div>
+      </section>
+
+      <section class="page" data-page="lucent" hidden>
+        <header class="page__head"><button class="f-btn f-btn--ghost f-btn--icon page__back" data-back aria-label="Zurück"><svg><use href="#i-back"/></svg></button><h2 class="f-h2">Lucent</h2></header>
+        <p class="f-dim page__lede">Lucent verwaltet Akari OS von außen: Zustand, Konten, SSH und Wartung auf seinen Seiten, Anmelden mit einem Lucent-Konto. Akari behält seine eigene Oberfläche und läuft auch ohne Lucent weiter.</p>
+        <div class="grp" data-lu-paired hidden>
+          <div class="opt"><span class="opt__txt"><b>Gekoppelt</b><small data-lu-state>–</small></span><span class="f-badge f-badge--ok">verbunden</span></div>
+          <div class="opt" data-lu-admin><span class="opt__txt"><b>Entkoppeln</b><small>Lucent sieht Akari danach nicht mehr, Anmelden mit Lucent geht nicht mehr. In Lucent das Tool auch dort entfernen.</small></span><button class="f-btn f-btn--sm f-btn--danger" data-lu-leave>Entkoppeln</button></div>
+        </div>
+        <form class="grp grp--form" data-form="lucent" autocomplete="off" hidden>
+          <label class="f-field"><span>Adresse von Lucent</span><input class="f-input" name="lucent_url" type="url" placeholder="https://lucent.example" required spellcheck="false"></label>
+          <label class="f-field"><span>Code</span><input class="f-input" name="code" placeholder="ABCD-EFGH-JKLM" required spellcheck="false" autocapitalize="characters"><small>In Lucent unter Tools → Code erzeugen. Gilt 15 Minuten und einmal.</small></label>
+          <label class="f-field"><span>Adresse von Akari</span><input class="f-input" name="ui_url" type="url" required spellcheck="false"><small>So öffnet ein Browser Akari OS. Dorthin kommt man nach „Mit Lucent anmelden“ zurück.</small></label>
+          <label class="f-field"><span>Adresse für Lucent (wenn anders)</span><input class="f-input" name="base_url" type="url" spellcheck="false" placeholder="leer: wie oben"><small>Wo Lucent Akari erreicht, etwa http://akari:8130 im Docker-Netz.</small></label>
+          <div class="grp__foot"><span class="f-dim" data-state></span><button class="f-btn f-btn--primary" type="submit">Koppeln</button></div>
+        </form>
+        <p class="f-dim page__lede" data-lu-nonadmin hidden>Noch nicht gekoppelt. Koppeln darf ein Konto, das verwalten darf.</p>
+        <span class="f-label grp__label" data-lu-me-label hidden>Mein Konto</span>
+        <div class="grp" data-lu-me hidden>
+          <div class="opt"><span class="opt__txt"><b>Mit Lucent anmelden</b><small data-lu-me-state>–</small></span><button class="f-btn f-btn--sm" data-lu-link>Verknüpfen</button></div>
         </div>
       </section>
 

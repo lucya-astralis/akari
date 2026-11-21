@@ -1038,6 +1038,15 @@
     await Promise.all([loadSession(), loadSystem()]);
     window.Akari.ready = true;
     emit('ready');
+    // back from "Mit Lucent verknüpfen": say how it went, then forget the address
+    const lu = new URLSearchParams(location.search).get('lucent');
+    if (lu) {
+      history.replaceState(null, '', '/');
+      const say = { verknuepft: ['Dein Konto ist jetzt mit Lucent verknüpft.', 'ok'], vergeben: ['Diese Lucent-Person ist schon mit einem anderen Konto verknüpft.', 'err'] }[lu]
+        || ['Verknüpfen mit Lucent hat nicht geklappt.', 'err'];
+      Facet.toast(t(say[0]), { tone: say[1] });
+      open('settings', { page: 'lucent' });
+    }
     events();
   };
   document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', start) : start();

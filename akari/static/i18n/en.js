@@ -1,6 +1,32 @@
 /* AKARI: English. Keys are the German texts as they appear; rules cover texts with values in them. */
 window.AKARI_EN = {
   exact: {
+    // Lucent
+    'Lucent verwaltet Akari OS von außen: Zustand, Konten, SSH und Wartung auf seinen Seiten, Anmelden mit einem Lucent-Konto. Akari behält seine eigene Oberfläche und läuft auch ohne Lucent weiter.':
+      'Lucent manages Akari OS from outside: state, accounts, SSH and maintenance on its pages, signing in with a Lucent account. Akari keeps its own interface and keeps working without Lucent.',
+    'Gekoppelt': 'Paired', 'verbunden': 'connected', 'Entkoppeln': 'Unpair', 'Koppeln': 'Pair', 'Kopple …': 'Pairing …',
+    'Lucent sieht Akari danach nicht mehr, Anmelden mit Lucent geht nicht mehr. In Lucent das Tool auch dort entfernen.':
+      'Lucent no longer sees Akari, and signing in with Lucent stops. Remove the tool in Lucent as well.',
+    'Adresse von Lucent': 'Lucent address', 'Code': 'Code', 'Adresse von Akari': 'Akari address',
+    'In Lucent unter Tools → Code erzeugen. Gilt 15 Minuten und einmal.': 'In Lucent under Tools → create a code. Valid for 15 minutes, once.',
+    'So öffnet ein Browser Akari OS. Dorthin kommt man nach „Mit Lucent anmelden“ zurück.': 'How a browser opens Akari OS. "Sign in with Lucent" comes back here.',
+    'Adresse für Lucent (wenn anders)': 'Address for Lucent (if different)', 'leer: wie oben': 'empty: as above',
+    'Wo Lucent Akari erreicht, etwa http://akari:8130 im Docker-Netz.': 'Where Lucent reaches Akari, e.g. http://akari:8130 on the Docker network.',
+    'Noch nicht gekoppelt. Koppeln darf ein Konto, das verwalten darf.': 'Not paired yet. An account that manages can pair.',
+    'Mein Konto': 'My account', 'Mit Lucent anmelden': 'Sign in with Lucent', 'Verknüpfen': 'Link', 'Lösen': 'Unlink',
+    'Einmal verknüpfen, dann meldest du dich mit deinem Lucent-Konto an. Lucent fragt dich dafür nach der Anmeldung.':
+      'Link once, then sign in with your Lucent account. Lucent asks you to sign in for this.',
+    'Von Lucent entkoppeln?': 'Unpair from Lucent?', 'Mit Lucent gekoppelt.': 'Paired with Lucent.', 'Von Lucent gelöst.': 'Unlinked from Lucent.',
+    'Lucent sieht Akari danach nicht mehr, und niemand meldet sich mehr mit Lucent an. Verknüpfte Konten bleiben verknüpft, für ein neues Koppeln.':
+      'Lucent no longer sees Akari, and nobody signs in with Lucent. Linked accounts stay linked for a new pairing.',
+    'Dein Konto ist jetzt mit Lucent verknüpft.': 'Your account is now linked to Lucent.',
+    'Diese Lucent-Person ist schon mit einem anderen Konto verknüpft.': 'This Lucent person is already linked to another account.',
+    'Verknüpfen mit Lucent hat nicht geklappt.': 'Linking with Lucent did not work.',
+    'Dieses Lucent-Konto ist mit keinem Konto hier verknüpft. Melde dich einmal mit Passwort an und verknüpfe es unter Einstellungen → Lucent.':
+      'This Lucent account is not linked to an account here. Sign in once with your password and link it under Settings → Lucent.',
+    'Lucent hat die Anmeldung abgelehnt.': 'Lucent refused the sign-in.',
+    'Die Anmeldung über Lucent hat zu lange gedauert. Noch einmal, bitte.': 'Signing in with Lucent took too long. Please try again.',
+    'Anmelden mit Lucent hat nicht geklappt.': 'Signing in with Lucent did not work.',
     // taskbar, launcher, popovers
     'Apps': 'Apps', 'Akari-Menü': 'Akari menu', 'Schreibtisch': 'Desktop', 'Desktop wechseln': 'Switch desktop',
     'Mit dem Workspace verbunden': 'Connected to the workspace', 'Keine Verbindung zum Workspace': 'No connection to the workspace',
@@ -153,6 +179,9 @@ window.AKARI_EN = {
     'Die Werte sind die des Rechners unter dem Container, geteilt mit allen darauf.': 'These are the numbers of the computer under the container, shared by everyone on it.',
   },
   rules: [
+    [/^(.+), seit (.+)\. Akari ist dort als (.+) eingetragen\.$/, '$1, since $2. Akari is registered there as $3.'],
+    [/^Verknüpft mit (.+)\. Am Anmeldebildschirm: „Mit Lucent anmelden“\.$/, 'Linked to $1. On the login screen: "Sign in with Lucent".'],
+    [/^Lucent, (.+)$/, 'Lucent, $1'],
     [/^([\d.,]+ [KMGT]?B) von ([\d.,]+ [KMGT]?B)$/, '$1 of $2'],
     [/^([\d.,]+ %) · (\d+) Kerne$/, '$1 · $2 cores'],
     [/^Auslagerung: (.+) von (.+)$/, 'Swap: $1 of $2'],

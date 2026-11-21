@@ -25,7 +25,7 @@ from starlette.background import BackgroundTask
 from websockets.asyncio.client import unix_connect
 from websockets.exceptions import ConnectionClosed
 
-from . import accounts, agents, auth, avatars, config, software, ssh
+from . import accounts, agents, auth, avatars, config, lucent, software, ssh
 
 # style-src allows inline styles: xterm.js writes its theme into a <style> element.
 CSP = ("default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; "
@@ -46,6 +46,7 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+app.include_router(lucent.router)     # /lucent/v1 (Lucent asks), /auth/lucent (sign-in), /api/lucent
 
 
 def _secure(resp: Response) -> Response:
@@ -108,7 +109,7 @@ def login_state(request: Request) -> dict:
     s = auth.current(request)
     acct = s and accounts.get(s.name)
     return {
-        "setup": accounts.needs_setup(), "os": _os(), "hostname": config.HOSTNAME,
+        "setup": accounts.needs_setup(), "os": _os(), "hostname": config.HOSTNAME, "lucent": bool(lucent.pairing()),
         "signed_in": acct.public() if acct else None, "desktop": s.desktop if s else None,
         "accounts": [{**a.public(), "active": agents.running(a.uid)} for a in accounts.all()],
     }

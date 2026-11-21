@@ -62,6 +62,8 @@ async def _restore(missing: list[str]) -> None:
             if await p.wait() != 0:
                 STATE.update(state="failed", at=int(time.time()))
                 return
+    from . import accounts
+    await asyncio.to_thread(accounts.adopt_etc)     # packages may have made system users
     still = [x for x in missing if x not in await _installed(missing)]
     STATE.update(state="failed" if still else "done", missing=still, at=int(time.time()))
 

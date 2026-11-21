@@ -452,6 +452,11 @@ button{ font:inherit; color:inherit }
 .greeter__back:hover{ color:var(--text); background:var(--surface-2) }
 .greeter__back[hidden]{ display:none }
 
+.greeter__lucent{ justify-self:center; margin-top:var(--s-3); padding:var(--s-1) var(--s-3); border-radius:var(--r-pill);
+  color:var(--text-dim); font-size:var(--fs-200); font-weight:500; text-decoration:none }
+.greeter__lucent:hover{ color:var(--text); background:var(--surface-2) }
+.greeter__lucent[hidden]{ display:none }
+.greeter__date.is-note{ max-width:min(520px, 90vw); font-size:var(--fs-300); font-weight:500; color:var(--err) }
 .greeter__foot{ display:flex; align-items:center; justify-content:space-between; gap:var(--s-4); margin-top:var(--s-2) }
 .greeter__foot .f-dim{ font-size:var(--fs-200) }
 .greeter__code{ margin:0; padding:var(--s-3) var(--s-4); border-radius:var(--r-control); background:var(--surface-2); font:400 var(--fs-200)/var(--lh-200) var(--mono) }

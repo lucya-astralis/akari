@@ -8,3 +8,10 @@ dir=/data/system/apt
 mkdir -p "$dir"
 apt-mark showmanual | sort -u | comm -13 "$base" - > "$dir/packages.list.tmp"
 mv "$dir/packages.list.tmp" "$dir/packages.list"
+# a package that made a system user replaced the /etc/passwd link: give it back to akarid
+for f in passwd group shadow gshadow; do
+  if [ ! -L "/etc/$f" ]; then
+    cd /opt/akari && PYTHONPATH=/opt/akari /opt/venv/bin/python -c 'from akari import accounts; accounts.adopt_etc()' || true
+    break
+  fi
+done

@@ -4,7 +4,16 @@ Ein Desktop im Browser mit einem echten Linux darunter, auf Debian trixie,
 gebaut in [Facet 1.8](../facet). Gedacht als Tool für Lucent: Lucent verwaltet
 es (installieren, koppeln, Zustand), Akari OS hat seine eigene Oberfläche.
 
-**Stand 0.5.6:** Anmeldebildschirm nach macOS-Art: Datum und große Uhr oben,
+**Stand 0.6:** an Lucent angebunden (Connector-Vertrag 1, siehe
+[lucent/CONNECTOR.md](../lucent/CONNECTOR.md)). Lucent zeigt Akari mit Zustand und
+Kennzahlen und zeichnet drei Seiten: Übersicht (Last, Speicher, wer angemeldet ist),
+Konten (anlegen, verwalten erlauben, Passwort, abmelden, löschen) und System (SSH,
+nachinstallierte Software). Wartung: alle abmelden, Software wieder einspielen.
+„Mit Lucent anmelden“ am Anmeldebildschirm für Konten, die unter Einstellungen →
+Lucent verknüpft sind. Außerdem: Pakete, die Systembenutzer anlegen, nehmen Akari
+nicht mehr `/etc/passwd` weg.
+
+**0.5.6:** Anmeldebildschirm nach macOS-Art: Datum und große Uhr oben,
 die Konten unten als kurze Liste, ein gewähltes Konto wächst und bekommt eine
 Pille fürs Passwort; Sprache und Farbschema oben rechts. Japanisch vorinstalliert
 (Noto CJK, Locale ja_JP.UTF-8).
@@ -129,6 +138,26 @@ Deutsch ist die Quelle, `akari/static/i18n/en.js` die englische Fassung
 (genaue Texte und Muster für Texte mit Werten). Gewählt wird unter Einstellungen →
 Darstellung → Sprache, sonst gilt die Sprache des Browsers.
 
+## Lucent
+
+Koppeln: in Lucent unter **Tools** einen Code erzeugen, dann in Akari unter
+**Einstellungen → Lucent** (Konten, die verwalten) Lucents Adresse, den Code und
+Akaris Adresse eintragen. Oder im Container:
+
+```bash
+docker compose exec akari python -m akari --lucent-join https://lucent.example ABCD-EFGH-JKLM --ui-url https://akari.example
+```
+
+Läuft Lucent auf demselben Rechner außerhalb von Docker, ist es aus dem Container
+`http://host.docker.internal:8060`. Die Kopplung liegt in `/data/system/lucent.json`
+(nur root): das OIDC-Client-Geheimnis und ein Hash des Connector-Geheimnisses.
+
+Wer ist wer: Akari-Konten sind Linux-Benutzer, deshalb legt eine Anmeldung über
+Lucent nie ein Konto an. Man verknüpft sein Konto einmal, angemeldet, unter
+Einstellungen → Lucent. Was Lucent auf Akaris Seiten ändert (Konten, SSH), führt
+Akari nur aus, wenn die Lucent-Person mit einem Akari-Konto verknüpft ist, das
+verwalten darf, egal was Lucent selbst erlaubt.
+
 ## Roadmap
 
 1. **Echtes ISO-Image.** Akari OS als installierbares System: Debian-Basis mit
@@ -138,6 +167,5 @@ Darstellung → Sprache, sonst gilt die Sprache des Browsers.
    für das Image, systemd-Units für akarid und die Agenten statt Docker, die
    Paketliste dieses Images als `akari-desktop`-Metapaket, später eine eigene
    apt-Quelle für Akari-Pakete.
-2. Connector zu Lucent: Manifest, Status, Aktionen; Anmeldung über Lucent als zweiter Weg.
-3. Ton aus Linux-Apps (der Medien-Teil der Leiste steht schon), HiDPI.
-4. Eigene Fenster pro Linux-Programm auch aus dem Terminal (Xpra „seamless“).
+2. Ton aus Linux-Apps (der Medien-Teil der Leiste steht schon), HiDPI.
+3. Eigene Fenster pro Linux-Programm auch aus dem Terminal (Xpra „seamless“).
