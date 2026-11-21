@@ -4,6 +4,15 @@
 # to be a login manager (see compose.yaml); every account is a real Linux user
 # and its session runs as that user. The root filesystem is read-only;
 # everything that changes lives in the one volume, /data.
+# The Akari cursors as an Xcursor theme, built from the same SVGs the browser shows
+# (image/cursors/build.sh); only the finished theme goes into the image
+FROM debian:trixie-slim AS cursors
+RUN apt-get update && apt-get install -y --no-install-recommends librsvg2-bin x11-apps
+COPY akari/static/assets/cursors /src
+COPY image/cursors/build.sh /build.sh
+RUN sh /build.sh /src /out/Akari \
+ && mkdir -p /out/default && printf '[Icon Theme]\nInherits=Akari\n' > /out/default/index.theme
+
 FROM debian:trixie-slim
 
 ARG DEBIAN_FRONTEND=noninteractive
@@ -75,6 +84,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends sudo \
 
 # Akari OS: os-release, fastfetch, zsh defaults, skeleton home, sudoers, the apt hook
 COPY image/rootfs/ /
+COPY --from=cursors /out/ /usr/share/icons/
 RUN chsh -s /bin/zsh root && sed -i 's|^SHELL=.*|SHELL=/bin/zsh|' /etc/default/useradd \
  && chmod 440 /etc/sudoers.d/akari && visudo -cq \
  && fc-cache -f >/dev/null \

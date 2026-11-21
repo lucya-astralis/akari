@@ -1,0 +1,15 @@
+default 4 3
+pointer 4 3
+help 4 3
+progress 4 3
+text 16 16
+move 16 16
+grab 16 16
+grabbing 16 16
+ew-resize 16 16
+ns-resize 16 16
+nwse-resize 16 16
+nesw-resize 16 16
+wait 16 16
+not-allowed 16 16
+crosshair 16 16

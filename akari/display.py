@@ -60,6 +60,10 @@ class Session:
 
 SESSIONS: dict[str, Session] = {}
 
+# Zeiger in den Linux-Apps: das Xcursor-Thema „Akari“ aus dem Image
+# (image/cursors/build.sh), dieselben Formen wie im Browser
+CURSOR_ENV = {"XCURSOR_THEME": "Akari", "XCURSOR_SIZE": "24"}
+
 
 def _run() -> Path:
     return Path(os.environ.get("XDG_RUNTIME_DIR") or config.user_run(os.getuid()))
@@ -234,6 +238,7 @@ async def launch(app: str, body: LaunchIn, request: Request) -> dict:
         "XDG_RUNTIME_DIR": str(run), "XDG_CACHE_HOME": str(config.HOME / ".cache"),
         "XDG_CURRENT_DESKTOP": "Akari", "XDG_SESSION_TYPE": "x11",
         "MOZ_ENABLE_WAYLAND": "0", "NO_AT_BRIDGE": "1",
+        **CURSOR_ENV,               # das Akari-Cursor-Set auch in den Linux-Apps
         **await media.env(did),     # players on this desktop show in its taskbar
     }
     # a display number another account grabbed between our check and Xvnc's start: take the next
@@ -405,7 +410,7 @@ async def ensure_default(did: str, w: int = 1280, h: int = 800) -> Session:
         env = {
             "HOME": str(config.HOME), "USER": config.NAME, "LANG": os.environ.get("LANG", "C.UTF-8"),
             "PATH": os.environ.get("PATH", "/usr/bin:/bin"), "XDG_RUNTIME_DIR": str(run),
-            **await media.env(did),
+            **CURSOR_ENV, **await media.env(did),
         }
         for n in range(FIRST, LAST + 1):
             if _taken(n):

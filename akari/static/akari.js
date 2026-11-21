@@ -35,7 +35,7 @@
 
   /* ---------- preferences: in the home folder, cached for a fast first paint ---------- */
   const DEFAULTS = {
-    theme: 'system', tint: '', wallpaper: true, mirror: false, motion: false, lite: false,
+    theme: 'system', tint: '', wallpaper: true, mirror: false, motion: false, lite: false, cursors: true,
     dock: 'm', autohide: false, icons: true, seconds: false, date: true, dnd: false, widgets: true, bar: 'bottom', grid: true, pinned: null,
   };
   let P = { ...DEFAULTS };
@@ -43,7 +43,7 @@
   let saveT;
   const save = () => {
     if (!prefsLoaded) return;
-    try { localStorage.setItem('akari-prefs-last', JSON.stringify({ tint: P.tint, nova: novaSide(), wallpaper: P.wallpaper !== false && !P.wallpaperV })); } catch {}
+    try { localStorage.setItem('akari-prefs-last', JSON.stringify({ tint: P.tint, nova: novaSide(), wallpaper: P.wallpaper !== false && !P.wallpaperV, cursors: P.cursors !== false })); } catch {}
     clearTimeout(saveT);
     saveT = setTimeout(() => api('/api/prefs', { method: 'PUT', json: P, quiet: true }).catch(() => {}), 400);
   };
@@ -58,6 +58,7 @@
     flag('data-mirror', novaSide() === 'right');
     flag('data-nova', novaSide() === 'both', 'both');
     flag('data-motion', P.motion, 'reduced');
+    flag('data-cursors', P.cursors === false, 'off');   // the own cursor set (cursors.css)
     root.classList.toggle('fx-lite', P.lite);
     root.dataset.dock = P.dock;
     root.dataset.bar = P.bar === "top" ? "top" : "bottom";
@@ -1034,7 +1035,7 @@
     const remote = await api('/api/prefs', { quiet: true }).catch(() => null);
     P = { ...DEFAULTS, ...(remote || {}) };
     prefsLoaded = true;
-    try { localStorage.setItem('akari-prefs-last', JSON.stringify({ tint: P.tint, nova: novaSide(), wallpaper: P.wallpaper !== false && !P.wallpaperV })); } catch {}
+    try { localStorage.setItem('akari-prefs-last', JSON.stringify({ tint: P.tint, nova: novaSide(), wallpaper: P.wallpaper !== false && !P.wallpaperV, cursors: P.cursors !== false })); } catch {}
     Facet.setTheme(P.theme || 'system');
     apply();
     emit('prefs');

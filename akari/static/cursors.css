@@ -1,0 +1,97 @@
+/* AKARI — Cursor. Das eigene Zeiger-Set aus assets/cursors/ (gezeichnet von
+   tools/cursors.py): dunkel mit hellem Rand, damit es auf hellem wie dunklem
+   Grund lesbar bleibt, ein Schein-Balken in Akzentfarbe. Geladen nach akari.css
+   auf Desktop und Anmeldeseite.
+   Abschaltbar: data-cursors="off" auf :root (Pref „cursors“, Standard an) —
+   dann gilt hier nichts mehr und alles fällt auf die Zeiger des Systems zurück. */
+
+/* Rollen → Bild. Hotspot: Pfeilspitze bei 4 3, sonst die Mitte (assets/cursors/hotspots.txt).
+   Ohne Set stehen die Rollen auf den Schlüsselwörtern, so dass var(--cur-…) überall taugt. */
+:root{
+  --cur-default:default; --cur-pointer:pointer; --cur-text:text; --cur-help:help;
+  --cur-move:move; --cur-grab:grab; --cur-grabbing:grabbing; --cur-crosshair:crosshair;
+  --cur-ew-resize:ew-resize; --cur-ns-resize:ns-resize; --cur-nwse-resize:nwse-resize; --cur-nesw-resize:nesw-resize;
+  --cur-wait:wait; --cur-progress:progress; --cur-not-allowed:not-allowed;
+}
+:root:not([data-cursors="off"]){
+  --cur-default:url("assets/cursors/default.svg") 4 3, default;
+  --cur-pointer:url("assets/cursors/pointer.svg") 4 3, pointer;
+  --cur-help:url("assets/cursors/help.svg") 4 3, help;
+  --cur-progress:url("assets/cursors/progress.svg") 4 3, progress;
+  --cur-text:url("assets/cursors/text.svg") 16 16, text;
+  --cur-move:url("assets/cursors/move.svg") 16 16, move;
+  --cur-grab:url("assets/cursors/grab.svg") 16 16, grab;
+  --cur-grabbing:url("assets/cursors/grabbing.svg") 16 16, grabbing;
+  --cur-crosshair:url("assets/cursors/crosshair.svg") 16 16, crosshair;
+  --cur-ew-resize:url("assets/cursors/ew-resize.svg") 16 16, ew-resize;
+  --cur-ns-resize:url("assets/cursors/ns-resize.svg") 16 16, ns-resize;
+  --cur-nwse-resize:url("assets/cursors/nwse-resize.svg") 16 16, nwse-resize;
+  --cur-nesw-resize:url("assets/cursors/nesw-resize.svg") 16 16, nesw-resize;
+  --cur-wait:url("assets/cursors/wait.svg") 16 16, wait;
+  --cur-not-allowed:url("assets/cursors/not-allowed.svg") 16 16, not-allowed;
+}
+
+/* Grundregeln ohne Gewicht (:where): sie gelten nur, wo sonst nichts steht */
+:where(:root:not([data-cursors="off"])) body{ cursor:var(--cur-default) }
+:where(:root:not([data-cursors="off"])) :where(a[href], button, summary, select, label[for], [role="button"],
+  [role="menuitem"], [role="tab"], [role="radio"], [role="switch"], input[type="checkbox"], input[type="radio"],
+  input[type="range"], input[type="color"], input[type="button"], input[type="submit"]){ cursor:var(--cur-pointer) }
+:where(:root:not([data-cursors="off"])) :where(input:not([type="checkbox"], [type="radio"], [type="range"],
+  [type="color"], [type="button"], [type="submit"], [type="file"]), textarea,
+  [contenteditable]:not([contenteditable="false"])){ cursor:var(--cur-text) }
+:where(:root:not([data-cursors="off"])) :where(:disabled, [aria-disabled="true"]){ cursor:var(--cur-not-allowed) }
+:where(:root:not([data-cursors="off"])) :where([aria-busy="true"]){ cursor:var(--cur-progress) }
+
+/* Die Stellen aus akari.css, facet.css und xterm.css, die ein Schlüsselwort setzen,
+   hier auf das Set umgestellt. Jede Regel trägt dasselbe Präfix, so bleibt das
+   Gewicht der Selektoren untereinander wie im Original (… .is-dragging schlägt
+   weiter die Ruhestellung). Kommt in akari.css ein neues cursor:… dazu: hier eintragen. */
+
+/* Zeigen und Klicken */
+:root:not([data-cursors="off"]) .bar__brand, :root:not([data-cursors="off"]) .bar__btn,
+:root:not([data-cursors="off"]) .icon, :root:not([data-cursors="off"]) .light,
+:root:not([data-cursors="off"]) .dock__app, :root:not([data-cursors="off"]) .set__me,
+:root:not([data-cursors="off"]) .opt--check, :root:not([data-cursors="off"]) .swatches button,
+:root:not([data-cursors="off"]) .range, :root:not([data-cursors="off"]) .net,
+:root:not([data-cursors="off"]) .fm__crumbs button, :root:not([data-cursors="off"]) .greeter__lang,
+:root:not([data-cursors="off"]) .greeter__tool, :root:not([data-cursors="off"]) .who__one,
+:root:not([data-cursors="off"]) .greeter__back, :root:not([data-cursors="off"]) .dpick,
+:root:not([data-cursors="off"]) .bar__desk, :root:not([data-cursors="off"]) .tb__launch,
+:root:not([data-cursors="off"]) .tb__btn, :root:not([data-cursors="off"]) .min__win,
+:root:not([data-cursors="off"]) .tb__cover, :root:not([data-cursors="off"]) .tb__mbtn,
+:root:not([data-cursors="off"]) .tb__desk, :root:not([data-cursors="off"]) .tb__clock,
+:root:not([data-cursors="off"]) .launch__app, :root:not([data-cursors="off"]) .quick__tints button,
+:root:not([data-cursors="off"]) .quick__tile, :root:not([data-cursors="off"]) .tm__head button,
+:root:not([data-cursors="off"]) .acct__face, :root:not([data-cursors="off"]) .launch__item,
+:root:not([data-cursors="off"]) .launch__me, :root:not([data-cursors="off"]) .widget__x,
+:root:not([data-cursors="off"]) .f-btn, :root:not([data-cursors="off"]) select.f-input,
+:root:not([data-cursors="off"]) .f-select, :root:not([data-cursors="off"]) .f-switch,
+:root:not([data-cursors="off"]) .f-check, :root:not([data-cursors="off"]) .f-seg label,
+:root:not([data-cursors="off"]) .f-chip, :root:not([data-cursors="off"]) .f-nav__item,
+:root:not([data-cursors="off"]) .f-tabs button, :root:not([data-cursors="off"]) .f-menu button,
+:root:not([data-cursors="off"]) .f-iconbtn, :root:not([data-cursors="off"]) .xterm .xterm-cursor-pointer{ cursor:var(--cur-pointer) }
+
+/* ausdrücklich der Pfeil */
+:root:not([data-cursors="off"]) .fm__row, :root:not([data-cursors="off"]) .bar #bar-avatar,
+:root:not([data-cursors="off"]) .tm__row, :root:not([data-cursors="off"]) .xterm.enable-mouse-events{ cursor:var(--cur-default) }
+
+/* Text */
+:root:not([data-cursors="off"]) .w-note__text, :root:not([data-cursors="off"]) .xterm{ cursor:var(--cur-text) }
+
+/* Greifen: Titelleisten, Widgets */
+:root:not([data-cursors="off"]) .win__bar, :root:not([data-cursors="off"]) .widget{ cursor:var(--cur-grab) }
+
+/* Ziehen: Fenster, Symbole, Dock */
+:root:not([data-cursors="off"]) .win.is-dragging, :root:not([data-cursors="off"]) .icon.is-dragging,
+:root:not([data-cursors="off"]) .widget.is-dragging,
+:root:not([data-cursors="off"]) .tb__dock .dock__app.is-dragging{ cursor:var(--cur-grabbing) }
+
+/* Fenstergriff unten rechts */
+:root:not([data-cursors="off"]) .win__grip{ cursor:var(--cur-nwse-resize) }
+
+/* gesperrt */
+:root:not([data-cursors="off"]) .range:disabled, :root:not([data-cursors="off"]) .f-btn:disabled,
+:root:not([data-cursors="off"]) .f-btn[aria-disabled="true"]{ cursor:var(--cur-not-allowed) }
+
+/* arbeitet */
+:root:not([data-cursors="off"]) .net[aria-busy="true"]{ cursor:var(--cur-progress) }

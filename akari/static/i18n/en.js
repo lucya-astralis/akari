@@ -54,7 +54,7 @@ window.AKARI_EN = {
     'Akzent': 'Accent', 'Facet · Violett': 'Facet · Violet', 'Akzentfarbe': 'Accent colour', 'Facet': 'Facet', 'Blau': 'Blue',
     'Cyan': 'Cyan', 'Grün': 'Green', 'Bernstein': 'Amber', 'Rot': 'Red', 'Pink': 'Pink',
     'Nova als Hintergrund': 'Nova as background', 'Aus: ein schlichter Grund.': 'Off: a plain ground.',
-    'Licht von': 'Light from', 'Woher Novas Strahlen kommen.': 'Where the rays of Nova come from.', 'Links': 'Left', 'Rechts': 'Right', 'Beiden Seiten': 'Both sides',
+    'Eigene Cursor': 'Own cursors', 'Die Zeiger von Akari OS. Aus: die Zeiger des Computers.': 'The pointers of Akari OS. Off: the computer\'s own.', 'Licht von': 'Light from', 'Woher Novas Strahlen kommen.': 'Where the rays of Nova come from.', 'Links': 'Left', 'Rechts': 'Right', 'Beiden Seiten': 'Both sides',
     'Eigenes Bild': 'Your own picture', 'Bild wählen …': 'Choose picture …', 'Bild entfernen': 'Remove picture',
     'Ein Bild aus deinem Rechner. Es wird im Home dieses Kontos abgelegt.': 'A picture from your computer. It is kept in this account\'s home.',
     'Bedienungshilfen': 'Accessibility', 'Bewegung reduzieren': 'Reduce motion',

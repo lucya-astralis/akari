@@ -68,6 +68,7 @@
         const lg = $(`input[name="lang"][value="${Akari.locale().startsWith('en') ? 'en' : 'de'}"]`, el); if (lg) lg.checked = true;
         $('[data-wall-drop]', el).hidden = !P.wallpaperV;
         const wg = $('[data-pref="widgets"]', el); if (wg) wg.checked = P.widgets !== false;
+        const cu = $('[data-pref="cursors"]', el); if (cu) cu.checked = P.cursors !== false;
         // magnification: on unless switched off; strength and reach only while on
         const mg = $('[data-pref="magnify"]', el); if (mg) mg.checked = P.magnify !== false;
         $$('[data-mag-opt]', el).forEach(o => { o.hidden = P.magnify === false; });

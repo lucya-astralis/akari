@@ -16,7 +16,7 @@ import os
 import time
 from pathlib import Path
 
-VERSION = "0.6.1"
+VERSION = "0.6.2"
 OS_NAME = "Akari OS"
 STARTED = time.time()
 
