@@ -1,0 +1,514 @@
+<title>Akari Showcase</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="facet.css">
+<style>
+/* Akari Showcase. Layout: two keynote stages, each a bento of four columns
+   (areas below), on Facet's own ground; tiles are white glass cards, the
+   middle tile carries the title on Nova. Colours come from Facet's tokens,
+   which follow light and dark by themselves (light-dark, color-scheme). */
+:root{
+  --u: 1cqw;              /* the unit of everything drawn small: a hundredth of its container */
+  --tile: var(--surface);
+  --tile-line: var(--stroke-1);
+  --tile-r: 26px;
+  --gap: 14px;
+}
+body{ background:var(--bg); color:var(--text); font-family:var(--sans) }
+
+.show{ max-width:1280px; margin:0 auto; display:grid; gap:28px;
+  padding-block:48px 40px; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)) }
+.eyebrow{ font:600 11px/1 var(--mono); letter-spacing:.12em; text-transform:uppercase; color:var(--acc) }
+.stage__head{ display:grid; gap:10px; justify-items:center; text-align:center; padding-top:20px }
+.stage__head h1{ margin:0; font:700 clamp(30px, 4.4vw, 52px)/1.05 var(--sans); letter-spacing:-.03em; text-wrap:balance }
+.stage__head p{ margin:0; max-width:56ch; color:var(--text-dim); font-size:16px; line-height:1.5; text-wrap:balance }
+.show__foot{ display:flex; align-items:center; justify-content:center; gap:10px; color:var(--text-ghost); font:500 12px var(--mono); padding-top:12px }
+.show__foot .am{ width:14px; height:15px }
+
+/* the mark, as Akari draws it */
+.am-l{ fill:var(--acc) } .am-b{ fill:var(--text) } .am-d{ fill:var(--text-ghost) }
+
+/* ---------- the stages ---------- */
+.stage{ display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:var(--gap); align-items:stretch }
+.tile{ margin:0; min-width:0; position:relative; border-radius:var(--tile-r); background:var(--tile); border:1px solid var(--tile-line);
+  box-shadow:var(--shadow-4); overflow:clip }
+@media (min-width: 1000px){
+  .stage--looks{ grid-template-areas:"a b c c" "d t t e" "f t t g" "h h i j" }
+  .stage--feats{ grid-template-areas:"a b c c" "a h h d" "e h h f" "g g i f" "j k k l" }
+  [data-ga="a"]{ grid-area:a } [data-ga="b"]{ grid-area:b } [data-ga="c"]{ grid-area:c } [data-ga="d"]{ grid-area:d }
+  [data-ga="e"]{ grid-area:e } [data-ga="f"]{ grid-area:f } [data-ga="g"]{ grid-area:g } [data-ga="h"]{ grid-area:h }
+  [data-ga="i"]{ grid-area:i } [data-ga="j"]{ grid-area:j } [data-ga="k"]{ grid-area:k } [data-ga="l"]{ grid-area:l }
+  [data-ga="t"]{ grid-area:t }
+}
+@media (min-width: 641px) and (max-width: 999px){
+  .stage{ grid-template-columns:repeat(2, minmax(0, 1fr)) }
+  .is-wide, [data-ga="t"], [data-ga="h"].feat{ grid-column:span 2 }
+}
+@media (max-width: 640px){
+  .stage{ grid-template-columns:minmax(0, 1fr) }
+}
+
+/* stage 1: a desktop and what makes its look */
+.tile--look{ display:grid; grid-template-rows:auto 1fr }
+.tile--look .mini{ border-radius:var(--tile-r) var(--tile-r) 0 0 }
+.tile--look figcaption{ display:grid; gap:8px; align-content:start; padding:14px 16px 16px }
+.tile--look figcaption b{ font:600 16px/1.2 var(--sans) }
+.chips{ display:flex; flex-wrap:wrap; gap:6px }
+.chip{ padding:3px 8px; border-radius:var(--r-pill); background:var(--surface-2); color:var(--text-dim); font:500 11px/1.3 var(--sans) }
+@media (min-width: 1000px){
+  /* wide tiles: the desktop at the same height as its neighbours, the words beside it */
+  .tile--look.is-wide{ grid-template-columns:calc(50% - var(--gap) / 2) 1fr; grid-template-rows:auto }
+  .tile--look.is-wide .mini{ border-radius:var(--tile-r) 0 0 var(--tile-r) }
+  .tile--look.is-wide figcaption{ align-content:center; padding:20px 24px; gap:12px }
+  .tile--look.is-wide figcaption b{ font-size:22px }
+}
+.tile--title{ display:grid; align-content:center; justify-items:center; gap:14px; text-align:center; padding:36px 28px; min-height:280px; border:0 }
+.tile--title h2, .hero__title{ margin:0; font:700 clamp(34px, 4.6vw, 64px)/1 var(--sans); letter-spacing:-.035em; text-wrap:balance;
+  background:linear-gradient(100deg, oklch(.62 .2 var(--tint-h)), oklch(.66 .19 calc(var(--tint-h) + 70)), oklch(.7 .18 calc(var(--tint-h) + 150)));
+  -webkit-background-clip:text; background-clip:text; color:transparent; padding-bottom:.06em }
+.tile--title p{ margin:0; max-width:34ch; color:var(--text-dim); font-size:15px; line-height:1.5 }
+
+/* ---------- a look of its own: Akari's tint, scoped to one element ----------
+   Facet sets these on :root[data-tint]; here every .look carries its own hue
+   (--tint-h), its scheme (light or dark) and Nova's side. */
+.look{
+  --acc:        light-dark(oklch(.52 .20 var(--tint-h)), oklch(.68 .16 var(--tint-h)));
+  --acc-fill:   light-dark(oklch(.52 .20 var(--tint-h)), oklch(.58 .19 var(--tint-h)));
+  --acc-soft:   light-dark(oklch(.52 .20 var(--tint-h) / .09), oklch(.68 .16 var(--tint-h) / .16));
+  --nova-a:     light-dark(oklch(.86 .07 var(--tint-h)), oklch(.40 .19 var(--tint-h)));
+  --nova-b:     light-dark(oklch(.93 .035 var(--tint-h)), oklch(.25 .11 var(--tint-h)));
+  --nova-c:     light-dark(oklch(.96 .012 var(--tint-h)), oklch(.13 .04 var(--tint-h)));
+  --nova-shard: light-dark(oklch(.62 .16 var(--tint-h) / .26), oklch(.60 .17 var(--tint-h) / .55));
+  --nova-shard-2: light-dark(oklch(.45 .20 var(--tint-h) / .12), oklch(.42 .18 var(--tint-h) / .35));
+  --nova-line:  light-dark(oklch(.58 .20 var(--tint-h) / .55), oklch(.72 .15 var(--tint-h) / .90));
+  --nova-glow:  light-dark(oklch(.82 .09 var(--tint-h) / .50), oklch(.52 .22 var(--tint-h) / .42));
+  --nova-edge:  light-dark(oklch(1 0 0 / .85), oklch(.88 .07 var(--tint-h) / .38));
+  --nova-halo:  light-dark(oklch(.62 .16 var(--tint-h) / .16), oklch(.72 .15 var(--tint-h) / .22));
+  color:var(--text);
+}
+.look--light{ color-scheme:light } .look--dark{ color-scheme:dark }
+.look[data-side="right"]{ --nova-angle:-68deg; --nova-x:100%; --nova-dir:-1 }
+.look[data-side="both"].f-nova::after{ background:
+  var(--nova-grain),
+  linear-gradient(-68deg, transparent 0 6%, var(--nova-edge) 6% 6.12%, transparent 6.12%),
+  linear-gradient(-68deg, transparent 0 21%, var(--nova-silver) 21% 21.2%, transparent 21.2%),
+  linear-gradient(-68deg, transparent 0 26%, var(--nova-line) 26% 26.3%, transparent 26.3%),
+  linear-gradient(-68deg, transparent 23.6%, var(--nova-halo) 26.15%, transparent 29.4%),
+  linear-gradient(-68deg, transparent 0 6%, var(--nova-shard) 6% 14%, var(--nova-shard-2) 14% 19%, transparent 19%),
+  radial-gradient(ellipse 62% 78% at 100% 14%, var(--nova-glow), transparent 68%),
+  linear-gradient(-68deg, var(--nova-a) 0%, var(--nova-b) 18%, color-mix(in srgb, var(--nova-c) 55%, transparent) 34%, transparent 46%) }
+.look--spectrum{ animation:look-walk 60s linear infinite;
+  --nova-b:     light-dark(oklch(.93 .045 calc(var(--tint-h) + 70)), oklch(.27 .12 calc(var(--tint-h) + 70)));
+  --nova-c:     light-dark(oklch(.96 .016 calc(var(--tint-h) + 140)), oklch(.14 .05 calc(var(--tint-h) + 140)));
+  --nova-shard: light-dark(oklch(.64 .17 calc(var(--tint-h) + 90) / .30), oklch(.60 .18 calc(var(--tint-h) + 90) / .58));
+  --nova-shard-2: light-dark(oklch(.50 .20 calc(var(--tint-h) + 180) / .16), oklch(.45 .19 calc(var(--tint-h) + 180) / .40));
+  --nova-line:  light-dark(oklch(.60 .21 calc(var(--tint-h) + 210) / .60), oklch(.74 .16 calc(var(--tint-h) + 210) / .92));
+  --nova-halo:  light-dark(oklch(.64 .17 calc(var(--tint-h) + 260) / .18), oklch(.72 .16 calc(var(--tint-h) + 260) / .26));
+  --nova-glow:  light-dark(oklch(.82 .11 calc(var(--tint-h) + 300) / .55), oklch(.55 .22 calc(var(--tint-h) + 300) / .46)) }
+.look--rainbow{ animation:look-walk 24s linear infinite }
+@keyframes look-walk{ from{ --tint-h:0 } to{ --tint-h:360 } }
+.look--plain.f-nova::before, .look--plain.f-nova::after{ display:none }
+.look--plain.f-nova{ background:light-dark(#eef0f5, #101119) }
+@media (prefers-reduced-motion: reduce){ .look--spectrum, .look--rainbow{ animation:none } }
+
+/* ---------- a desktop in small: everything sized by its width (cqw) ---------- */
+.mini{ position:relative; width:100%; max-width:100%; aspect-ratio:16 / 10; container-type:inline-size; overflow:clip; font-family:var(--sans) }
+.mini > *{ position:absolute }
+.glassy{ background:color-mix(in oklab, var(--surface) 74%, transparent); -webkit-backdrop-filter:blur(10px) saturate(1.3); backdrop-filter:blur(10px) saturate(1.3);
+  box-shadow:0 calc(.5 * var(--u)) calc(2 * var(--u)) rgb(0 0 0 / .14), inset 0 0 0 1px color-mix(in oklab, var(--text) 7%, transparent) }
+.mini__bar{ left:calc(2 * var(--u)); right:calc(2 * var(--u)); bottom:calc(1.8 * var(--u)); display:flex; justify-content:center; gap:calc(1.6 * var(--u)) }
+.mini[data-top="1"] .mini__bar{ top:calc(1.8 * var(--u)); bottom:auto }
+.mini__bar[data-align="left"]{ justify-content:flex-start } .mini__bar[data-align="right"]{ justify-content:flex-end }
+.mini__bar[data-align="split"]{ justify-content:space-between }
+.mb{ display:flex; align-items:center; gap:calc(.9 * var(--u)); height:calc(5.4 * var(--u)); padding:0 calc(1.3 * var(--u)); border-radius:calc(2 * var(--u));
+  background:color-mix(in oklab, var(--surface) 74%, transparent); -webkit-backdrop-filter:blur(10px) saturate(1.3); backdrop-filter:blur(10px) saturate(1.3);
+  box-shadow:0 calc(.5 * var(--u)) calc(2 * var(--u)) rgb(0 0 0 / .14), inset 0 0 0 1px color-mix(in oklab, var(--text) 8%, transparent); white-space:nowrap }
+.mb .ic{ width:calc(3.3 * var(--u)); height:calc(3.3 * var(--u)) }
+.mb .li{ width:calc(1.7 * var(--u)); height:calc(1.7 * var(--u)); color:var(--text) }
+.mb__mark{ width:calc(1.9 * var(--u)); height:calc(2 * var(--u)) }
+.mb__sep{ width:1px; height:calc(2.3 * var(--u)); background:color-mix(in oklab, var(--text) 16%, transparent) }
+.mb__desk{ display:flex; align-items:center; gap:calc(.5 * var(--u)); font-size:calc(1.05 * var(--u)); color:var(--text-dim) }
+.mb__clock{ display:grid; justify-items:end; line-height:1.1 }
+.mb__clock b{ font:600 calc(1.35 * var(--u)) var(--mono) } .mb__clock small{ font:400 calc(.8 * var(--u)) var(--mono); color:var(--text-dim) }
+.mb__media{ display:flex; align-items:center; gap:calc(.6 * var(--u)) }
+.mb__media span{ display:grid; line-height:1.15 } .mb__media b{ font-size:calc(1.05 * var(--u)) } .mb__media small{ font-size:calc(.85 * var(--u)); color:var(--text-dim) }
+.mb__cover{ width:calc(3.4 * var(--u)); height:calc(3.4 * var(--u)); border-radius:calc(.9 * var(--u)); background:linear-gradient(135deg, oklch(.7 .17 var(--tint-h)), oklch(.5 .2 calc(var(--tint-h) + 60))) }
+.mb__min{ width:calc(4.2 * var(--u)); height:calc(3.3 * var(--u)); border-radius:calc(.7 * var(--u)); background:var(--surface); box-shadow:inset 0 0 0 1px var(--stroke-1), 0 calc(.2 * var(--u)) calc(.6 * var(--u)) rgb(0 0 0 / .1) }
+
+.mini__widgets{ left:calc(2 * var(--u)); top:calc(2 * var(--u)); width:calc(18 * var(--u)); display:grid; gap:calc(1 * var(--u)) }
+.mini[data-top="1"] .mini__widgets{ top:calc(9.5 * var(--u)) }
+.mwg{ border-radius:calc(1.5 * var(--u)); padding:calc(1.1 * var(--u)) calc(1.3 * var(--u)); display:grid; gap:calc(.3 * var(--u));
+  background:color-mix(in oklab, var(--surface) 78%, transparent); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+  box-shadow:0 calc(.4 * var(--u)) calc(1.6 * var(--u)) rgb(0 0 0 / .1), inset 0 0 0 1px color-mix(in oklab, var(--text) 7%, transparent) }
+.mwg small{ font-size:calc(.8 * var(--u)); color:var(--text-dim) }
+.mwg--clock b{ font:700 calc(3.2 * var(--u))/1 var(--sans); letter-spacing:-.03em }
+.mwg--perf i{ height:calc(.6 * var(--u)); border-radius:calc(1 * var(--u)); background:linear-gradient(90deg, var(--acc) calc(var(--v) * 100%), color-mix(in oklab, var(--text) 10%, transparent) 0) }
+.spark{ height:calc(1.8 * var(--u)); background:linear-gradient(170deg, transparent 45%, var(--acc) 46% 52%, transparent 53%) left / 50% 100% no-repeat,
+  linear-gradient(15deg, transparent 45%, var(--acc) 46% 52%, transparent 53%) right / 50% 100% no-repeat }
+.mwg--note{ height:calc(7 * var(--u)) }
+
+.mini__icons{ right:calc(2.4 * var(--u)); top:calc(2.4 * var(--u)); display:grid; gap:calc(1.5 * var(--u)); justify-items:center }
+.mini__icons span{ display:grid; justify-items:center; gap:calc(.3 * var(--u)) }
+.mini__icons .ic{ width:calc(4.6 * var(--u)); height:calc(4.6 * var(--u)); filter:drop-shadow(0 calc(.3 * var(--u)) calc(.6 * var(--u)) rgb(0 0 0 / .18)) }
+.mini__icons small{ font-size:calc(.75 * var(--u)); color:var(--text) }
+
+.mini__logo{ top:50%; width:calc(15 * var(--u)); height:auto; aspect-ratio:95.64 / 100; translate:0 -62%;
+  filter:drop-shadow(0 0 calc(4 * var(--u)) var(--nova-glow)) drop-shadow(0 calc(.3 * var(--u)) calc(1 * var(--u)) rgb(0 0 0 / .12)) }
+.mini__logo--lucya{ width:calc(24 * var(--u)); aspect-ratio:964 / 543; color:color-mix(in oklab, var(--text) 78%, transparent); fill:currentColor }
+.mini[data-side="left"] .mini__logo{ right:calc(21 * var(--u)) } .mini[data-side="right"] .mini__logo{ left:calc(24 * var(--u)) }
+.mini[data-side="both"] .mini__logo{ left:50%; translate:-50% -62% }
+
+/* windows */
+.mwin{ left:calc(23 * var(--u)); top:calc(8 * var(--u)); width:calc(52 * var(--u)); height:calc(47 * var(--u)); border-radius:calc(1.6 * var(--u)); overflow:clip; display:grid; grid-template-rows:calc(3.4 * var(--u)) 1fr;
+  background:var(--surface); box-shadow:0 calc(1.4 * var(--u)) calc(4 * var(--u)) rgb(0 0 0 / .22), inset 0 0 0 1px color-mix(in oklab, var(--text) 9%, transparent) }
+.mini[data-top="1"] .mwin{ top:calc(11 * var(--u)) }
+.mw__dots{ position:absolute; left:calc(1.2 * var(--u)); top:calc(1.15 * var(--u)); display:flex; gap:calc(.6 * var(--u)) }
+.mw__dots i{ width:calc(1.05 * var(--u)); height:calc(1.05 * var(--u)); border-radius:50%; background:#ff5f57 } .mw__dots i + i{ background:#febc2e } .mw__dots i + i + i{ background:#28c840 }
+.mwin__title{ align-self:center; justify-self:center; font:500 calc(1.05 * var(--u)) var(--sans); color:var(--text-dim) }
+.mwin__body{ min-height:0; display:grid; overflow:clip }
+.mwin--term .mwin__body{ grid-template-columns:auto 1fr; gap:calc(2 * var(--u)); padding:calc(1.5 * var(--u)) calc(2 * var(--u)); align-items:start }
+.ff{ margin:0; font:400 calc(1.02 * var(--u))/1.06 var(--mono); color:var(--text); white-space:pre }
+.ff1{ color:var(--acc) } .ff2{ color:var(--text) }
+.ffi{ display:grid; gap:calc(.25 * var(--u)); font:400 calc(.95 * var(--u))/1.3 var(--mono); padding-top:calc(1 * var(--u)) }
+.ffi b{ font-weight:600 } .ffi b span{ color:var(--acc) }
+.ffi i{ height:1px; background:var(--stroke-1); margin:calc(.3 * var(--u)) 0 }
+.ffi p{ margin:0; white-space:nowrap } .ffi p span{ display:inline-block; width:calc(7 * var(--u)); color:var(--acc); font-weight:600 }
+.mwin--files .mwin__body, .mwin--set .mwin__body{ grid-template-columns:calc(12 * var(--u)) 1fr }
+.mwin aside{ background:var(--surface-2); padding:calc(1.2 * var(--u)) calc(1 * var(--u)); display:grid; align-content:start; gap:calc(.4 * var(--u)) }
+.mwin aside p{ margin:0; padding:calc(.5 * var(--u)) calc(.8 * var(--u)); border-radius:calc(.7 * var(--u)); font-size:calc(.95 * var(--u)); color:var(--text-dim) }
+.mwin aside p.on{ background:var(--surface); color:var(--text); box-shadow:var(--shadow-1) }
+.fgrid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:calc(1.6 * var(--u)); padding:calc(2 * var(--u)); align-content:start }
+.fcell{ display:grid; justify-items:center; gap:calc(.4 * var(--u)) } .fcell svg{ width:calc(5.6 * var(--u)); height:calc(5.6 * var(--u)) } .fcell small{ font-size:calc(.85 * var(--u)); color:var(--text-dim) }
+.sbody{ padding:calc(1.8 * var(--u)) calc(2.2 * var(--u)); display:grid; gap:calc(1.4 * var(--u)); align-content:start }
+.sbody > b{ font:600 calc(1.9 * var(--u)) var(--sans) }
+.srow{ display:flex; align-items:center; justify-content:space-between; gap:calc(1 * var(--u)); padding-bottom:calc(1.2 * var(--u)); border-bottom:1px solid var(--stroke-1); font-size:calc(1 * var(--u)) }
+.sw{ display:flex; gap:calc(.6 * var(--u)) }
+.sw i{ width:calc(1.8 * var(--u)); height:calc(1.8 * var(--u)); border-radius:50%; background:oklch(.62 .17 var(--h)) }
+.sw--rb, .sw .sw--rb{ background:conic-gradient(from 90deg, oklch(.62 .17 0), oklch(.62 .17 90), oklch(.62 .17 180), oklch(.62 .17 270), oklch(.62 .17 360)) }
+.sw--sp, .sw .sw--sp{ background:linear-gradient(135deg, oklch(.66 .17 300) 0 25%, oklch(.7 .15 200) 25% 50%, oklch(.74 .15 120) 50% 75%, oklch(.7 .17 30) 75%) }
+.seg{ display:flex; padding:calc(.25 * var(--u)); border-radius:calc(1 * var(--u)); background:var(--surface-2) }
+.seg i{ padding:calc(.35 * var(--u)) calc(.9 * var(--u)); border-radius:calc(.8 * var(--u)); font:normal calc(.85 * var(--u)) var(--sans); color:var(--text-dim) }
+.seg i.on{ background:var(--surface); color:var(--text); box-shadow:var(--shadow-1) }
+.mwin--web .mwin__body{ grid-template-rows:auto auto 1fr }
+.wtabs{ display:flex; gap:calc(.6 * var(--u)); padding:0 calc(1.2 * var(--u)) }
+.wtabs i{ padding:calc(.6 * var(--u)) calc(1.4 * var(--u)); border-radius:calc(.8 * var(--u)) calc(.8 * var(--u)) 0 0; font:normal calc(.9 * var(--u)) var(--sans); color:var(--text-dim) }
+.wtabs i.on{ background:var(--surface-2); color:var(--text) }
+.wurl{ margin:0 calc(1.2 * var(--u)); padding:calc(.6 * var(--u)) calc(1.2 * var(--u)); border-radius:calc(2 * var(--u)); background:var(--surface-2); font-size:calc(.9 * var(--u)); color:var(--text-dim) }
+.wpage{ display:grid; gap:calc(1 * var(--u)); padding:calc(2.4 * var(--u)) calc(3 * var(--u)); align-content:start }
+.wh{ height:calc(3 * var(--u)); width:60%; border-radius:calc(.6 * var(--u)); background:linear-gradient(90deg, oklch(.6 .18 var(--tint-h)), oklch(.62 .18 calc(var(--tint-h) + 60))) }
+.wl{ height:calc(1 * var(--u)); width:85%; border-radius:calc(.5 * var(--u)); background:color-mix(in oklab, var(--text) 12%, transparent) } .wl.s{ width:55% }
+.wcards{ display:grid; grid-template-columns:repeat(3, 1fr); gap:calc(1.2 * var(--u)); margin-top:calc(1 * var(--u)) }
+.wcards i{ aspect-ratio:4 / 3; border-radius:calc(1 * var(--u)); background:linear-gradient(135deg, var(--acc-soft), color-mix(in oklab, var(--text) 6%, transparent)) }
+/* the control centre, small */
+.mcc{ right:calc(2.4 * var(--u)); bottom:calc(9.5 * var(--u)); width:calc(30 * var(--u)); padding:calc(1.2 * var(--u)); border-radius:calc(2 * var(--u)); display:grid; gap:calc(.9 * var(--u));
+  background:color-mix(in oklab, var(--surface) 80%, transparent); -webkit-backdrop-filter:blur(14px) saturate(1.3); backdrop-filter:blur(14px) saturate(1.3);
+  box-shadow:0 calc(1.2 * var(--u)) calc(4 * var(--u)) rgb(0 0 0 / .25), inset 0 0 0 1px color-mix(in oklab, var(--text) 9%, transparent) }
+.mcc__row{ display:grid; grid-template-columns:1fr 1fr; gap:calc(.9 * var(--u)) }
+.mcc__mod{ display:grid; gap:calc(.6 * var(--u)); padding:calc(1 * var(--u)); border-radius:calc(1.4 * var(--u)); background:color-mix(in oklab, var(--surface-2) 85%, transparent) }
+.mcc__mod small{ font-size:calc(.8 * var(--u)); color:var(--text-dim) }
+.mcc__mod--on .li{ width:calc(2.6 * var(--u)); height:calc(2.6 * var(--u)); padding:calc(.5 * var(--u)); border-radius:50%; background:var(--acc-fill); color:var(--on-acc) }
+.mcc__orbs{ display:flex; gap:calc(.6 * var(--u)) } .mcc__orbs i{ width:calc(2.6 * var(--u)); height:calc(2.6 * var(--u)); border-radius:50%; background:var(--surface) } .mcc__orbs i.on{ background:var(--acc-fill) }
+.mcc .sw{ flex-wrap:wrap } .mcc .sw i{ width:calc(2 * var(--u)); height:calc(2 * var(--u)) }
+.mcc__toggles{ display:grid; grid-template-columns:repeat(4, 1fr); gap:calc(.9 * var(--u)) }
+.mcc__toggles i{ display:grid; place-items:center; padding:calc(1 * var(--u)) 0; border-radius:calc(1.4 * var(--u)); background:color-mix(in oklab, var(--surface-2) 85%, transparent) }
+.mcc__toggles .li{ width:calc(2.6 * var(--u)); height:calc(2.6 * var(--u)); padding:calc(.5 * var(--u)); border-radius:50%; background:var(--surface); color:var(--text-dim) }
+.mcc__toggles i.on .li{ background:var(--acc-fill); color:var(--on-acc) }
+
+/* ---------- stage 2: features ---------- */
+.feat{ display:flex; flex-direction:column; gap:16px; padding:22px; min-height:220px }
+.feat__head{ display:grid; gap:8px }
+.feat__head h3{ margin:0; font:600 21px/1.15 var(--sans); letter-spacing:-.015em; text-wrap:balance }
+.feat__head p{ margin:0; color:var(--text-dim); font-size:14px; line-height:1.5; max-width:46ch }
+.feat__note{ margin:0; color:var(--text-dim); font-size:13px }
+@media (min-width: 1000px){
+  .feat.is-wide{ display:grid; grid-template-columns:minmax(0, .9fr) minmax(0, 1.1fr); align-items:center; gap:22px }
+}
+.feat--hero{ align-items:center; justify-content:center; text-align:center; gap:14px; padding:40px 24px; min-height:340px; border:0; color:var(--text) }
+.hero__mark{ width:64px; height:67px; filter:drop-shadow(0 0 30px var(--nova-glow)) }
+.hero__lede{ margin:0; max-width:30ch; font-size:17px; line-height:1.45; color:var(--text-dim) }
+.hero__ver{ font:500 12px var(--mono); color:var(--text-ghost) }
+/* terminal */
+.term{ flex:1; display:grid; grid-template-columns:minmax(0, 1fr); gap:12px; align-content:start; padding:18px; border-radius:16px;
+  background:var(--surface-2); box-shadow:inset 0 0 0 1px var(--stroke-1) }
+.term .ff{ font-size:9px; line-height:1.06; overflow:hidden }
+.term .ffi{ font-size:11px; gap:3px; padding-top:6px }
+.term .ffi p span{ width:72px }
+.term .ffi i{ margin:3px 0 }
+.prompt{ grid-column:1 / -1; font:400 12px/1.6 var(--mono); color:var(--text) }
+.prompt .p1{ color:var(--acc); font-weight:600 } .prompt .p2{ color:var(--text-dim) }
+/* cursors */
+.curs{ display:grid; grid-template-columns:repeat(4, 1fr); gap:8px }
+.cur{ display:grid; justify-items:center; gap:4px; padding:10px 4px 8px; border-radius:14px; background:var(--surface-2) }
+.cur img{ width:32px; height:32px }
+.cur small{ font:400 9.5px var(--mono); color:var(--text-dim); max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+/* apps */
+.mini--flat{ border-radius:16px; box-shadow:inset 0 0 0 1px var(--stroke-1) }
+.mini--flat .mwin{ left:calc(8 * var(--u)); top:calc(8 * var(--u)); width:calc(84 * var(--u)); height:calc(84 * var(--u)) }
+.mini--flat .mwin__title{ font-size:calc(2 * var(--u)) } .mini--flat .mw__dots i{ width:calc(1.8 * var(--u)); height:calc(1.8 * var(--u)) } .mini--flat .mw__dots{ left:calc(2 * var(--u)); top:calc(1.8 * var(--u)); gap:calc(1 * var(--u)) }
+.mini--flat .mwin{ grid-template-rows:calc(5.6 * var(--u)) 1fr } .mini--flat .wtabs i, .mini--flat .wurl{ font-size:calc(1.6 * var(--u)) } .mini--flat .wh{ height:calc(5 * var(--u)) } .mini--flat .wl{ height:calc(1.6 * var(--u)) }
+/* media pill */
+.pill{ align-self:center; display:flex; align-items:center; gap:12px; padding:8px 10px 8px 8px; border-radius:999px; background:var(--surface-2);
+  box-shadow:inset 0 0 0 1px var(--stroke-1); max-width:100% }
+.pill__cover{ width:42px; height:42px; flex:none; border-radius:12px; background:linear-gradient(135deg, oklch(.7 .17 var(--tint-h)), oklch(.5 .2 calc(var(--tint-h) + 70))) }
+.pill span:not(.pill__ctl){ display:grid; line-height:1.2; min-width:0 } .pill b{ font-size:14px } .pill small{ font-size:12px; color:var(--text-dim) }
+.pill__ctl{ display:flex; gap:2px } .pill__ctl .li{ width:30px; height:30px; padding:8px; border-radius:50%; color:var(--text) }
+/* dock */
+.dock{ align-self:center; display:flex; align-items:center; gap:6px; padding:7px 10px; border-radius:20px; background:var(--surface-2); box-shadow:inset 0 0 0 1px var(--stroke-1); max-width:100% }
+.dock .ic{ width:26px; height:26px; flex:none }
+.dock__mark{ width:18px; height:19px; flex:none }
+.dsep{ width:1px; height:20px; background:var(--stroke-1) }
+.dmin{ width:32px; height:26px; flex:none; display:grid; place-items:center; border-radius:7px; background:var(--surface); box-shadow:inset 0 0 0 1px var(--stroke-1), 0 1px 3px rgb(0 0 0 / .1) }
+.dmin .ic{ width:18px; height:18px }
+/* control centre */
+.ccw{ flex:1; display:grid; place-items:center; container-type:inline-size; padding:6px }
+.ccw{ --u:3.2cqw }
+.ccw .mcc{ position:static; width:calc(30 * var(--u)) }
+/* lucent */
+.lu{ display:grid; gap:10px }
+.lu__card{ display:grid; gap:3px; padding:14px 16px; border-radius:16px; background:var(--surface-2) }
+.lu__card b{ font-size:17px } .lu__card small{ color:var(--text-dim); font-size:13px }
+.lu__state{ display:flex; align-items:center; gap:6px; font:500 11px var(--mono); color:var(--ok) }
+.lu__state i{ width:7px; height:7px; border-radius:50%; background:var(--ok) }
+.lu__stats{ display:grid; grid-template-columns:repeat(3, 1fr); gap:8px }
+.lu__stats span{ display:grid; gap:2px; padding:10px 12px; border-radius:12px; background:var(--surface-2) }
+.lu__stats small{ font:500 10px var(--mono); text-transform:uppercase; letter-spacing:.08em; color:var(--text-ghost) } .lu__stats b{ font-size:16px }
+.lu__btn{ justify-self:start; padding:8px 14px; border-radius:999px; background:var(--text); color:var(--bg); font-size:13px; font-weight:600 }
+/* ssh */
+.cmd{ display:block; padding:12px 14px; border-radius:12px; background:var(--surface-2); font:500 13px var(--mono); overflow-x:auto; white-space:nowrap }
+/* desktops */
+.desks{ display:grid; gap:6px }
+.desks span{ display:grid; gap:1px; padding:9px 12px; border-radius:12px; border:1px solid var(--stroke-1) }
+.desks span.on{ border-color:var(--acc-line); background:var(--acc-soft) }
+.desks b{ font-size:14px } .desks small{ font-size:12px; color:var(--text-dim) }
+/* accents */
+.accents{ display:grid; grid-template-columns:repeat(5, 1fr); gap:12px 8px }
+.accents .sw{ display:grid; justify-items:center; gap:6px; font-style:normal }
+.accents .sw::before{ content:""; width:34px; height:34px; border-radius:50%; background:oklch(.62 .17 var(--h, 277));
+  box-shadow:inset 0 0 0 1px light-dark(rgba(0,0,0,.12), rgba(255,255,255,.18)) }
+.accents .sw--rb::before{ background:conic-gradient(from 90deg, oklch(.62 .17 0), oklch(.62 .17 90), oklch(.62 .17 180), oklch(.62 .17 270), oklch(.62 .17 360)) }
+.accents .sw--sp::before{ background:linear-gradient(135deg, oklch(.66 .17 300) 0 25%, oklch(.7 .15 200) 25% 50%, oklch(.74 .15 120) 50% 75%, oklch(.7 .17 30) 75%) }
+.accents .sw--custom::before{ background:radial-gradient(circle, oklch(.62 .17 320) 0 42%, transparent 44%),
+  conic-gradient(from 90deg, oklch(.75 .12 0), oklch(.75 .12 90), oklch(.75 .12 180), oklch(.75 .12 270), oklch(.75 .12 360)) }
+.accents .sw--rb, .accents .sw--sp{ background:none }
+.accents small{ font-size:11px; color:var(--text-dim) }
+/* languages */
+.lang{ margin:0; display:grid; gap:4px; font:600 24px/1.2 var(--sans); letter-spacing:-.01em }
+.lang span:nth-child(2){ color:var(--text-dim) } .lang span:nth-child(3){ color:var(--acc); font-family:"Noto Sans JP", "Hiragino Sans", var(--sans) }
+
+@media (max-width: 640px){
+  .feat--hero{ min-height:260px }
+  .accents{ grid-template-columns:repeat(4, 1fr) }
+  .term{ grid-template-columns:minmax(0, 1fr) }
+}
+
+</style>
+<svg width="0" height="0" class="sprite" aria-hidden="true" style="position:absolute"><defs>
+    <linearGradient id="g-shine" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".30"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient>
+    <linearGradient id="g-files" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#63a4ff"/><stop offset="1" stop-color="#2c5fe0"/></linearGradient>
+    <linearGradient id="g-files-front" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dce7ff"/></linearGradient>
+    <linearGradient id="g-term" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a3a46"/><stop offset="1" stop-color="#121217"/></linearGradient>
+    <linearGradient id="g-edit" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd76a"/><stop offset="1" stop-color="#f29a0b"/></linearGradient>
+    <linearGradient id="g-web" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb347"/><stop offset=".55" stop-color="#f2546b"/><stop offset="1" stop-color="#7b5cff"/></linearGradient>
+    <linearGradient id="g-xterm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6c6c7c"/><stop offset="1" stop-color="#383844"/></linearGradient>
+    <linearGradient id="g-set" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eceef4"/><stop offset="1" stop-color="#a3a6b6"/></linearGradient>
+    <linearGradient id="g-win" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3fe0c5"/><stop offset="1" stop-color="#0e8a86"/></linearGradient>
+  </defs>
+<symbol id="am" viewBox="0 0 95.64 100"><path class="am-l" d="M40.4 0L51.4 0L11 100L0 100Z"/><path class="am-b" d="M51.14 14L75.14 14L40.39 100L16.39 100Z"/><path class="am-d" d="M71.64 36L95.64 36L69.79 100L45.79 100Z"/></symbol>
+<symbol id="lm" viewBox="0 0 964 543"><path fill="currentColor" d="M112,148L260,217L409.69,379.66L467.26,264.53L400,222.08L400,204.02L0,0L112,148Z"/><path fill="currentColor" d="M964,0L564,204.02L564,222.08L496.74,264.53L554.31,379.66L704,217L852,148L964,0Z"/><path fill="currentColor" d="M172.93,266.68L315.8,308.65L247.36,234.28L59.81,146.84L172.93,266.68Z"/><path fill="currentColor" d="M904.19,146.84L716.64,234.28L648.2,308.65L791.07,266.68L904.19,146.84Z"/><path fill="currentColor" d="M289.78,367.82L400.19,400.35L343.4,338.64L191.3,293.96L289.78,367.82Z"/><path fill="currentColor" d="M772.7,293.96L620.6,338.64L563.81,400.35L674.22,367.82L772.7,293.96Z"/><path fill="currentColor" d="M518,67L415,100L403,120L454,122L421,210.5L482,249L543,210.5L538,85L518,67Z"/><path fill="currentColor" d="M482,282L544.5,407L482,543L419.5,407L482,282Z"/></symbol>
+<symbol id="app-files" viewBox="0 0 64 64">
+    <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#g-files)"/>
+    <path d="M13 21.5a3 3 0 0 1 3-3h10.5l4 4.5H48a3 3 0 0 1 3 3V44H13z" fill="#bcd3ff"/>
+    <path d="M11 29.5a3 3 0 0 1 3-3h36a3 3 0 0 1 3 3.3l-1.6 15.4a3.4 3.4 0 0 1-3.4 3.1H16a3.4 3.4 0 0 1-3.4-3.1z" fill="url(#g-files-front)"/>
+    <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#g-shine)"/>
+    <rect x="2.5" y="2.5" width="59" height="59" rx="13.5" fill="none" stroke="#fff" stroke-opacity=".18"/>
+  </symbol>
+<symbol id="app-terminal" viewBox="0 0 64 64">
+    <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#g-term)"/>
+    <path d="M17 23l9 8-9 8" fill="none" stroke="#3ecf8e" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="30" y="37" width="16" height="4.5" rx="2.25" fill="#f2f2f4"/>
+    <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#g-shine)" opacity=".5"/>
+    <rect x="2.5" y="2.5" width="59" height="59" rx="13.5" fill="none" stroke="#fff" stroke-opacity=".16"/>
+  </symbol>
+<symbol id="app-editor" viewBox="0 0 64 64">
+    <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#g-edit)"/>
+    <g transform="rotate(-7 32 32)">
+      <rect x="17" y="12" width="28" height="38" rx="3.5" fill="#fff"/>
+      <path d="M22 21h18M22 27h18M22 33h12" stroke="#c9a14a" stroke-width="2.4" stroke-linecap="round"/>
+    </g>
+    <g transform="rotate(40 42 40)">
+      <rect x="38" y="20" width="8" height="26" rx="1.5" fill="#7b5cff"/>
+      <rect x="38" y="20" width="8" height="5" rx="1.5" fill="#f2b6c6"/>
+      <path d="M38 46h8l-4 7z" fill="#f6dfb4"/><path d="M40.6 50.6h2.8L42 53z" fill="#2b2b34"/>
+    </g>
+    <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#g-shine)"/>
+    <rect x="2.5" y="2.5" width="59" height="59" rx="13.5" fill="none" stroke="#fff" stroke-opacity=".22"/>
+  </symbol>
+<symbol id="app-web" viewBox="0 0 64 64">
+    <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#g-web)"/>
+    <g fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round">
+      <circle cx="32" cy="32" r="16"/>
+      <ellipse cx="32" cy="32" rx="7" ry="16"/>
+      <path d="M17 26.5h30M17 37.5h30"/>
+    </g>
+    <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#g-shine)"/>
+    <rect x="2.5" y="2.5" width="59" height="59" rx="13.5" fill="none" stroke="#fff" stroke-opacity=".2"/>
+  </symbol>
+<symbol id="app-settings" viewBox="0 0 64 64">
+    <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#g-set)"/>
+    <circle cx="32" cy="32" r="15.5" fill="none" stroke="#3a3a46" stroke-width="7" stroke-dasharray="6.09 6.09"/>
+    <circle cx="32" cy="32" r="12" fill="#3a3a46"/>
+    <circle cx="32" cy="32" r="5" fill="#c9cbd6"/>
+    <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#g-shine)"/>
+    <rect x="2.5" y="2.5" width="59" height="59" rx="13.5" fill="none" stroke="#fff" stroke-opacity=".5"/>
+  </symbol>
+<symbol id="i-music" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M9 18V5.5l11-2V16M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm11-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/></symbol>
+<symbol id="i-prev" viewBox="0 0 24 24"><path fill="currentColor" d="M5 5.5a1 1 0 0 1 2 0v13a1 1 0 0 1-2 0zM19 6.3v11.4a1 1 0 0 1-1.53.85L9.3 13.06a1.25 1.25 0 0 1 0-2.12l8.17-5.49A1 1 0 0 1 19 6.3z"/></symbol>
+<symbol id="i-next" viewBox="0 0 24 24"><path fill="currentColor" d="M19 5.5a1 1 0 0 0-2 0v13a1 1 0 0 0 2 0zM5 6.3v11.4a1 1 0 0 0 1.53.85l8.17-5.49a1.25 1.25 0 0 0 0-2.12L6.53 5.45A1 1 0 0 0 5 6.3z"/></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24"><rect fill="currentColor" x="6.5" y="5" width="4" height="14" rx="1.2"/><rect fill="currentColor" x="13.5" y="5" width="4" height="14" rx="1.2"/></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/></symbol>
+<symbol id="i-sun" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></g></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" d="M19.5 14.6A8 8 0 0 1 9.4 4.5a8 8 0 1 0 10.1 10.1z"/></symbol>
+<symbol id="i-auto" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/></g><path fill="currentColor" d="M12 4a8 8 0 0 1 0 16z"/></symbol>
+<symbol id="i-folder" viewBox="0 0 24 24"><path fill="currentColor" fill-opacity=".18" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" d="M3.5 6.5h6l2 2h9v10h-17z"/></symbol>
+<symbol id="i-pulse" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" d="M3 12h4l2-5 4 10 2-5h6"/></symbol>
+<symbol id="i-pointer" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" d="M5.5 3.5v15l4-3.6 2.8 6.6 3-1.3-2.8-6.4h5.4z"/></symbol>
+<symbol id="i-motion" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 8h10M3 12h14M3 16h8"/><circle cx="18.5" cy="16" r="2.5"/></g></symbol>
+<symbol id="i-net" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M3.5 9a12 12 0 0 1 17 0M6.5 12.5a7.5 7.5 0 0 1 11 0M9.5 16a3 3 0 0 1 5 0M12 19.5h.01"/></symbol>
+<symbol id="i-battery" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" d="M3.5 7.5h15v9h-15zM20.5 10.5v3"/></symbol>
+<symbol id="i-sliders" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></g></symbol>
+<symbol id="i-window" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" d="M3.5 5h17v14h-17zM3.5 9h17"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" d="M10.5 17a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13zM15.5 15.5 20 20"/></symbol>
+<symbol id="i-term" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M3.5 5h17v14h-17zM7 9.5l3 2.5-3 2.5M12.5 15h4"/></symbol>
+<symbol id="i-gear" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></g></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M9 11.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM2.5 19.5c.8-3 3.3-4.5 6.5-4.5s5.7 1.5 6.5 4.5M16 4.8a3.5 3.5 0 0 1 0 6.4M18 15.3c1.6.6 2.8 2 3.4 4.2"/></symbol>
+<symbol id="i-box" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" d="M4 7.5 12 4l8 3.5v9L12 20l-8-3.5zM4 7.5l8 3.5 8-3.5M12 11v9"/></symbol></svg>
+<main class="show">
+  <header class="stage__head">
+    <span class="eyebrow">Akari OS 0.7</span>
+    <h1>Jeder Desktop ein eigener Look</h1>
+    <p>Mehrere Desktops pro Konto, jeder mit Farbe, Licht, Logo und Leiste nach Wahl. Alles echte Akari-Einstellungen.</p>
+  </header>
+  <section class="stage stage--looks" aria-label="Desktops"><figure class="tile tile--look" data-ga="a"><div class="mini f-nova look look--light   " style="--tint-h:277" data-side="left" data-logo="none" data-top="0"><div class="mini__widgets"><div class="mwg mwg--clock"><b>10:53</b><small>Samstag, 21. November</small></div><div class="mwg mwg--perf"><small>CPU</small><span class="spark"></span><small>Speicher</small><i style="--v:.42"></i></div><div class="mwg mwg--note"><small>Notiz …</small></div></div><div class="mini__icons"><span><svg class="ic"><use href="#app-web"/></svg><small>Firefox</small></span><span><svg class="ic"><use href="#app-terminal"/></svg><small>Terminal</small></span><span><svg class="ic"><use href="#app-files"/></svg><small>Dateien</small></span><span><svg class="ic"><use href="#app-settings"/></svg><small>Einstellungen</small></span></div><div class="mwin mwin--files"><span class="mw__dots"><i></i><i></i><i></i></span><span class="mwin__title">Dateien · Home</span><div class="mwin__body"><aside><p>Home</p><p>Schreibtisch</p><p>Dokumente</p><p>Papierkorb</p></aside><div class="fgrid"><span class="fcell"><svg><use href="#app-files"/></svg><small>Dokumente</small></span><span class="fcell"><svg><use href="#app-files"/></svg><small>Bilder</small></span><span class="fcell"><svg><use href="#app-files"/></svg><small>Downloads</small></span><span class="fcell"><svg><use href="#app-files"/></svg><small>Musik</small></span><span class="fcell"><svg><use href="#app-files"/></svg><small>Projekte</small></span><span class="fcell"><svg><use href="#app-files"/></svg><small>akari</small></span></div></div></div><div class="mini__bar" data-align="center"><div class="mb"><svg class="mb__mark am" viewBox="0 0 95.64 100"><use href="#am"/></svg><i class="mb__sep"></i><svg class="ic"><use href="#app-files"/></svg><svg class="ic"><use href="#app-terminal"/></svg><svg class="ic"><use href="#app-editor"/></svg><svg class="ic"><use href="#app-web"/></svg><svg class="ic"><use href="#app-settings"/></svg></div><div class="mb"><span class="mb__desk"><svg class="li"><use href="#i-window"/></svg>Arbeit</span><i class="mb__sep"></i><svg class="li"><use href="#i-net"/></svg><svg class="li"><use href="#i-battery"/></svg><i class="mb__sep"></i><svg class="li"><use href="#i-sliders"/></svg><svg class="li"><use href="#i-bell"/></svg><span class="mb__clock"><b>10:53</b><small>21.11.2026</small></span></div></div></div><figcaption><b>Arbeit</b><span class="chips"><span class="chip">Facet-Violett</span><span class="chip">Hell</span><span class="chip">Licht von links</span></span></figcaption></figure><figure class="tile tile--look" data-ga="b"><div class="mini f-nova look look--dark   " style="--tint-h:70" data-side="right" data-logo="none" data-top="0"><div class="mini__widgets"><div class="mwg mwg--clock"><b>21:40</b><small>Samstag, 21. November</small></div><div class="mwg mwg--perf"><small>CPU</small><span class="spark"></span><small>Speicher</small><i style="--v:.42"></i></div><div class="mwg mwg--note"><small>Notiz …</small></div></div><div class="mini__icons"><span><svg class="ic"><use href="#app-web"/></svg><small>Firefox</small></span><span><svg class="ic"><use href="#app-terminal"/></svg><small>Terminal</small></span><span><svg class="ic"><use href="#app-files"/></svg><small>Dateien</small></span><span><svg class="ic"><use href="#app-settings"/></svg><small>Einstellungen</small></span></div><div class="mwin mwin--term"><span class="mw__dots"><i></i><i></i><i></i></span><span class="mwin__title">Terminal · ada@akari</span><div class="mwin__body"><pre class="ff">         <span class="ff1">███</span>
+        <span class="ff1">▄██  </span><span class="ff2">▄▄▄▄▄▄</span>
+       <span class="ff1">▄██▀ </span><span class="ff2">▄█████▀</span>
+       <span class="ff1">██▀  </span><span class="ff2">█████▀</span>
+      <span class="ff1">███  </span><span class="ff2">██████  ▄▄▄▄▄▄</span>
+     <span class="ff1">███  </span><span class="ff2">██████  ██████</span>
+    <span class="ff1">▄██  </span><span class="ff2">▄█████  ▄█████▀</span>
+   <span class="ff1">▄██▀ </span><span class="ff2">▄█████▀ ▄█████▀</span>
+   <span class="ff1">██▀  </span><span class="ff2">█████▀  █████▀</span>
+  <span class="ff1">███  </span><span class="ff2">██████  ██████</span>
+ <span class="ff1">███  </span><span class="ff2">██████  ██████</span>
+<span class="ff1">▄██  </span><span class="ff2">██████  ▄█████</span></pre><div class="ffi"><b>ada<span>@</span>akari</b><i></i><p><span>System</span>Akari OS 0.7</p><p><span>Kernel</span>7.0.12</p><p><span>Desktop</span>Akari · Facet 1.8</p><p><span>Shell</span>zsh 5.9</p><p><span>Pakete</span>600 (dpkg)</p><p><span>Speicher</span>1,2 / 7,7 GiB</p></div></div></div><div class="mini__bar" data-align="center"><div class="mb"><svg class="mb__mark am" viewBox="0 0 95.64 100"><use href="#am"/></svg><i class="mb__sep"></i><svg class="ic"><use href="#app-files"/></svg><svg class="ic"><use href="#app-terminal"/></svg><svg class="ic"><use href="#app-editor"/></svg><svg class="ic"><use href="#app-web"/></svg><svg class="ic"><use href="#app-settings"/></svg></div><div class="mb"><span class="mb__desk"><svg class="li"><use href="#i-window"/></svg>Abends</span><i class="mb__sep"></i><svg class="li"><use href="#i-net"/></svg><svg class="li"><use href="#i-battery"/></svg><i class="mb__sep"></i><svg class="li"><use href="#i-sliders"/></svg><svg class="li"><use href="#i-bell"/></svg><span class="mb__clock"><b>21:40</b><small>21.11.2026</small></span></div></div></div><figcaption><b>Abends</b><span class="chips"><span class="chip">Bernstein</span><span class="chip">Dunkel</span><span class="chip">Licht von rechts</span></span></figcaption></figure><figure class="tile tile--look is-wide" data-ga="c"><div class="mini f-nova look look--light look--spectrum  " style="--tint-h:300" data-side="both" data-logo="lucya" data-top="0"><svg class="mini__logo mini__logo--lucya" viewBox="0 0 964 543"><use href="#lm"/></svg><div class="mini__widgets"><div class="mwg mwg--clock"><b>10:53</b><small>Samstag, 21. November</small></div><div class="mwg mwg--perf"><small>CPU</small><span class="spark"></span><small>Speicher</small><i style="--v:.42"></i></div><div class="mwg mwg--note"><small>Notiz …</small></div></div><div class="mini__icons"><span><svg class="ic"><use href="#app-web"/></svg><small>Firefox</small></span><span><svg class="ic"><use href="#app-terminal"/></svg><small>Terminal</small></span><span><svg class="ic"><use href="#app-files"/></svg><small>Dateien</small></span><span><svg class="ic"><use href="#app-settings"/></svg><small>Einstellungen</small></span></div><div class="mini__bar" data-align="split"><div class="mb"><svg class="mb__mark am" viewBox="0 0 95.64 100"><use href="#am"/></svg><i class="mb__sep"></i><svg class="ic"><use href="#app-files"/></svg><svg class="ic"><use href="#app-terminal"/></svg><svg class="ic"><use href="#app-editor"/></svg><svg class="ic"><use href="#app-web"/></svg><svg class="ic"><use href="#app-settings"/></svg></div><div class="mb"><span class="mb__media"><i class="mb__cover"></i><span><b>Magic</b><small>Geo22</small></span><svg class="li"><use href="#i-prev"/></svg><svg class="li"><use href="#i-pause"/></svg><svg class="li"><use href="#i-next"/></svg></span><i class="mb__sep"></i><span class="mb__desk"><svg class="li"><use href="#i-window"/></svg>Studio</span><i class="mb__sep"></i><svg class="li"><use href="#i-net"/></svg><svg class="li"><use href="#i-battery"/></svg><i class="mb__sep"></i><svg class="li"><use href="#i-sliders"/></svg><svg class="li"><use href="#i-bell"/></svg><span class="mb__clock"><b>10:53</b><small>21.11.2026</small></span></div></div></div><figcaption><b>Studio</b><span class="chips"><span class="chip">Farbverlauf</span><span class="chip">Hell</span><span class="chip">Beide Seiten</span><span class="chip">Leiste geteilt</span><span class="chip">lucya.systems-Logo</span></span></figcaption></figure><figure class="tile tile--look" data-ga="d"><div class="mini f-nova look look--dark   " style="--tint-h:250" data-side="left" data-logo="none" data-top="1"><div class="mwin mwin--web"><span class="mw__dots"><i></i><i></i><i></i></span><span class="mwin__title">Firefox</span><div class="mwin__body"><div class="wtabs"><i class="on">lucya.systems</i><i>Neuer Tab</i></div><div class="wurl">lucya.systems</div><div class="wpage"><i class="wh"></i><i class="wl"></i><i class="wl s"></i><span class="wcards"><i></i><i></i><i></i></span></div></div></div><div class="mini__bar" data-align="center"><div class="mb"><svg class="mb__mark am" viewBox="0 0 95.64 100"><use href="#am"/></svg><i class="mb__sep"></i><svg class="ic"><use href="#app-files"/></svg><svg class="ic"><use href="#app-terminal"/></svg><svg class="ic"><use href="#app-editor"/></svg><svg class="ic"><use href="#app-web"/></svg><svg class="ic"><use href="#app-settings"/></svg></div><div class="mb"><span class="mb__desk"><svg class="li"><use href="#i-window"/></svg>Fokus</span><i class="mb__sep"></i><svg class="li"><use href="#i-net"/></svg><svg class="li"><use href="#i-battery"/></svg><i class="mb__sep"></i><svg class="li"><use href="#i-sliders"/></svg><svg class="li"><use href="#i-bell"/></svg><span class="mb__clock"><b>10:53</b><small>21.11.2026</small></span></div></div></div><figcaption><b>Fokus</b><span class="chips"><span class="chip">Blau</span><span class="chip">Dunkel</span><span class="chip">Leiste oben</span><span class="chip">Ohne Widgets</span></span></figcaption></figure><figure class="tile tile--look" data-ga="e"><div class="mini f-nova look look--light   " style="--tint-h:150" data-side="right" data-logo="lucya" data-top="0"><svg class="mini__logo mini__logo--lucya" viewBox="0 0 964 543"><use href="#lm"/></svg><div class="mini__widgets"><div class="mwg mwg--clock"><b>10:53</b><small>Samstag, 21. November</small></div><div class="mwg mwg--perf"><small>CPU</small><span class="spark"></span><small>Speicher</small><i style="--v:.42"></i></div><div class="mwg mwg--note"><small>Notiz …</small></div></div><div class="mini__icons"><span><svg class="ic"><use href="#app-web"/></svg><small>Firefox</small></span><span><svg class="ic"><use href="#app-terminal"/></svg><small>Terminal</small></span><span><svg class="ic"><use href="#app-files"/></svg><small>Dateien</small></span><span><svg class="ic"><use href="#app-settings"/></svg><small>Einstellungen</small></span></div><div class="mini__bar" data-align="center"><div class="mb"><svg class="mb__mark am" viewBox="0 0 95.64 100"><use href="#am"/></svg><i class="mb__sep"></i><svg class="ic"><use href="#app-files"/></svg><svg class="ic"><use href="#app-terminal"/></svg><svg class="ic"><use href="#app-editor"/></svg><svg class="ic"><use href="#app-web"/></svg><svg class="ic"><use href="#app-settings"/></svg><i class="mb__sep"></i><i class="mb__min"></i></div><div class="mb"><span class="mb__desk"><svg class="li"><use href="#i-window"/></svg>Garten</span><i class="mb__sep"></i><svg class="li"><use href="#i-net"/></svg><svg class="li"><use href="#i-battery"/></svg><i class="mb__sep"></i><svg class="li"><use href="#i-sliders"/></svg><svg class="li"><use href="#i-bell"/></svg><span class="mb__clock"><b>10:53</b><small>21.11.2026</small></span></div></div></div><figcaption><b>Garten</b><span class="chips"><span class="chip">Grün</span><span class="chip">Hell</span><span class="chip">Licht von rechts</span><span class="chip">Minimiert</span></span></figcaption></figure><figure class="tile tile--look" data-ga="f"><div class="mini f-nova look look--dark   " style="--tint-h:-10" data-side="both" data-logo="akari" data-top="0"><svg class="mini__logo am" viewBox="0 0 95.64 100"><use href="#am"/></svg><div class="mini__widgets"><div class="mwg mwg--clock"><b>23:12</b><small>Samstag, 21. November</small></div><div class="mwg mwg--perf"><small>CPU</small><span class="spark"></span><small>Speicher</small><i style="--v:.42"></i></div><div class="mwg mwg--note"><small>Notiz …</small></div></div><div class="mini__icons"><span><svg class="ic"><use href="#app-web"/></svg><small>Firefox</small></span><span><svg class="ic"><use href="#app-terminal"/></svg><small>Terminal</small></span><span><svg class="ic"><use href="#app-files"/></svg><small>Dateien</small></span><span><svg class="ic"><use href="#app-settings"/></svg><small>Einstellungen</small></span></div><div class="mini__bar" data-align="center"><div class="mb"><svg class="mb__mark am" viewBox="0 0 95.64 100"><use href="#am"/></svg><i class="mb__sep"></i><svg class="ic"><use href="#app-files"/></svg><svg class="ic"><use href="#app-terminal"/></svg><svg class="ic"><use href="#app-editor"/></svg><svg class="ic"><use href="#app-web"/></svg><svg class="ic"><use href="#app-settings"/></svg></div><div class="mb"><span class="mb__desk"><svg class="li"><use href="#i-window"/></svg>Nacht</span><i class="mb__sep"></i><svg class="li"><use href="#i-net"/></svg><svg class="li"><use href="#i-battery"/></svg><i class="mb__sep"></i><svg class="li"><use href="#i-sliders"/></svg><svg class="li"><use href="#i-bell"/></svg><span class="mb__clock"><b>23:12</b><small>21.11.2026</small></span></div></div></div><figcaption><b>Nacht</b><span class="chips"><span class="chip">Pink</span><span class="chip">Dunkel</span><span class="chip">Beide Seiten</span><span class="chip">Akari-Logo</span></span></figcaption></figure><figure class="tile tile--look" data-ga="g"><div class="mini f-nova look look--dark  look--plain " style="--tint-h:215" data-side="left" data-logo="none" data-top="0"><div class="mini__widgets"><div class="mwg mwg--clock"><b>10:53</b><small>Samstag, 21. November</small></div><div class="mwg mwg--perf"><small>CPU</small><span class="spark"></span><small>Speicher</small><i style="--v:.42"></i></div><div class="mwg mwg--note"><small>Notiz …</small></div></div><div class="mwin mwin--set"><span class="mw__dots"><i></i><i></i><i></i></span><span class="mwin__title">Einstellungen</span><div class="mwin__body"><aside><p class=on>Darstellung</p><p>Schreibtisch</p><p>Konto</p><p>Lucent</p><p>SSH</p></aside><div class="sbody"><b>Darstellung</b><div class="srow"><span>Akzent</span><span class="sw"><i style="--h:277"></i><i style="--h:250"></i><i style="--h:215"></i><i style="--h:150"></i><i style="--h:70"></i><i style="--h:25"></i><i style="--h:350"></i><i class="sw--rb"></i></span></div><div class="srow"><span>Licht von</span><span class="seg"><i>Links</i><i class="on">Rechts</i><i>Beide</i></span></div><div class="srow"><span>Logo</span><span class="seg"><i>Keins</i><i class="on">Akari</i><i>lucya</i></span></div></div></div></div><div class="mini__bar" data-align="center"><div class="mb"><svg class="mb__mark am" viewBox="0 0 95.64 100"><use href="#am"/></svg><i class="mb__sep"></i><svg class="ic"><use href="#app-files"/></svg><svg class="ic"><use href="#app-terminal"/></svg><svg class="ic"><use href="#app-editor"/></svg><svg class="ic"><use href="#app-web"/></svg><svg class="ic"><use href="#app-settings"/></svg></div><div class="mb"><span class="mb__desk"><svg class="li"><use href="#i-window"/></svg>Schlicht</span><i class="mb__sep"></i><svg class="li"><use href="#i-net"/></svg><svg class="li"><use href="#i-battery"/></svg><i class="mb__sep"></i><svg class="li"><use href="#i-sliders"/></svg><svg class="li"><use href="#i-bell"/></svg><span class="mb__clock"><b>10:53</b><small>21.11.2026</small></span></div></div></div><figcaption><b>Schlicht</b><span class="chips"><span class="chip">Cyan</span><span class="chip">Dunkel</span><span class="chip">Ohne Nova</span></span></figcaption></figure><figure class="tile tile--look is-wide" data-ga="h"><div class="mini f-nova look look--dark look--rainbow  " style="--tint-h:0" data-side="both" data-logo="akari" data-top="0"><svg class="mini__logo am" viewBox="0 0 95.64 100"><use href="#am"/></svg><div class="mini__widgets"><div class="mwg mwg--clock"><b>00:30</b><small>Samstag, 21. November</small></div><div class="mwg mwg--perf"><small>CPU</small><span class="spark"></span><small>Speicher</small><i style="--v:.42"></i></div><div class="mwg mwg--note"><small>Notiz …</small></div></div><div class="mini__icons"><span><svg class="ic"><use href="#app-web"/></svg><small>Firefox</small></span><span><svg class="ic"><use href="#app-terminal"/></svg><small>Terminal</small></span><span><svg class="ic"><use href="#app-files"/></svg><small>Dateien</small></span><span><svg class="ic"><use href="#app-settings"/></svg><small>Einstellungen</small></span></div><div class="mcc"><div class="mcc__row"><span class="mcc__mod"><small>Darstellung</small><span class="mcc__orbs"><i></i><i class="on"></i><i></i></span></span><span class="mcc__mod mcc__mod--on"><svg class="li"><use href="#i-bell"/></svg><small>Nicht stören</small></span></div><span class="mcc__mod mcc__mod--wide"><small>Akzent</small><span class="sw"><i style="--h:277"></i><i style="--h:250"></i><i style="--h:215"></i><i style="--h:150"></i><i style="--h:70"></i><i style="--h:25"></i><i style="--h:350"></i><i style="--h:300"></i><i class="sw--rb"></i><i class="sw--sp"></i></span></span><span class="mcc__mod mcc__mod--wide"><small>Nova</small><span class="seg"><i>Links</i><i class="on">Beide</i><i>Rechts</i></span></span><div class="mcc__toggles"><i class="on"><svg class="li"><use href="#i-folder"/></svg></i><i class="on"><svg class="li"><use href="#i-pulse"/></svg></i><i class="on"><svg class="li"><use href="#i-pointer"/></svg></i><i><svg class="li"><use href="#i-motion"/></svg></i></div></div><div class="mini__bar" data-align="split"><div class="mb"><svg class="mb__mark am" viewBox="0 0 95.64 100"><use href="#am"/></svg><i class="mb__sep"></i><svg class="ic"><use href="#app-files"/></svg><svg class="ic"><use href="#app-terminal"/></svg><svg class="ic"><use href="#app-editor"/></svg><svg class="ic"><use href="#app-web"/></svg><svg class="ic"><use href="#app-settings"/></svg></div><div class="mb"><span class="mb__media"><i class="mb__cover"></i><span><b>Magic</b><small>Geo22</small></span><svg class="li"><use href="#i-prev"/></svg><svg class="li"><use href="#i-pause"/></svg><svg class="li"><use href="#i-next"/></svg></span><i class="mb__sep"></i><span class="mb__desk"><svg class="li"><use href="#i-window"/></svg>Party</span><i class="mb__sep"></i><svg class="li"><use href="#i-net"/></svg><svg class="li"><use href="#i-battery"/></svg><i class="mb__sep"></i><svg class="li"><use href="#i-sliders"/></svg><svg class="li"><use href="#i-bell"/></svg><span class="mb__clock"><b>00:30</b><small>21.11.2026</small></span></div></div></div><figcaption><b>Party</b><span class="chips"><span class="chip">Regenbogen</span><span class="chip">Dunkel</span><span class="chip">Kontrollzentrum</span></span></figcaption></figure><figure class="tile tile--look" data-ga="i"><div class="mini f-nova look look--light   " style="--tint-h:25" data-side="left" data-logo="none" data-top="0"><div class="mini__widgets"><div class="mwg mwg--clock"><b>10:53</b><small>Samstag, 21. November</small></div><div class="mwg mwg--perf"><small>CPU</small><span class="spark"></span><small>Speicher</small><i style="--v:.42"></i></div><div class="mwg mwg--note"><small>Notiz …</small></div></div><div class="mini__icons"><span><svg class="ic"><use href="#app-web"/></svg><small>Firefox</small></span><span><svg class="ic"><use href="#app-terminal"/></svg><small>Terminal</small></span><span><svg class="ic"><use href="#app-files"/></svg><small>Dateien</small></span><span><svg class="ic"><use href="#app-settings"/></svg><small>Einstellungen</small></span></div><div class="mwin mwin--term"><span class="mw__dots"><i></i><i></i><i></i></span><span class="mwin__title">Terminal · ada@akari</span><div class="mwin__body"><pre class="ff">         <span class="ff1">███</span>
+        <span class="ff1">▄██  </span><span class="ff2">▄▄▄▄▄▄</span>
+       <span class="ff1">▄██▀ </span><span class="ff2">▄█████▀</span>
+       <span class="ff1">██▀  </span><span class="ff2">█████▀</span>
+      <span class="ff1">███  </span><span class="ff2">██████  ▄▄▄▄▄▄</span>
+     <span class="ff1">███  </span><span class="ff2">██████  ██████</span>
+    <span class="ff1">▄██  </span><span class="ff2">▄█████  ▄█████▀</span>
+   <span class="ff1">▄██▀ </span><span class="ff2">▄█████▀ ▄█████▀</span>
+   <span class="ff1">██▀  </span><span class="ff2">█████▀  █████▀</span>
+  <span class="ff1">███  </span><span class="ff2">██████  ██████</span>
+ <span class="ff1">███  </span><span class="ff2">██████  ██████</span>
+<span class="ff1">▄██  </span><span class="ff2">██████  ▄█████</span></pre><div class="ffi"><b>ada<span>@</span>akari</b><i></i><p><span>System</span>Akari OS 0.7</p><p><span>Kernel</span>7.0.12</p><p><span>Desktop</span>Akari · Facet 1.8</p><p><span>Shell</span>zsh 5.9</p><p><span>Pakete</span>600 (dpkg)</p><p><span>Speicher</span>1,2 / 7,7 GiB</p></div></div></div><div class="mini__bar" data-align="left"><div class="mb"><svg class="mb__mark am" viewBox="0 0 95.64 100"><use href="#am"/></svg><i class="mb__sep"></i><svg class="ic"><use href="#app-files"/></svg><svg class="ic"><use href="#app-terminal"/></svg><svg class="ic"><use href="#app-editor"/></svg><svg class="ic"><use href="#app-web"/></svg><svg class="ic"><use href="#app-settings"/></svg></div><div class="mb"><span class="mb__desk"><svg class="li"><use href="#i-window"/></svg>Werkstatt</span><i class="mb__sep"></i><svg class="li"><use href="#i-net"/></svg><svg class="li"><use href="#i-battery"/></svg><i class="mb__sep"></i><svg class="li"><use href="#i-sliders"/></svg><svg class="li"><use href="#i-bell"/></svg><span class="mb__clock"><b>10:53</b><small>21.11.2026</small></span></div></div></div><figcaption><b>Werkstatt</b><span class="chips"><span class="chip">Rot</span><span class="chip">Hell</span><span class="chip">Leiste links</span></span></figcaption></figure><figure class="tile tile--look" data-ga="j"><div class="mini f-nova look look--dark   " style="--tint-h:320" data-side="right" data-logo="lucya" data-top="0"><svg class="mini__logo mini__logo--lucya" viewBox="0 0 964 543"><use href="#lm"/></svg><div class="mini__widgets"><div class="mwg mwg--clock"><b>10:53</b><small>Samstag, 21. November</small></div><div class="mwg mwg--perf"><small>CPU</small><span class="spark"></span><small>Speicher</small><i style="--v:.42"></i></div><div class="mwg mwg--note"><small>Notiz …</small></div></div><div class="mini__icons"><span><svg class="ic"><use href="#app-web"/></svg><small>Firefox</small></span><span><svg class="ic"><use href="#app-terminal"/></svg><small>Terminal</small></span><span><svg class="ic"><use href="#app-files"/></svg><small>Dateien</small></span><span><svg class="ic"><use href="#app-settings"/></svg><small>Einstellungen</small></span></div><div class="mini__bar" data-align="right"><div class="mb"><svg class="mb__mark am" viewBox="0 0 95.64 100"><use href="#am"/></svg><i class="mb__sep"></i><svg class="ic"><use href="#app-files"/></svg><svg class="ic"><use href="#app-terminal"/></svg><svg class="ic"><use href="#app-editor"/></svg><svg class="ic"><use href="#app-web"/></svg><svg class="ic"><use href="#app-settings"/></svg></div><div class="mb"><span class="mb__desk"><svg class="li"><use href="#i-window"/></svg>Eigen</span><i class="mb__sep"></i><svg class="li"><use href="#i-net"/></svg><svg class="li"><use href="#i-battery"/></svg><i class="mb__sep"></i><svg class="li"><use href="#i-sliders"/></svg><svg class="li"><use href="#i-bell"/></svg><span class="mb__clock"><b>10:53</b><small>21.11.2026</small></span></div></div></div><figcaption><b>Eigen</b><span class="chips"><span class="chip">Eigene Farbe 320°</span><span class="chip">Dunkel</span><span class="chip">Leiste rechts</span></span></figcaption></figure>
+    <figure class="tile tile--title look look--light look--spectrum f-nova" data-ga="t" style="--tint-h:250" data-side="both">
+      <span class="eyebrow">Ein System</span>
+      <h2>Zehn Desktops,<br>zehn Looks</h2>
+      <p>Hell oder dunkel, Licht von links, rechts oder beiden Seiten, zehn Akzente, Logo auf Nova.</p>
+    </figure>
+  </section>
+
+  <header class="stage__head">
+    <span class="eyebrow">Design und Funktionen</span>
+    <h1>Gebaut in Facet 1.8</h1>
+    <p>Ein echtes Linux unter einer ruhigen, gläsernen Oberfläche.</p>
+  </header>
+  <section class="stage stage--feats" aria-label="Design und Funktionen">
+<figure class="tile feat feat--term" data-ga="a"">
+  <div class="feat__head"><span class="eyebrow">Echtes Debian</span><h3>Ein Linux, kein Spielzeug</h3>
+  <p>zsh mit powerlevel10k, fastfetch in deiner Akzentfarbe, sudo und apt, Pakete überleben jedes Update.</p></div>
+  <div class="term look look--dark" style="--tint-h:150"><pre class="ff">         <span class="ff1">███</span>
+        <span class="ff1">▄██  </span><span class="ff2">▄▄▄▄▄▄</span>
+       <span class="ff1">▄██▀ </span><span class="ff2">▄█████▀</span>
+       <span class="ff1">██▀  </span><span class="ff2">█████▀</span>
+      <span class="ff1">███  </span><span class="ff2">██████  ▄▄▄▄▄▄</span>
+     <span class="ff1">███  </span><span class="ff2">██████  ██████</span>
+    <span class="ff1">▄██  </span><span class="ff2">▄█████  ▄█████▀</span>
+   <span class="ff1">▄██▀ </span><span class="ff2">▄█████▀ ▄█████▀</span>
+   <span class="ff1">██▀  </span><span class="ff2">█████▀  █████▀</span>
+  <span class="ff1">███  </span><span class="ff2">██████  ██████</span>
+ <span class="ff1">███  </span><span class="ff2">██████  ██████</span>
+<span class="ff1">▄██  </span><span class="ff2">██████  ▄█████</span></pre>
+  <div class="ffi"><b>ada<span>@</span>akari</b><i></i><p><span>System</span>Akari OS 0.7 x86_64</p><p><span>Kernel</span>7.0.12</p>
+  <p><span>Desktop</span>Akari · Facet 1.8</p><p><span>Shell</span>zsh 5.9</p><p><span>Terminal</span>Akari Terminal</p><p><span>Pakete</span>600 (dpkg)</p></div>
+  <code class="prompt"><span class="p1">◆ ada@akari</span> <span class="p2">~</span><br>❯ sudo apt install btop</code></div>
+</figure>
+
+<figure class="tile feat feat--cursor" data-ga="b"">
+  <div class="feat__head"><span class="eyebrow">Eigene Cursor</span><h3>15 Zeiger, in jeder Farbe</h3></div>
+  <div class="curs look" style="--tint-h:277"><span class="cur"><img src="cursors/default.svg" alt="" width="32" height="32"><small>default</small></span><span class="cur"><img src="cursors/pointer.svg" alt="" width="32" height="32"><small>pointer</small></span><span class="cur"><img src="cursors/text.svg" alt="" width="32" height="32"><small>text</small></span><span class="cur"><img src="cursors/grab.svg" alt="" width="32" height="32"><small>grab</small></span><span class="cur"><img src="cursors/move.svg" alt="" width="32" height="32"><small>move</small></span><span class="cur"><img src="cursors/wait.svg" alt="" width="32" height="32"><small>wait</small></span><span class="cur"><img src="cursors/nwse-resize.svg" alt="" width="32" height="32"><small>nwse-resize</small></span><span class="cur"><img src="cursors/help.svg" alt="" width="32" height="32"><small>help</small></span></div>
+</figure>
+
+<figure class="tile feat is-wide feat--apps" data-ga="c"">
+  <div class="feat__head"><span class="eyebrow">Linux-Apps</span><h3>Firefox, Konsole, GIMP als Fenster</h3>
+  <p>Jede App auf einem eigenen Display, gestreamt in ein Akari-Fenster. Zwischenablage in beide Richtungen.</p></div>
+  <div class="mini mini--flat f-nova look look--light" style="--tint-h:250" data-side="left"><div class="mwin mwin--web"><span class="mw__dots"><i></i><i></i><i></i></span><span class="mwin__title">Firefox</span><div class="mwin__body"><div class="wtabs"><i class="on">lucya.systems</i><i>Neuer Tab</i></div><div class="wurl">lucya.systems</div><div class="wpage"><i class="wh"></i><i class="wl"></i><i class="wl s"></i><span class="wcards"><i></i><i></i><i></i></span></div></div></div></div>
+</figure>
+
+<figure class="tile feat feat--hero look look--dark look--spectrum f-nova" data-ga="h" style="--tint-h:280" data-side="both">
+  <svg class="hero__mark am" viewBox="0 0 95.64 100"><use href="#am"/></svg>
+  <h2 class="hero__title">Akari OS</h2>
+  <p class="hero__lede">Ein Desktop im Browser mit einem echten Debian darunter.</p>
+  <span class="hero__ver">0.7 · Facet 1.8</span>
+</figure>
+
+<figure class="tile feat feat--media" data-ga="d"">
+  <div class="feat__head"><span class="eyebrow">Medien</span><h3>Was spielt, steht in der Leiste</h3></div>
+  <div class="pill look look--light" style="--tint-h:-10"><i class="pill__cover"></i><span><b>Magic</b><small>Geo22</small></span>
+  <span class="pill__ctl"><svg class="li"><use href="#i-prev"/></svg><svg class="li"><use href="#i-pause"/></svg><svg class="li"><use href="#i-next"/></svg></span></div>
+</figure>
+
+<figure class="tile feat feat--dock" data-ga="e"">
+  <div class="feat__head"><span class="eyebrow">Die Leiste</span><h3>Minimiert wie bei macOS</h3></div>
+  <div class="dock look look--light" style="--tint-h:277"><svg class="dock__mark am" viewBox="0 0 95.64 100"><use href="#am"/></svg><i class="dsep"></i>
+  <svg class="ic"><use href="#app-files"/></svg><svg class="ic"><use href="#app-terminal"/></svg><svg class="ic"><use href="#app-editor"/></svg><i class="dsep"></i><span class="dmin"><svg class="ic"><use href="#app-web"/></svg></span><span class="dmin"><svg class="ic"><use href="#app-settings"/></svg></span></div>
+  <p class="feat__note">Unten, oben, links, rechts oder geteilt.</p>
+</figure>
+
+<figure class="tile feat feat--cc" data-ga="f"">
+  <div class="feat__head"><span class="eyebrow">Kontrollzentrum</span><h3>Alles mit einem Klick</h3></div>
+  <div class="ccw look look--light" style="--tint-h:150"><div class="mcc"><div class="mcc__row"><span class="mcc__mod"><small>Darstellung</small><span class="mcc__orbs"><i></i><i class="on"></i><i></i></span></span><span class="mcc__mod mcc__mod--on"><svg class="li"><use href="#i-bell"/></svg><small>Nicht stören</small></span></div><span class="mcc__mod mcc__mod--wide"><small>Akzent</small><span class="sw"><i style="--h:277"></i><i style="--h:250"></i><i style="--h:215"></i><i style="--h:150"></i><i style="--h:70"></i><i style="--h:25"></i><i style="--h:350"></i><i style="--h:300"></i><i class="sw--rb"></i><i class="sw--sp"></i></span></span><span class="mcc__mod mcc__mod--wide"><small>Nova</small><span class="seg"><i>Links</i><i class="on">Beide</i><i>Rechts</i></span></span><div class="mcc__toggles"><i class="on"><svg class="li"><use href="#i-folder"/></svg></i><i class="on"><svg class="li"><use href="#i-pulse"/></svg></i><i class="on"><svg class="li"><use href="#i-pointer"/></svg></i><i><svg class="li"><use href="#i-motion"/></svg></i></div></div></div>
+</figure>
+
+<figure class="tile feat is-wide feat--lucent" data-ga="g"">
+  <div class="feat__head"><span class="eyebrow">Lucent</span><h3>Verwaltet von Lucent, bedient wie immer</h3>
+  <p>Zustand, Konten, SSH und Wartung auf Lucents Seiten. Anmelden mit dem Lucent-Konto.</p></div>
+  <div class="lu">
+    <div class="lu__card"><span class="lu__state"><i></i>erreichbar</span><b>Akari OS</b><small>3 Konten, 1 angemeldet</small></div>
+    <div class="lu__stats"><span><small>CPU</small><b>4 %</b></span><span><small>Speicher</small><b>1,3 GB</b></span><span><small>Platz</small><b>3 %</b></span></div>
+    <span class="lu__btn">Mit Lucent anmelden</span>
+  </div>
+</figure>
+
+<figure class="tile feat feat--ssh" data-ga="i"">
+  <div class="feat__head"><span class="eyebrow">Fernzugriff</span><h3>SSH mit Schlüssel</h3></div>
+  <code class="cmd">ssh -p 2222 ada@akari</code>
+  <p class="feat__note">Passwort pro Konto wählbar.</p>
+</figure>
+
+<figure class="tile feat feat--desks" data-ga="j"">
+  <div class="feat__head"><span class="eyebrow">Getrennte Desktops</span><h3>Arbeit hier, Spiel dort</h3></div>
+  <div class="desks"><span class="on"><b>Arbeit</b><small>Firefox läuft</small></span><span><b>Abends</b><small>zuletzt heute 21:40</small></span><span><b>Studio</b><small>zuletzt 18. Nov.</small></span></div>
+</figure>
+
+<figure class="tile feat is-wide feat--accent" data-ga="k"">
+  <div class="feat__head"><span class="eyebrow">Zehn Akzente</span><h3>Eine Farbe färbt alles: Nova, Cursor, Terminal</h3></div>
+  <div class="accents"><i class="sw" style="--h:277"><small>Facet</small></i><i class="sw" style="--h:250"><small>Blau</small></i><i class="sw" style="--h:215"><small>Cyan</small></i><i class="sw" style="--h:150"><small>Grün</small></i><i class="sw" style="--h:70"><small>Bernstein</small></i><i class="sw" style="--h:25"><small>Rot</small></i><i class="sw" style="--h:350"><small>Pink</small></i><i class="sw sw--custom"><small>Eigene</small></i><i class="sw sw--rb"><small>Regenbogen</small></i><i class="sw sw--sp"><small>Farbverlauf</small></i></div>
+</figure>
+
+<figure class="tile feat feat--lang" data-ga="l"">
+  <div class="feat__head"><span class="eyebrow">Sprachen</span><h3>Deutsch, English, 日本語</h3></div>
+  <p class="lang"><span>Schreibtisch</span><span>Desktop</span><span lang="ja">デスクトップ</span></p>
+</figure>
+</section>
+  <footer class="show__foot"><svg class="am" viewBox="0 0 95.64 100"><use href="#am"/></svg> Akari OS · lucya.systems</footer>
+</main>
