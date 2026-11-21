@@ -1,0 +1,7 @@
+# Akari OS runs in Linux: scripts and configuration keep LF line endings, also
+# when checked out on Windows (a CRLF shell script does not run in the image).
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.woff2 binary
+*.ttf binary

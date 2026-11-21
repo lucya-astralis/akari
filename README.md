@@ -48,9 +48,13 @@ Linux-Benutzer, getrennte Desktops, SSH, oh-my-zsh mit powerlevel10k. Noch ohne 
 ## Starten
 
 ```bash
-docker compose up -d --build
-docker compose logs akari        # beim ersten Start: der Einrichtungslink
+docker compose pull && docker compose up -d     # das fertige Image von ghcr.io
+docker compose logs akari                       # beim ersten Start: der Einrichtungslink
 ```
+
+Selbst bauen statt ziehen: `docker compose up -d --build`. Zum Entwickeln
+mit eingehängtem Code: `docker compose -f compose.yaml -f compose.dev.yaml up -d --build`
+(oder `COMPOSE_FILE=compose.yaml:compose.dev.yaml` in `.env`, unter Windows mit `;`).
 
 Der Link `http://127.0.0.1:8130/?token=…` führt zur Einrichtung des ersten
 Kontos. Danach meldet man sich am Login-Bildschirm an; weitere Konten legt
@@ -168,7 +172,7 @@ Koppeln: in Lucent unter **Tools** einen Code erzeugen, dann in Akari unter
 Akaris Adresse eintragen. Oder im Container:
 
 ```bash
-docker compose exec akari python -m akari --lucent-join https://lucent.example ABCD-EFGH-JKLM --ui-url https://akari.example
+docker compose exec akari /opt/venv/bin/python -m akari --lucent-join https://lucent.example ABCD-EFGH-JKLM --ui-url https://akari.example
 ```
 
 Läuft Lucent auf demselben Rechner außerhalb von Docker, ist es aus dem Container

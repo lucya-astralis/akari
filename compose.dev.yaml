@@ -1,0 +1,13 @@
+# Akari OS while developing it: built here, the code from this checkout mounted
+# read-only (restart to pick up Python changes; the static files are live).
+#   docker compose -f compose.yaml -f compose.dev.yaml up -d --build
+# or COMPOSE_FILE=compose.yaml:compose.dev.yaml in .env (";" between them on Windows).
+services:
+  akari:
+    image: akari:dev
+    container_name: akari-dev
+    volumes:
+      - ./akari:/opt/akari/akari:ro
+      - ./image/rootfs/etc/xdg/fastfetch:/etc/xdg/fastfetch:ro
+      - ./image/rootfs/usr/share/akari/fastfetch:/usr/share/akari/fastfetch:ro
+      - ./image/rootfs/usr/share/akari/zsh:/usr/share/akari/zsh:ro

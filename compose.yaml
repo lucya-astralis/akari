@@ -1,4 +1,9 @@
-# Akari OS for development.
+# Akari OS.
+#
+#   docker compose pull && docker compose up -d       the published image (ghcr.io)
+#   docker compose up -d --build                      built from this checkout
+#   docker compose -f compose.yaml -f compose.dev.yaml up -d --build
+#                                                     development: the code mounted in
 #
 # Real Linux users and real sudo: accounts that manage may `sudo apt install`.
 # For that the root filesystem is writable and setuid programs (sudo, su) work,
@@ -20,8 +25,8 @@
 services:
   akari:
     build: .
-    image: akari:dev
-    container_name: akari-dev
+    image: ghcr.io/lucya-astralis/akari:stable
+    container_name: akari
     hostname: akari
     ports:
       - "127.0.0.1:8130:8130"
@@ -34,11 +39,6 @@ services:
     shm_size: "512m"
     volumes:
       - akari-data:/data
-      # development: the code from this checkout, read-only; restart to pick up Python changes
-      - ./akari:/opt/akari/akari:ro
-      - ./image/rootfs/etc/xdg/fastfetch:/etc/xdg/fastfetch:ro
-      - ./image/rootfs/usr/share/akari/fastfetch:/usr/share/akari/fastfetch:ro
-      - ./image/rootfs/usr/share/akari/zsh:/usr/share/akari/zsh:ro
     environment:
       AKARI_TOKEN: ${AKARI_TOKEN:-}
       AKARI_SSH_PUBLIC: "127.0.0.1:2222"
