@@ -16,7 +16,7 @@ import os
 import time
 from pathlib import Path
 
-VERSION = "0.7.1"
+VERSION = "0.8.0"
 OS_NAME = "Akari OS"
 STARTED = time.time()
 
@@ -58,5 +58,5 @@ def agent_socket(uid: int) -> Path:
 
 def ensure_user_dirs() -> None:
     """In the agent: the folders a desktop expects, every start (cheap, idempotent)."""
-    for d in (CONFIG, CACHE, CACHE / "tmp", TRASH, HOME / "Dokumente", HOME / "Downloads", HOME / "Bilder", HOME / "Schreibtisch"):
+    for d in (CONFIG, CACHE, CACHE / "tmp", TRASH, HOME / "Dokumente", HOME / "Downloads", HOME / "Bilder", HOME / "Musik", HOME / "Schreibtisch"):
         d.mkdir(parents=True, exist_ok=True)

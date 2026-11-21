@@ -1059,3 +1059,101 @@ img.app-art, img.win__icon{ object-fit:contain; border-radius:22% }
    from the right, on the left; from both sides, in the middle */
 :root:not([data-mirror]):not([data-nova="both"]) .desk > .desk__logo{ justify-items:end; padding-right:clamp(120px, 16vw, 300px) }
 :root[data-mirror]:not([data-nova="both"]) .desk > .desk__logo{ justify-items:start; padding-left:clamp(120px, 16vw, 300px) }
+
+/* ---------- Musik ----------
+   Now playing on top (cover, title, bar, buttons, volume), the library below;
+   side by side once the window is wide. A track without a picture gets a
+   colour of its own (--h, from its album). */
+.mu{ container-type:inline-size; display:grid; grid-template-rows:auto minmax(0, 1fr); overflow:hidden; background:var(--surface) }
+.mu__now{ display:grid; justify-items:center; gap:var(--s-3); padding:var(--s-5) var(--s-5) var(--s-4); border-bottom:var(--hair) solid var(--stroke-1) }
+.mu__art{ position:relative; width:min(190px, 52cqw); aspect-ratio:1; border-radius:18px; overflow:hidden; display:grid; place-items:center;
+  background:linear-gradient(135deg, oklch(.72 .15 var(--h, 300)), oklch(.48 .19 calc(var(--h, 300) + 50)));
+  color:rgb(255 255 255 / .9); box-shadow:0 18px 40px -12px oklch(.45 .19 var(--h, 300) / .55), var(--shadow-4);
+  transform:scale(.94); transition:transform var(--dur-4) var(--spring), box-shadow var(--dur-4) var(--ease) }
+.mu__art.is-playing{ transform:none }
+.mu__art.is-empty{ background:var(--surface-2); color:var(--text-ghost); box-shadow:none }
+.mu__art svg{ width:34%; height:34% }
+.mu__art img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover }
+.mu__art img[hidden]{ display:none }
+.mu__meta{ display:grid; justify-items:center; gap:2px; max-width:100%; text-align:center }
+.mu__meta b{ font-size:var(--fs-500); font-weight:600; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.mu__meta small{ color:var(--text-dim); max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.mu__seek{ width:100%; display:grid; gap:2px }
+.mu__bar{ width:100% }
+.mu__times{ display:flex; justify-content:space-between; font:500 var(--fs-100)/1 var(--mono); color:var(--text-ghost); font-variant-numeric:tabular-nums }
+.mu__ctl{ display:flex; align-items:center; justify-content:center; gap:var(--s-3) }
+.mu__btn{ position:relative; width:36px; height:36px; display:grid; place-items:center; padding:0; border:0; border-radius:50%; background:none; color:var(--text-dim); cursor:pointer;
+  transition:background-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease), transform var(--dur-2) var(--spring) }
+.mu__btn:hover{ background:var(--surface-2); color:var(--text) }
+.mu__btn:active{ transform:scale(.9) }
+.mu__btn:focus-visible{ outline:2px solid var(--acc); outline-offset:2px }
+.mu__btn svg{ width:18px; height:18px }
+.mu__btn--md{ color:var(--text) } .mu__btn--md svg{ width:22px; height:22px }
+.mu__btn--play{ width:54px; height:54px; background:var(--acc-fill); color:var(--on-acc); box-shadow:0 8px 20px -8px var(--acc) }
+.mu__btn--play:hover{ background:var(--acc-fill); color:var(--on-acc); transform:scale(1.05) }
+.mu__btn--play svg{ width:24px; height:24px }
+.mu__btn--sm{ width:30px; height:30px } .mu__btn--sm svg{ width:17px; height:17px }
+.mu__btn[aria-pressed="true"]{ color:var(--acc) }
+.mu__btn[aria-pressed="true"]::after{ content:""; position:absolute; bottom:3px; width:4px; height:4px; border-radius:50%; background:var(--acc) }
+.mu__one{ position:absolute; top:5px; right:4px; font:700 8px/1 var(--mono); font-style:normal; color:var(--acc); display:none }
+.mu__btn[data-mode="one"] .mu__one{ display:block }
+.mu__vol{ display:flex; align-items:center; gap:var(--s-2); width:min(240px, 100%) }
+.mu__vol .range{ flex:1 }
+.mu__lib{ display:flex; flex-direction:column; min-height:0 }
+.mu__lib > .mu__list, .mu__lib > .mu__empty, .mu__lib > .mu__connect{ flex:1; min-height:0 }
+.mu__libhead{ display:flex; align-items:center; gap:var(--s-2); padding:var(--s-3) var(--s-4) var(--s-2) }
+.mu__search{ flex:1 } .mu__search .f-input{ font-size:14px }
+.mu__list{ overflow:auto; display:grid; align-content:start; padding:0 var(--s-2) var(--s-3) }
+.mu__list[hidden]{ display:none }
+.mu__row{ display:grid; grid-template-columns:40px minmax(0, 1fr); align-items:center; gap:var(--s-3); padding:6px var(--s-2); border:0; border-radius:var(--r-control);
+  background:none; color:var(--text); text-align:left; font:inherit; cursor:pointer; transition:background-color var(--dur-1) var(--ease) }
+.mu__row:hover{ background:var(--surface-2) }
+.mu__row:focus-visible{ outline:2px solid var(--acc); outline-offset:-2px }
+.mu__row.is-cur{ background:var(--acc-soft) }
+.mu__row.is-cur b{ color:var(--acc) }
+.mu__thumb{ position:relative; width:40px; height:40px; border-radius:9px; overflow:hidden; display:grid; place-items:center; color:rgb(255 255 255 / .9);
+  background:linear-gradient(135deg, oklch(.72 .15 var(--h, 300)), oklch(.5 .18 calc(var(--h, 300) + 50))) }
+.mu__thumb svg{ width:18px; height:18px }
+.mu__thumb img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover }
+.mu__txt{ display:grid; gap:1px; min-width:0 }
+.mu__txt b{ font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.mu__txt small{ color:var(--text-dim); font-size:var(--fs-200); overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+/* the one playing: three bars over its picture */
+.mu__eq{ position:absolute; inset:0; display:none; align-items:end; justify-content:center; gap:3px; padding-bottom:11px; background:rgb(0 0 0 / .38) }
+.mu__row.is-cur .mu__eq{ display:flex }
+.mu__eq i{ width:3px; height:6px; border-radius:2px; background:#fff }
+.mu__row.is-playing .mu__eq i{ animation:mu-eq .9s ease-in-out infinite alternate }
+.mu__row.is-playing .mu__eq i:nth-child(2){ animation-delay:-.3s } .mu__row.is-playing .mu__eq i:nth-child(3){ animation-delay:-.6s }
+@keyframes mu-eq{ to{ height:17px } }
+.mu__none{ padding:var(--s-6) var(--s-4); text-align:center; color:var(--text-dim) }
+.mu__empty{ display:grid; justify-items:center; align-content:center; gap:var(--s-3); padding:var(--s-6) var(--s-6); text-align:center }
+.mu__empty[hidden]{ display:none }
+.mu__empty > svg{ width:34px; height:34px; color:var(--text-ghost) }
+.mu__empty p{ margin:0; max-width:36ch; color:var(--text-dim); font-size:var(--fs-200); line-height:1.5 }
+@container (min-width: 640px){
+  .mu{ grid-template-rows:none; grid-template-columns:minmax(280px, 40%) minmax(0, 1fr) }
+  .mu__now{ align-content:center; border-bottom:0; border-right:var(--hair) solid var(--stroke-1) }
+}
+:root[data-motion="reduced"] .mu__row.is-playing .mu__eq i{ animation:none; height:12px }
+/* the taskbar and control centre: a track without a cover in its own colour */
+.tb__cover[style*="--mh"], .qc__cover[style*="--mh"]{ background:linear-gradient(135deg, oklch(.72 .15 var(--mh)), oklch(.48 .19 calc(var(--mh) + 50))) }
+/* Musik: the two sources, the server's strip, connecting */
+.mu__libhead{ flex-wrap:wrap }
+.mu__src{ display:flex; padding:2px; border-radius:var(--r-pill); background:var(--surface-2); flex:none }
+.mu__src button{ padding:4px 12px; border:0; border-radius:var(--r-pill); background:none; color:var(--text-dim); font:500 var(--fs-200)/1.4 var(--sans); cursor:pointer }
+.mu__src button[aria-selected="true"]{ background:var(--surface); color:var(--text); box-shadow:var(--shadow-1) }
+.mu__src button:focus-visible{ outline:2px solid var(--acc); outline-offset:1px }
+.mu__search{ min-width:140px }
+.mu__server{ display:flex; align-items:center; justify-content:space-between; gap:var(--s-2); padding:0 var(--s-4) var(--s-2); font-size:var(--fs-200) }
+.mu__server[hidden]{ display:none }
+.mu__server .f-status{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.mu__row{ grid-template-columns:40px minmax(0, 1fr) auto }
+.mu__len{ font:500 var(--fs-100) var(--mono); color:var(--text-ghost); font-variant-numeric:tabular-nums; padding-right:var(--s-2) }
+.mu__connect{ display:grid; gap:var(--s-3); align-content:start; padding:var(--s-4) var(--s-5) var(--s-5); overflow:auto }
+.mu__connect[hidden]{ display:none }
+.mu__connect > svg{ width:28px; height:28px; color:var(--acc) }
+.mu__connect > b{ font-size:var(--fs-400) }
+.mu__connect p{ margin:0; color:var(--text-dim); font-size:var(--fs-200); line-height:1.5 }
+.mu__connect .f-input{ font-size:14px }
+.mu__connect-foot{ display:flex; align-items:center; justify-content:space-between; gap:var(--s-3) }
+.mu__connect-foot .f-dim{ font-size:var(--fs-200) }

@@ -4,6 +4,13 @@ Ein Desktop im Browser mit einem echten Linux darunter, auf Debian trixie,
 gebaut in [Facet 1.8](../facet). Gedacht als Tool für Lucent: Lucent verwaltet
 es (installieren, koppeln, Zustand), Akari OS hat seine eigene Oberfläche.
 
+**Stand 0.8:** Musik, ein kleiner Audio-Player: die eigene Musik aus ~/Musik
+(dazu lose Dateien in Downloads und Schreibtisch, Titel, Künstler und Cover aus
+ID3 oder dem Albumordner) und, auf Wunsch, ein Subsonic-Server (Navidrome,
+Airsonic, Gonic) über den Agenten, ohne gespeichertes Passwort. Springen per
+Range, Zufall, Wiederholen, Lautstärke; was spielt, steht in der Leiste und im
+Kontrollzentrum und hört auf die Medientasten.
+
 **Stand 0.6:** an Lucent angebunden (Connector-Vertrag 1, siehe
 [lucent/CONNECTOR.md](../lucent/CONNECTOR.md)). Lucent zeigt Akari mit Zustand und
 Kennzahlen und zeichnet drei Seiten: Übersicht (Last, Speicher, wer angemeldet ist),

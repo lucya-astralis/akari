@@ -119,6 +119,7 @@
         if (!e) return;
         if (e.dir) return load(join(path, e.name));
         if (e.kind === 'text' || e.size === 0) return Akari.open('editor', { path: join(path, e.name) });
+        if (e.kind === 'audio') return Akari.open('music', { path: join(path, e.name) });
         download(e);
       };
       const download = e => {
@@ -208,6 +209,7 @@
           const en = selected();
           return Akari.menu(e, [
             { label: 'Öffnen', icon: en.dir ? 'i-folder' : 'i-chev', act: () => openEntry(en) },
+            !en.dir && en.kind === 'audio' && { label: 'In Musik abspielen', icon: 'i-music', act: () => Akari.open('music', { path: join(path, en.name) }) },
             !en.dir && { label: 'Öffnen mit Editor', icon: 'i-edit', act: () => Akari.open('editor', { path: join(path, en.name) }) },
             !en.dir && { label: 'Laden', icon: 'i-down', act: () => download(en) },
             '-',

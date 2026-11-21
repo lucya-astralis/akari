@@ -1003,56 +1003,61 @@
      The players on this desktop (Firefox, mpv, Spotify …) report over MPRIS;
      the workspace pushes "media" whenever that changes. Hidden while nothing
      plays or pauses. */
-  const media = $('#tb-media');
-  let playing = null;
-  on('media', m => {
-    const p = m.playing || null;
+  /* Two sources: players on the desktop's Linux side (MPRIS, pushed as "media")
+     and Akari's own Musik app (mediaLocal). The one that plays wins; when
+     both pause, the app's stays. */
+  const media = $('#tb-media'), qMedia = $('[data-qc-media]');
+  let fromServer = null, fromApp = null, appControl = null, playing = null;
+  const coverOf = p => (p.cover ? p.cover : p.art ? `/api/media/art?v=${encodeURIComponent(p.art)}` : null);
+  const paintMedia = () => {
+    const p = fromApp && (fromApp.status === 'playing' || !fromServer || fromServer.status !== 'playing') ? fromApp : fromServer;
     if (!!p !== !!playing) glidePill(media.closest('.tb'), () => { media.hidden = $('#tb-media-sep').hidden = !p; });
     playing = p;
+    qMedia.hidden = !p;
     if (!p) return;
-    $('b', media).textContent = p.title || p.player;
-    $('small', media).textContent = p.artist || p.album || p.player;
-    const img = $('.tb__cover img', media);
-    if (p.art && img.dataset.v !== p.art) {
-      img.dataset.v = p.art;
-      img.onload = () => { img.hidden = false; };
-      img.onerror = () => { img.hidden = true; };
-      img.src = `/api/media/art?v=${encodeURIComponent(p.art)}`;
-    } else if (!p.art) { img.hidden = true; img.removeAttribute('src'); delete img.dataset.v; }
-    const isOn = p.status === 'playing', main = $('[data-media="play-pause"]', media);
+    const cover = coverOf(p), isOn = p.status === 'playing';
+    for (const [box, img] of [[media, $('.tb__cover img', media)], [qMedia, $('.qc__cover img', qMedia)]]) {
+      $('b', box).textContent = p.title || p.player;
+      $('small', box).textContent = p.artist || p.album || p.player || '';
+      if (cover && img.dataset.v !== cover) {
+        img.dataset.v = cover;
+        img.onload = () => { img.hidden = false; };
+        img.onerror = () => { img.hidden = true; };
+        img.src = cover;
+      } else if (!cover) { img.hidden = true; img.removeAttribute('src'); delete img.dataset.v; }
+      // the app's own colour where there is no cover
+      box.querySelector('.tb__cover, .qc__cover')?.style.setProperty('--mh', p.hue ?? '');
+    }
+    const main = $('[data-media="play-pause"]', media);
     $('use', main).setAttribute('href', isOn ? '#i-pause' : '#i-play');
     main.setAttribute('aria-label', t(isOn ? 'Pause' : 'Abspielen'));
     media.classList.toggle('is-paused', !isOn);
-  });
-  // the same in the control centre
-  const qMedia = $('[data-qc-media]');
-  on('media', m => {
-    const p = m.playing || null;
-    qMedia.hidden = !p;
-    if (!p) return;
-    $('b', qMedia).textContent = p.title || p.player;
-    $('small', qMedia).textContent = p.artist || p.album || p.player;
-    const img = $('.qc__cover img', qMedia);
-    if (p.art) { img.onload = () => { img.hidden = false; }; img.onerror = () => { img.hidden = true; }; img.src = `/api/media/art?v=${encodeURIComponent(p.art)}`; }
-    else { img.hidden = true; img.removeAttribute('src'); }
-    $('[data-qmedia="play-pause"] use', qMedia).setAttribute('href', p.status === 'playing' ? '#i-pause' : '#i-play');
-  });
-  qMedia.addEventListener('click', e => {
-    const b = e.target.closest('[data-qmedia]');
-    if (!b) return;
-    if (b.dataset.qmedia === 'show') { closePops(); return $('#tb-media [data-media="show"]').click(); }
-    api(`/api/media/${b.dataset.qmedia}`, { method: 'POST', quiet: true }).catch(() => {});
-  });
-  media.addEventListener('click', e => {
-    const b = e.target.closest('[data-media]');
-    if (!b || !playing) return;
-    if (b.dataset.media === 'show') {
+    $('[data-qmedia="play-pause"] use', qMedia).setAttribute('href', isOn ? '#i-pause' : '#i-play');
+  };
+  on('media', m => { fromServer = m.playing || null; paintMedia(); });
+  // the Musik app reports what it plays, and takes the buttons back
+  const mediaLocal = (state, control) => {
+    fromApp = state ? { ...state, local: true } : null;
+    if (control) appControl = control;
+    paintMedia();
+  };
+  const mediaDo = action => {
+    if (!playing) return;
+    if (playing.local) return appControl?.(action);
+    if (action === 'show') {
       // to the window the sound comes from: Firefox's own, else the desktop's Linux apps
       const w = (/firefox/i.test(playing.player) && ofApp('x:firefox')[0]) || ofApp('x:desktop')[0]
         || [...WINS].filter(x => x.app.startsWith('x:')).sort((x, y) => y.z - x.z)[0];
       return w && focus(w);
     }
-    api(`/api/media/${b.dataset.media}`, { method: 'POST', quiet: true }).catch(() => {});
+    api(`/api/media/${action}`, { method: 'POST', quiet: true }).catch(() => {});
+  };
+  media.addEventListener('click', e => { const b = e.target.closest('[data-media]'); if (b) mediaDo(b.dataset.media); });
+  qMedia.addEventListener('click', e => {
+    const b = e.target.closest('[data-qmedia]');
+    if (!b) return;
+    if (b.dataset.qmedia === 'show') closePops();
+    mediaDo(b.dataset.qmedia);
   });
 
   /* what happens in the workspace, pushed: each message is emitted by its type */
@@ -1077,7 +1082,7 @@
   };
 
   window.Akari = {
-    novaSide, api, register, unregister, open, close, focus, ask, notify, color, on, emit, fmtBytes, t, locale, closePops, menu: menuAt, minimise, avatar, recent, previewMagnify,
+    novaSide, mediaLocal, api, register, unregister, open, close, focus, ask, notify, color, on, emit, fmtBytes, t, locale, closePops, menu: menuAt, minimise, avatar, recent, previewMagnify,
     clip: { set: clipSet, read: clipRead, sink: clipSink, get text() { return CLIP; } },
     get prefs() { return P; }, set, get system() { return SYS; }, get me() { return ME; }, loadSystem, loadSession, windows: () => [...WINS],
   };

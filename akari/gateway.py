@@ -30,9 +30,10 @@ from . import accounts, agents, auth, avatars, config, lucent, software, ssh
 # style-src allows inline styles: xterm.js writes its theme into a <style> element.
 CSP = ("default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; "
        "font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
-AGENT_PATHS = ("/api/fs", "/api/prefs", "/api/system", "/api/display", "/api/term", "/api/desktops", "/api/ssh/keys", "/api/stats", "/api/procs", "/api/wallpaper", "/api/media")
+AGENT_PATHS = ("/api/fs", "/api/prefs", "/api/system", "/api/display", "/api/term", "/api/desktops", "/api/ssh/keys", "/api/stats", "/api/procs", "/api/wallpaper", "/api/media", "/api/audio")
 DESKTOP_HEADER = "X-Akari-Desktop"
-PASS_HEADERS = ("content-type", "content-length", "content-disposition", "content-security-policy", "x-content-type-options", "cache-control")
+PASS_HEADERS = ("content-type", "content-length", "content-disposition", "content-security-policy", "x-content-type-options", "cache-control",
+                "accept-ranges", "content-range")   # the music player jumps within a track
 
 
 @asynccontextmanager
@@ -413,7 +414,7 @@ async def to_agent(rest: str, request: Request) -> Response:
     acct, s = _me(request), auth.current(request)
     await agents.ensure(acct)
     c = _client(acct.uid)
-    headers = {k: v for k, v in request.headers.items() if k in ("content-type", "content-length")}
+    headers = {k: v for k, v in request.headers.items() if k in ("content-type", "content-length", "range", "if-range")}
     if s and s.desktop:
         headers[DESKTOP_HEADER] = s.desktop
     req = c.build_request(request.method, path, params=request.query_params, headers=headers, content=request.stream())
