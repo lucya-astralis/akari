@@ -63,6 +63,7 @@
         $$('[data-pref]', el).forEach(i => { i.checked = !!P[i.dataset.pref]; });
         const th = $(`input[name="theme"][value="${P.theme || 'system'}"]`, el); if (th) th.checked = true;
         const dk = $(`input[name="dock"][value="${P.dock}"]`, el); if (dk) dk.checked = true;
+        const nv = $(`input[name="nova"][value="${Akari.novaSide()}"]`, el); if (nv) nv.checked = true;
         const bp = $(`input[name="bar"][value="${P.bar === 'top' ? 'top' : 'bottom'}"]`, el); if (bp) bp.checked = true;
         const lg = $(`input[name="lang"][value="${Akari.locale().startsWith('en') ? 'en' : 'de'}"]`, el); if (lg) lg.checked = true;
         $('[data-wall-drop]', el).hidden = !P.wallpaperV;
@@ -92,6 +93,7 @@
         if (i.name === 'theme') return Facet.setTheme(i.value, i.nextElementSibling);
         if (i.name === 'dock') return Akari.set('dock', i.value);
         if (i.name === 'bar') return Akari.set('bar', i.value);
+        if (i.name === 'nova') return Akari.set('nova', i.value);
         if (i.name === 'lang') return window.AkariI18n?.set(i.value);
         if (i.dataset.widget) return i.checked ? Akari.desk?.addWidget(i.dataset.widget) : Akari.desk?.removeWidget(i.dataset.widget);
         if (i.dataset.pref) Akari.set(i.dataset.pref, i.checked);

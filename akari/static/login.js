@@ -17,7 +17,9 @@
   try {
     const p = JSON.parse(localStorage.getItem('akari-prefs-last') || '{}');
     if (p.tint) document.documentElement.dataset.tint = p.tint;
-    if (p.mirror) document.documentElement.setAttribute('data-mirror', '');
+    const side = p.nova || (p.mirror ? 'right' : 'left');
+    if (side === 'right') document.documentElement.setAttribute('data-mirror', '');
+    if (side === 'both') document.documentElement.setAttribute('data-nova', 'both');
   } catch {}
 
   // an account's face: its picture if it has one, else its initial

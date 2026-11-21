@@ -336,7 +336,15 @@
         <span class="f-label grp__label">Hintergrund</span>
         <div class="grp">
           <div class="opt" data-nova-opt><span class="opt__txt"><b>Nova als Hintergrund</b><small>Aus: ein schlichter Grund.</small></span><label class="f-switch"><input type="checkbox" data-pref="wallpaper"><i></i><span class="sr">Nova als Hintergrund</span></label></div>
-          <div class="opt" data-nova-opt><span class="opt__txt"><b>Licht von rechts</b><small>Spiegelt Nova an der Senkrechten.</small></span><label class="f-switch"><input type="checkbox" data-pref="mirror"><i></i><span class="sr">Licht von rechts</span></label></div>
+          <div class="opt" data-nova-opt>
+            <span class="opt__txt"><b>Licht von</b><small>Woher Novas Strahlen kommen.</small></span>
+            <div class="f-seg" role="radiogroup" aria-label="Licht von">
+              <span class="f-seg__thumb"></span>
+              <input type="radio" name="nova" id="nv-left" value="left"><label for="nv-left">Links</label>
+              <input type="radio" name="nova" id="nv-right" value="right"><label for="nv-right">Rechts</label>
+              <input type="radio" name="nova" id="nv-both" value="both"><label for="nv-both">Beiden Seiten</label>
+            </div>
+          </div>
         </div>
         <div class="grp">
           <div class="opt"><span class="opt__txt"><b>Eigenes Bild</b><small>Ein Bild aus deinem Rechner. Es wird im Home dieses Kontos abgelegt.</small></span>

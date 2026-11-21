@@ -385,6 +385,17 @@ button{ font:inherit; color:inherit }
 .greeter__card{ grid-row:4 }
 .greeter__foot-line{ grid-row:5 }
 :root[data-mirror] .greeter{ --nova-angle:-68deg; --nova-x:100%; --nova-dir:-1 }
+/* Nova from both sides: the left light stays in ::before, ::after carries its mirror
+   image (shards, lines, glow and a fading base) instead of the far lines */
+:root[data-nova="both"] :is(.desk, .lock, .greeter).f-nova::after{ background:
+  var(--nova-grain),
+  linear-gradient(-68deg, transparent 0 6%, var(--nova-edge) 6% 6.12%, transparent 6.12%),
+  linear-gradient(-68deg, transparent 0 21%, var(--nova-silver) 21% 21.2%, transparent 21.2%),
+  linear-gradient(-68deg, transparent 0 26%, var(--nova-line) 26% 26.3%, transparent 26.3%),
+  linear-gradient(-68deg, transparent 23.6%, var(--nova-halo) 26.15%, transparent 29.4%),
+  linear-gradient(-68deg, transparent 0 6%, var(--nova-shard) 6% 14%, var(--nova-shard-2) 14% 19%, transparent 19%),
+  radial-gradient(ellipse 62% 78% at 100% 14%, var(--nova-glow), transparent 68%),
+  linear-gradient(-68deg, var(--nova-a) 0%, var(--nova-b) 18%, color-mix(in srgb, var(--nova-c) 55%, transparent) 34%, transparent 46%) }
 .greeter__top{ justify-self:stretch; display:flex; align-items:center; justify-content:space-between; min-height:28px }
 .greeter__os{ display:flex; align-items:center; gap:var(--s-2); font-size:var(--fs-200); font-weight:600; color:var(--text-dim) }
 .greeter__tools{ display:flex; align-items:center; gap:var(--s-1) }
@@ -436,9 +447,9 @@ button{ font:inherit; color:inherit }
 .greeter__name{ display:grid; gap:2px }
 .greeter__name b{ font-size:var(--fs-400); font-weight:600 }
 .greeter__name small{ font-size:var(--fs-200) }
-.greeter__pw{ width:100%; text-align:center; margin-top:var(--s-1) }
+.greeter__pw{ width:min(232px, 100%); text-align:center; margin-top:var(--s-1) }
 .greeter__pwrow{ position:relative; display:flex }
-.greeter__pwrow .f-input{ height:38px; padding:0 44px 0 var(--s-5); border-radius:var(--r-pill); font-size:15px; text-align:center;
+.greeter__pwrow .f-input{ height:38px; padding:0 40px 0 var(--s-4); border-radius:var(--r-pill); font-size:15px; text-align:left;
   background:color-mix(in oklab, var(--surface-2) 70%, transparent); -webkit-backdrop-filter:blur(16px) saturate(1.4); backdrop-filter:blur(16px) saturate(1.4);
   border-color:color-mix(in oklab, var(--text) 16%, transparent) }
 .greeter__pwrow .f-input::placeholder{ color:var(--text-dim) }
@@ -460,7 +471,7 @@ button{ font:inherit; color:inherit }
 .greeter__foot{ display:flex; align-items:center; justify-content:space-between; gap:var(--s-4); margin-top:var(--s-2) }
 .greeter__foot .f-dim{ font-size:var(--fs-200) }
 .greeter__code{ margin:0; padding:var(--s-3) var(--s-4); border-radius:var(--r-control); background:var(--surface-2); font:400 var(--fs-200)/var(--lh-200) var(--mono) }
-.greeter__foot-line{ display:flex; align-items:center; gap:var(--s-4); color:var(--text-ghost); font:500 var(--fs-100)/1 var(--mono) }
+.greeter__foot-line{ display:grid; justify-items:center; gap:var(--s-2); color:var(--text-ghost); font:500 var(--fs-100)/1 var(--mono) }
 .greeter__foot-line .wordmark{ height:7px; color:var(--text-ghost) }
 body.is-leaving .greeter > *{ transition:opacity var(--dur-2) var(--ease), transform var(--dur-2) var(--ease); opacity:0; transform:scale(.98) }
 @media (max-width: 639px){
@@ -900,3 +911,26 @@ body.is-leaving .desk{ transition:opacity var(--dur-2) var(--ease), filter var(-
 :root[data-bar="top"] .pop--launch{ transform-origin:top left }
 .fm__row.is-cut{ opacity:.45 }
 img.app-art, img.win__icon{ object-fit:contain; border-radius:22% }
+
+/* ---------- from the login screen into the desktop ----------
+   Two pages, one Nova: the browser carries the login screen's Nova over into
+   the desktop's (cross-document view transition; Chrome and Safari, Firefox
+   simply switches). The login screen fades its own things first (body.is-leaving),
+   so only Nova is left to hand over; the desktop's bar and icons rise after it. */
+@view-transition{ navigation:auto }
+.greeter, .desk{ view-transition-name:nova }
+::view-transition-group(nova){ animation-duration:900ms; animation-timing-function:cubic-bezier(.4, 0, .2, 1) }
+::view-transition-old(nova){ animation:nova-hop-out 900ms cubic-bezier(.4, 0, .2, 1) both }
+::view-transition-new(nova){ animation:nova-hop-in 900ms cubic-bezier(.4, 0, .2, 1) both }
+::view-transition-old(root){ animation:nova-fade 260ms ease both }
+::view-transition-new(root){ animation:desk-rise 620ms 360ms cubic-bezier(.34, 1.3, .64, 1) both }
+@keyframes nova-hop-out{ to{ opacity:0; transform:scale(1.06); filter:blur(10px) saturate(1.2) } }
+@keyframes nova-hop-in{ from{ opacity:0; transform:scale(.97); filter:blur(6px) } }
+@keyframes nova-fade{ to{ opacity:0 } }
+@keyframes desk-rise{ from{ opacity:0; transform:translateY(18px) scale(.99) } }
+@media (prefers-reduced-motion: reduce){
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*){ animation:none !important }
+}
+:root[data-motion="reduced"]::view-transition-group(*),
+:root[data-motion="reduced"]::view-transition-old(*),
+:root[data-motion="reduced"]::view-transition-new(*){ animation:none !important }

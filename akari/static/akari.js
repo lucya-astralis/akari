@@ -43,17 +43,20 @@
   let saveT;
   const save = () => {
     if (!prefsLoaded) return;
-    try { localStorage.setItem('akari-prefs-last', JSON.stringify({ tint: P.tint, mirror: P.mirror })); } catch {}
+    try { localStorage.setItem('akari-prefs-last', JSON.stringify({ tint: P.tint, nova: novaSide(), wallpaper: P.wallpaper !== false && !P.wallpaperV })); } catch {}
     clearTimeout(saveT);
     saveT = setTimeout(() => api('/api/prefs', { method: 'PUT', json: P, quiet: true }).catch(() => {}), 400);
   };
   const set = (k, v) => { P[k] = v; save(); apply(); emit('prefs'); };
 
+  const novaSide = () => (['left', 'right', 'both'].includes(P.nova) ? P.nova : (P.mirror ? 'right' : 'left'));
   const flag = (name, on, val = '') => on ? root.setAttribute(name, val) : root.removeAttribute(name);
   const apply = () => {
     if (P.tint) root.dataset.tint = P.tint; else delete root.dataset.tint;
     flag('data-wallpaper', !P.wallpaper, 'off');
-    flag('data-mirror', P.mirror);
+    // Nova's light: from the left, the right or both sides (before 0.6.1: mirror on or off)
+    flag('data-mirror', novaSide() === 'right');
+    flag('data-nova', novaSide() === 'both', 'both');
     flag('data-motion', P.motion, 'reduced');
     root.classList.toggle('fx-lite', P.lite);
     root.dataset.dock = P.dock;
@@ -512,7 +515,7 @@
     if (e.target.closest('#bar-desk')) return leave('desktop');
     const tile = e.target.closest('.min__win');
     if (tile) return tile.win && focus(tile.win);
-    const t = e.target.closest('.dock__app, .icon, .launch__app, [data-open]');
+    const t = e.target.closest('.dock__app, .icon, .launch__app, .launch__item[data-app], [data-open]');
     if (!t) return;
     const id = t.dataset.app || t.dataset.open;
     closeMenu();
@@ -1018,7 +1021,7 @@
   };
 
   window.Akari = {
-    api, register, unregister, open, close, focus, ask, notify, color, on, emit, fmtBytes, t, locale, closePops, menu: menuAt, minimise, avatar, recent, previewMagnify,
+    novaSide, api, register, unregister, open, close, focus, ask, notify, color, on, emit, fmtBytes, t, locale, closePops, menu: menuAt, minimise, avatar, recent, previewMagnify,
     clip: { set: clipSet, read: clipRead, sink: clipSink, get text() { return CLIP; } },
     get prefs() { return P; }, set, get system() { return SYS; }, get me() { return ME; }, loadSystem, loadSession, windows: () => [...WINS],
   };
@@ -1031,7 +1034,7 @@
     const remote = await api('/api/prefs', { quiet: true }).catch(() => null);
     P = { ...DEFAULTS, ...(remote || {}) };
     prefsLoaded = true;
-    try { localStorage.setItem('akari-prefs-last', JSON.stringify({ tint: P.tint, mirror: P.mirror })); } catch {}
+    try { localStorage.setItem('akari-prefs-last', JSON.stringify({ tint: P.tint, nova: novaSide(), wallpaper: P.wallpaper !== false && !P.wallpaperV })); } catch {}
     Facet.setTheme(P.theme || 'system');
     apply();
     emit('prefs');
