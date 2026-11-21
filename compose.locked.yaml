@@ -1,0 +1,7 @@
+# Akari OS without sudo: read-only root filesystem, no setuid programs.
+# docker compose -f compose.yaml -f compose.locked.yaml up -d
+# Accounts, homes, SSH and apps work as before; only sudo and apt do not.
+services:
+  akari:
+    read_only: true
+    security_opt: ["no-new-privileges:true"]

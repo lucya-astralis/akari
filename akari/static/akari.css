@@ -1,0 +1,863 @@
+/* AKARI — a desktop shell on Facet 1.8. Frontend only, no backend.
+   Everything here is layout on top of facet.css; every colour is a Facet token. */
+
+:root{
+  --bar-h: 36px;
+  --dock-icon: 44px;
+  --dock-gap: var(--s-3);
+  --win-w: 880px;
+  --win-h: 600px;
+}
+:root[data-dock="s"]{ --dock-icon: 36px }
+:root[data-dock="l"]{ --dock-icon: 56px }
+
+html, body{ height:100%; overflow:hidden }
+.sprite{ position:absolute }
+.sr{ position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap }
+button{ font:inherit; color:inherit }
+
+/* the lucya.systems mark: the eagle, in the text colour of whatever holds it */
+.lm{ display:block; color:var(--text); flex:none }
+.wordmark{ display:block; height:10px; aspect-ratio:1979 / 100; background:currentColor;
+  -webkit-mask:url('assets/logo/wordmark-white.svg') left center / contain no-repeat;
+          mask:url('assets/logo/wordmark-white.svg') left center / contain no-repeat }
+
+/* ---------- the desk: Nova at rest (glass floats over it, so it never moves: 1.2.1) ---------- */
+.desk{ position:fixed; inset:0; display:block; overflow:clip; user-select:none; -webkit-user-select:none }
+:root[data-mirror] .desk, :root[data-mirror] .lock{ --nova-angle:-68deg; --nova-x:100%; --nova-dir:-1 }
+
+/* ---------- the bar ---------- */
+.bar{ position:absolute; z-index:40; top:0; left:0; right:0; height:var(--bar-h);
+  display:flex; align-items:center; justify-content:space-between; gap:var(--s-4);
+  padding:0 var(--s-3) 0 var(--s-2); border-radius:0; border-width:0 0 var(--hair) 0 }
+.bar__brand{ display:flex; align-items:center; gap:var(--s-3); height:28px; padding:0 var(--s-3); border:0; border-radius:var(--r-control);
+  background:none; cursor:pointer; transition:background-color var(--dur-1) var(--ease) }
+.bar__brand:hover, .bar__brand[aria-expanded="true"]{ background:var(--surface-2) }
+.bar__brand .lm{ width:28px; height:16px }
+.bar__app{ font-weight:600 }
+.bar__end{ display:flex; align-items:center; gap:var(--s-1) }
+.bar__btn{ width:30px; height:28px; display:grid; place-items:center; border:0; border-radius:var(--r-control); background:none;
+  color:var(--text-dim); cursor:pointer; transition:background-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease) }
+.bar__btn:hover{ background:var(--surface-2); color:var(--text) }
+.bar__btn svg{ width:17px; height:17px }
+.bar__clock{ padding:0 var(--s-3); font:500 var(--fs-200)/1 var(--mono); font-variant-numeric:tabular-nums; letter-spacing:.02em; white-space:nowrap }
+.bar .f-avatar{ margin-left:var(--s-1) }
+/* .f-tip and the rail's [data-tip] both match an element that has both;
+   pin .f-tip to its own placement: above, centred (below in the bar) */
+.f-tip[data-tip]::after{ top:auto; left:50%; bottom:calc(100% + 8px); z-index:5; transform:translate(-50%, 4px) scale(.96) }
+.f-tip[data-tip]:hover::after, .f-tip[data-tip]:focus-visible::after{ transform:translate(-50%, 0) scale(1) }
+.bar .f-tip[data-tip]::after{ top:calc(100% + 8px); bottom:auto }
+.bar__menu{ position:absolute; z-index:45; top:calc(var(--bar-h) + var(--s-1)); left:var(--s-2); box-shadow:var(--shadow-16);
+  transform-origin:top left; animation:f-pop var(--dur-2) var(--spring) both }
+
+/* ---------- desktop icons ---------- */
+.icons{ position:absolute; top:calc(var(--bar-h) + var(--s-6)); right:var(--s-6); display:grid; gap:var(--s-4); justify-items:center }
+.icons[hidden]{ display:none }
+.icon{ width:88px; display:grid; justify-items:center; gap:var(--s-2); padding:var(--s-3) var(--s-1); border:0; border-radius:var(--r-card);
+  background:none; cursor:pointer; animation:f-rise var(--dur-4) var(--ease-out) backwards; animation-delay:calc(var(--i, 0) * var(--stagger));
+  transition:background-color var(--dur-1) var(--ease) }
+.icon:hover{ background:var(--glass) }
+.icon:focus-visible{ outline:2px solid var(--acc); outline-offset:1px }
+.icon__img{ width:52px; height:52px; display:grid; place-items:center; border-radius:var(--r-overlay);
+  background:var(--glass-hi); border:var(--hair) solid var(--glass-line); box-shadow:var(--shadow-4); color:var(--text);
+  -webkit-backdrop-filter:var(--blur-1); backdrop-filter:var(--blur-1); transition:transform var(--dur-2) var(--spring) }
+.icon:active .icon__img{ transform:var(--press) }
+.icon__img svg{ width:26px; height:26px }
+.icon__name{ font-size:var(--fs-200); line-height:var(--lh-200); font-weight:500; color:var(--text) }
+
+/* ---------- windows ---------- */
+.windows{ position:absolute; inset:var(--bar-h) 0 0 0; pointer-events:none }
+.win{ position:absolute; display:flex; flex-direction:column; pointer-events:auto;
+  width:min(var(--win-w), calc(100vw - 2 * var(--s-5))); height:min(var(--win-h), calc(100dvh - var(--bar-h) - var(--dock-icon) - 5 * var(--s-5)));
+  border-radius:var(--r-overlay); box-shadow:var(--shadow-28); overflow:hidden;
+  transform-origin:var(--ox, 50%) var(--oy, 100%);
+  transition:box-shadow var(--dur-2) var(--ease), opacity var(--dur-1) var(--ease) }
+.win.is-front{ box-shadow:var(--shadow-64) }
+.win:not(.is-front) .win__title{ color:var(--text-dim) }
+.win.is-opening{ animation:win-in var(--dur-3) var(--spring) both }
+.win.is-closing{ animation:win-out var(--dur-2) var(--ease) both; pointer-events:none }
+.win.is-minimising{ animation:win-min var(--dur-3) var(--ease-io) both; pointer-events:none }
+.win.is-max{ left:0 !important; top:0 !important; width:100% !important; height:calc(100% - var(--dock-icon) - 3 * var(--s-3)) !important; border-radius:0 }
+:root[data-autohide] .win.is-max{ height:100% !important }
+.win.is-max .win__grip{ display:none }
+.win.is-dragging{ transition:none; cursor:grabbing }
+@keyframes win-in{ from{ opacity:0; transform:translateY(14px) scale(.94) } }
+@keyframes win-out{ to{ opacity:0; transform:scale(.96) } }
+@keyframes win-min{ to{ opacity:0; transform:translate(var(--mx-to, 0), var(--my-to, 60vh)) scale(.12) } }
+
+/* the bar: lights left, the title in the middle, an app's own tools right */
+.win__bar{ flex:none; display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:var(--s-4);
+  height:40px; padding:0 var(--s-3) 0 var(--s-4); cursor:grab; touch-action:none }
+.win__title{ display:flex; align-items:center; gap:var(--s-2); min-width:0; font-weight:600; font-size:var(--fs-300);
+  transition:color var(--dur-1) var(--ease) }
+.win__icon{ flex:none; width:16px; height:16px; border-radius:var(--r-control) }
+.win__name{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:48ch }
+.win__tools{ display:flex; justify-content:flex-end; gap:var(--s-1); min-width:0 }
+
+/* traffic lights: close, minimise, maximise. The colours are state colours of
+   their own (red, amber, green), fixed in both themes like a real light; their
+   marks show while the pointer is over the group. Behind other windows they go grey. */
+:root{
+  --light-close: #ff5f57;  --light-close-line: #e0443e;
+  --light-min:   #febc2e;  --light-min-line:   #dea123;
+  --light-max:   #28c840;  --light-max-line:   #1aab29;
+  --light-mark:  rgb(0 0 0 / .55);
+  --light-off:   light-dark(#dcdce2, #3a3a42);  --light-off-line: light-dark(#c8c8d0, #4a4a54);
+}
+.win__lights{ display:flex; align-items:center; gap:8px; justify-self:start }
+.light{ position:relative; width:12px; height:12px; padding:0; border-radius:50%; cursor:pointer;
+  background:var(--_c); border:0; box-shadow:inset 0 0 0 0.5px var(--_l);
+  transition:background-color var(--dur-1) var(--ease), transform var(--dur-2) var(--spring) }
+.light::before{ content:""; position:absolute; inset:-5px -4px }   /* a bigger target than the dot */
+.light--close{ --_c:var(--light-close); --_l:var(--light-close-line) }
+.light--min{ --_c:var(--light-min); --_l:var(--light-min-line) }
+.light--max{ --_c:var(--light-max); --_l:var(--light-max-line) }
+.light svg{ position:absolute; inset:0; width:12px; height:12px; opacity:0; transition:opacity var(--dur-1) var(--ease) }
+.light svg path{ fill:none; stroke:var(--light-mark); stroke-width:1.3; stroke-linecap:round }
+.light svg path.fill{ fill:var(--light-mark); stroke:none }
+.win__lights:hover .light svg, .light:focus-visible svg{ opacity:1 }
+.light:active{ filter:brightness(.85) }
+.light:focus-visible{ outline:2px solid var(--acc); outline-offset:2px }
+.win:not(.is-front) .win__lights:not(:hover) .light{ --_c:var(--light-off); --_l:var(--light-off-line) }
+
+/* what a person reads lies on an opaque surface, never on the glass (rule 3) */
+.win__body{ position:relative; flex:1 1 auto; min-height:0; background:var(--surface); border-top:var(--hair) solid var(--glass-edge) }
+/* resize from the corner */
+.win__grip{ position:absolute; right:0; bottom:0; width:18px; height:18px; cursor:nwse-resize; touch-action:none; z-index:2 }
+.win__grip::after{ content:""; position:absolute; right:4px; bottom:4px; width:8px; height:8px;
+  border-right:2px solid var(--text-ghost); border-bottom:2px solid var(--text-ghost); border-bottom-right-radius:var(--r-small); opacity:.6 }
+.win__body--settings{ display:grid }
+.win__body--settings .set{ min-height:0 }
+
+/* the placeholder app */
+.empty{ display:grid; place-content:center; justify-items:center; gap:var(--s-3); padding:var(--s-7); text-align:center }
+.empty p{ margin:0; max-width:32ch }
+.empty__icon{ width:56px; height:56px; display:grid; place-items:center; border-radius:var(--r-overlay); background:var(--surface-3); color:var(--text-dim) }
+.empty__icon svg{ width:28px; height:28px }
+
+/* ---------- the dock ---------- */
+.dock{ position:absolute; z-index:30; left:50%; bottom:var(--s-3); display:flex; align-items:center; gap:var(--dock-gap);
+  padding:var(--s-2); border-radius:calc(var(--r-overlay) + var(--s-1)); box-shadow:var(--shadow-16);
+  transform:translateX(-50%); transition:transform var(--dur-3) var(--spring), padding var(--dur-2) var(--spring) }
+:root[data-autohide] .dock:not(.is-shown){ transform:translate(-50%, calc(100% + var(--s-5))) }
+.dock-edge{ position:absolute; z-index:29; left:0; right:0; bottom:0; height:var(--s-2); display:none }
+:root[data-autohide] .dock-edge{ display:block }
+.dock__app{ position:relative; width:var(--dock-icon); height:var(--dock-icon); display:grid; place-items:center;
+  border:var(--hair) solid var(--stroke-2); border-radius:calc(var(--r-overlay) - var(--s-1)); background:var(--card); color:var(--text); cursor:pointer;
+  transition:transform var(--dur-2) var(--spring), width var(--dur-2) var(--spring), height var(--dur-2) var(--spring), background-color var(--dur-1) var(--ease) }
+.dock__app:hover{ background:var(--surface-2); transform:translateY(-4px) }
+.dock__app:active{ transform:var(--press) }
+.dock__app:focus-visible{ outline:2px solid var(--acc); outline-offset:2px }
+.dock__app svg{ width:calc(var(--dock-icon) * .46); height:calc(var(--dock-icon) * .46) }
+/* a running app has a dot under it, in the accent: state, not decoration (rule 4) */
+.dock__app::before{ content:""; position:absolute; left:50%; bottom:-5px; width:4px; height:4px; border-radius:50%; background:var(--acc);
+  transform:translateX(-50%) scale(0); transition:transform var(--dur-2) var(--spring) }
+.dock__app.is-run::before{ transform:translateX(-50%) scale(1) }
+.dock__app.is-bounce{ animation:dock-bounce var(--dur-4) var(--spring) }
+@keyframes dock-bounce{ 30%{ transform:translateY(-12px) } }
+
+/* ---------- settings ---------- */
+.set{ display:grid; grid-template-columns:240px minmax(0,1fr) }
+.set__side{ display:flex; flex-direction:column; gap:var(--s-4); min-height:0; padding:var(--s-4) var(--s-3); overflow:auto;
+  background:var(--bg-frame); border-right:var(--hair) solid var(--stroke-2) }
+.set__side .f-search .f-input{ padding-right:var(--s-4) }
+.set__me{ display:flex; align-items:center; gap:var(--s-4); padding:var(--s-3); border:0; border-radius:var(--r-card); background:var(--card);
+  border:var(--hair) solid var(--stroke-2); text-align:left; cursor:pointer; transition:background-color var(--dur-1) var(--ease) }
+.set__me:hover{ background:var(--surface-2) }
+.set__me .f-avatar{ width:36px; height:36px; font-size:var(--fs-300) }
+.set__me b{ display:block; font-weight:600 }
+.set__me small{ display:block; color:var(--text-dim); font-size:var(--fs-200); line-height:var(--lh-200) }
+.set__navmeta{ margin-left:auto; font-size:var(--fs-200); color:var(--text-ghost) }
+.f-nav__item[hidden]{ display:none }
+.set__none{ margin:0; padding:0 var(--s-4) }
+
+.set__main{ min-height:0; overflow:auto; overscroll-behavior:contain; padding:var(--s-6) var(--s-7) var(--s-8) }
+.page{ display:grid; gap:var(--s-3); max-width:640px; margin:0 auto; animation:page-in var(--dur-3) var(--ease-out) backwards }
+@keyframes page-in{ from{ opacity:0; transform:translateY(8px) } }
+.page__head{ display:flex; align-items:center; gap:var(--s-3); margin-bottom:var(--s-3) }
+.page__head .f-h2{ margin:0 }
+.page__back{ display:none }
+
+.grp__label{ margin-top:var(--s-5); padding:0 var(--s-1) }
+.grp{ display:grid; background:var(--card); border:var(--hair) solid var(--stroke-2); border-radius:var(--r-card) }
+.grp > * + *{ border-top:var(--hair) solid var(--divider) }
+.grp:empty{ display:none }
+.grp__empty{ margin:0; padding:var(--s-4) var(--s-1) }
+
+.opt{ display:flex; align-items:center; justify-content:space-between; gap:var(--s-5); min-height:52px; padding:var(--s-3) var(--s-5) }
+.opt--stack{ flex-direction:column; align-items:stretch; gap:var(--s-4); padding-block:var(--s-4) }
+.opt__txt{ display:grid; gap:var(--s-0); min-width:0 }
+.opt__txt b{ font-weight:500 }
+.opt__txt small{ color:var(--text-dim); font-size:var(--fs-200); line-height:var(--lh-200) }
+.opt .f-switch{ flex:none }
+.opt__select{ width:auto; min-width:220px; font-size:16px }
+.opt--check{ display:grid; grid-template-columns:auto minmax(0,1fr) auto; cursor:pointer; transition:background-color var(--dur-1) var(--ease) }
+.opt--check:hover{ background:var(--surface-2) }
+.grp > .opt:first-child{ border-top-left-radius:inherit; border-top-right-radius:inherit }
+.grp > .opt:last-child{ border-bottom-left-radius:inherit; border-bottom-right-radius:inherit }
+
+/* hue swatches */
+.swatches{ display:flex; flex-wrap:wrap; gap:var(--s-3) }
+.swatches button{ padding:3px; border:2px solid transparent; border-radius:50%; background:none; cursor:pointer;
+  transition:border-color var(--dur-1) var(--ease), transform var(--dur-2) var(--spring) }
+.swatches button:hover{ transform:scale(1.08) }
+.swatches button:active{ transform:var(--press) }
+.swatches button[aria-checked="true"]{ border-color:var(--acc) }
+.swatches button:focus-visible{ outline:2px solid var(--acc); outline-offset:2px }
+.swatches .f-swatch{ width:28px; height:28px; display:block }
+.swatch--facet{ background:oklch(.62 .17 277) }  /* Facet's own violet: the same probe as data-h=277 */
+
+/* the volume slider, drawn from the same tokens as .f-meter and .f-switch */
+.slider{ display:flex; align-items:center; gap:var(--s-4); color:var(--text-dim) }
+.slider svg{ width:18px; height:18px; flex:none }
+.range{ --v:60%; flex:1; appearance:none; -webkit-appearance:none; height:6px; margin:0; border-radius:var(--r-pill); cursor:pointer;
+  background:linear-gradient(to right, var(--acc-fill) var(--v), var(--surface-3) var(--v)) }
+.range::-webkit-slider-thumb{ -webkit-appearance:none; width:20px; height:20px; border-radius:50%; background:#fff; /* thumb: white in both modes, like .f-switch */
+  border:var(--hair) solid var(--stroke-1); box-shadow:var(--shadow-4); transition:transform var(--dur-2) var(--spring) }
+.range::-moz-range-thumb{ width:20px; height:20px; border-radius:50%; background:#fff; border:var(--hair) solid var(--stroke-1); box-shadow:var(--shadow-4) }
+.range:active::-webkit-slider-thumb{ transform:scale(1.15) }
+.range:focus-visible{ outline:2px solid var(--acc); outline-offset:4px }
+.range:disabled{ opacity:.45; cursor:not-allowed }
+
+/* networks */
+.net{ display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:var(--s-4); width:100%;
+  min-height:52px; padding:var(--s-3) var(--s-5); border:0; background:none; text-align:left; cursor:pointer;
+  transition:background-color var(--dur-1) var(--ease) }
+.grp > .net:first-child{ border-top-left-radius:inherit; border-top-right-radius:inherit }
+.grp > .net:last-child{ border-bottom-left-radius:inherit; border-bottom-right-radius:inherit }
+.net:hover{ background:var(--surface-2) }
+.net[aria-busy="true"]{ cursor:progress }
+.net__sig{ width:20px; height:20px; color:var(--text-dim) }
+.net.is-on .net__sig{ color:var(--acc) }
+.net__end{ display:flex; align-items:center; gap:var(--s-3); color:var(--text-ghost) }
+.net__end svg{ width:15px; height:15px }
+
+/* account */
+.grp--form{ gap:var(--s-5); padding:var(--s-5) var(--s-5) 0 }
+.grp--form > * + *{ border-top:0 }
+.acct{ display:flex; align-items:center; gap:var(--s-5) }
+.acct .opt__txt b{ font-size:var(--fs-500); line-height:var(--lh-500); font-weight:600 }
+.grp--form .f-input{ font-size:16px }
+.grp__foot{ display:flex; align-items:center; justify-content:space-between; gap:var(--s-4); margin:0 calc(var(--s-5) * -1);
+  padding:var(--s-4) var(--s-5); border-top:var(--hair) solid var(--divider) !important; background:var(--surface-2);
+  border-radius:0 0 var(--r-card) var(--r-card) }
+
+/* info */
+.about{ display:flex; align-items:center; gap:var(--s-6); padding:var(--s-3) var(--s-1) var(--s-5) }
+.about__mark{ width:120px; height:auto; aspect-ratio:964 / 543; animation:mark-in var(--dur-5) var(--ease-out) backwards }
+.about p{ margin:0 0 var(--s-3) }
+.about .wordmark{ color:var(--text-dim) }
+@keyframes mark-in{ from{ opacity:0; transform:translateY(10px) scale(.9); filter:blur(6px) } }
+.info{ padding:0 var(--s-5) }
+.info .f-meter{ max-width:240px; margin-top:var(--s-2) }
+
+/* dialogs */
+.dlg{ display:grid; gap:var(--s-4); padding:var(--s-6); border-radius:var(--r-overlay) }
+.dlg .f-h3, .dlg p{ margin:0 }
+.dlg .f-input{ font-size:16px }
+.dlg__foot{ display:flex; justify-content:flex-end; gap:var(--s-3); margin-top:var(--s-2) }
+.f-dialog::backdrop{ background:color-mix(in srgb, var(--bg-deep) 40%, transparent); -webkit-backdrop-filter:var(--blur-1); backdrop-filter:var(--blur-1) }
+
+/* ---------- lock screen ---------- */
+.lock{ position:fixed; inset:0; z-index:60; display:grid; place-content:center; justify-items:center; gap:var(--s-3); text-align:center;
+  animation:f-fade var(--dur-3) var(--ease) both }
+.lock[hidden]{ display:none }
+.lock.is-out{ animation:lock-out var(--dur-3) var(--ease-out) both }
+@keyframes lock-out{ to{ opacity:0; transform:scale(1.04); filter:blur(8px) } }
+.lock__mark{ width:72px; height:auto; aspect-ratio:964 / 543; margin-bottom:var(--s-5) }
+.lock__time{ font:600 clamp(64px, 12vw, 120px)/1 var(--sans); letter-spacing:var(--tr-display); font-variant-numeric:tabular-nums; color:var(--text) }
+.lock__date{ font-size:var(--fs-500); line-height:var(--lh-500); color:var(--text) }
+.lock__btn{ margin-top:var(--s-8); padding-left:var(--s-2) }
+
+/* ---------- narrow: windows fill the screen, settings becomes list → page ---------- */
+@media (max-width: 639px){
+  .win{ left:0 !important; top:0 !important; width:100% !important; height:calc(100% - var(--dock-icon) - 3 * var(--s-3)) !important; border-radius:0 }
+  .win__grip{ display:none }
+  .fm{ grid-template-columns:1fr }
+  .fm__side{ display:none }
+  .fm__head span:nth-child(3), .fm__date{ display:none }
+  .fm__head, .fm__row{ grid-template-columns:minmax(0,1fr) 80px }
+  .fm__actions .f-btn{ font-size:0; gap:0; width:32px; padding:0 }
+  .light--max{ display:none }
+  .icons{ left:var(--s-5); right:var(--s-5); grid-template-columns:repeat(auto-fill, 88px); justify-content:start }
+  .bar__app{ display:none }
+  .set{ grid-template-columns:1fr }
+  .set__side{ border-right:0 }
+  .set:not(.is-page) .set__main{ display:none }
+  .set.is-page .set__side{ display:none }
+  .set__main{ padding:var(--s-4) var(--s-5) var(--s-8) }
+  .page__back{ display:inline-flex }
+  .opt__select{ min-width:0; max-width:55% }
+  .about{ gap:var(--s-5) }
+  .about__mark{ width:88px }
+}
+
+/* Facet's fallbacks reach the shell too (rule 7) */
+:root[data-motion="reduced"] .win, :root[data-motion="reduced"] .page, :root[data-motion="reduced"] .icon,
+:root[data-motion="reduced"] .about__mark, :root[data-motion="reduced"] .lock{ animation-duration:1ms !important }
+@media (prefers-reduced-motion: reduce){
+  .win, .page, .icon, .about__mark, .lock, .dock__app{ animation-duration:1ms !important }
+}
+.fx-lite .icon__img, .fx-lite .f-dialog::backdrop{ -webkit-backdrop-filter:none; backdrop-filter:none }
+
+/* ---------- the door (before the token link was opened) ---------- */
+.door{ min-height:100vh; display:grid; place-items:center; padding:var(--s-5) }
+.door main{ display:grid; gap:var(--s-3); max-width:40ch }
+.door pre{ margin:0; padding:var(--s-3) var(--s-4); border-radius:var(--r-control); background:var(--surface-2); font:400 var(--fs-200)/var(--lh-200) var(--mono) }
+
+/* ---------- terminal ---------- */
+.win__body--term{ padding:var(--s-2) 0 0 var(--s-3) }
+.term{ height:100% }
+.term .xterm{ height:100% }
+.term .xterm-viewport{ background:transparent !important; scrollbar-width:thin; scrollbar-color:var(--stroke-1) transparent }
+
+/* ---------- files ---------- */
+.fm{ display:grid; grid-template-columns:190px minmax(0,1fr) }
+.fm__side{ min-height:0; overflow:auto; padding:var(--s-3); background:var(--bg-frame); border-right:var(--hair) solid var(--stroke-2) }
+.fm__main{ position:relative; display:flex; flex-direction:column; min-width:0; min-height:0 }
+.fm__bar{ display:flex; align-items:center; gap:var(--s-1); padding:var(--s-2) var(--s-3); border-bottom:var(--hair) solid var(--divider) }
+.fm__bar .f-btn.is-on{ color:var(--acc); background:var(--acc-soft) }
+.fm__spacer{ flex:1 }
+.fm__crumbs{ display:flex; align-items:center; gap:var(--s-0); min-width:0; overflow:hidden; margin-left:var(--s-2) }
+.fm__crumbs button{ flex:none; max-width:20ch; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:var(--s-1) var(--s-2);
+  border:0; border-radius:var(--r-control); background:none; color:var(--text-dim); font-weight:500; cursor:pointer;
+  transition:background-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease) }
+.fm__crumbs button:hover{ background:var(--surface-2); color:var(--text) }
+.fm__crumbs button:last-child{ color:var(--text) }
+.fm__crumbs svg{ flex:none; width:12px; height:12px; color:var(--text-ghost) }
+.fm__head, .fm__row{ display:grid; grid-template-columns:minmax(0,1fr) 90px 150px; gap:var(--s-4); align-items:center; padding:0 var(--s-5) }
+.fm__head{ height:30px; border-bottom:var(--hair) solid var(--divider); font:500 var(--fs-chrome-xs)/1 var(--mono); letter-spacing:var(--tr-chrome-xs); text-transform:uppercase; color:var(--text-dim) }
+.fm__head span:nth-child(2), .fm__size{ text-align:right }
+.fm__list{ flex:1; min-height:0; overflow:auto; padding:var(--s-1) var(--s-2); outline:none }
+.fm__row{ height:34px; padding:0 var(--s-3); border-radius:var(--r-control); cursor:default; user-select:none;
+  transition:background-color var(--dur-1) var(--ease) }
+.fm__row:hover{ background:var(--surface-2) }
+.fm__row[aria-selected="true"]{ background:var(--acc-soft); color:var(--acc) }
+.fm__list:focus-visible .fm__row[aria-selected="true"]{ outline:2px solid var(--acc); outline-offset:-2px }
+.fm__row.is-hidden{ opacity:.6 }
+.fm__name{ display:flex; align-items:center; gap:var(--s-3); min-width:0 }
+.fm__name span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.fm__name small{ flex:none; color:var(--text-ghost); font-size:var(--fs-200) }
+.fm__ic{ flex:none; width:18px; height:18px; color:var(--text-dim) }
+.fm__ic--dir{ color:var(--acc) }
+.fm__size, .fm__date{ color:var(--text-dim); font-size:var(--fs-200); font-variant-numeric:tabular-nums; white-space:nowrap }
+.fm__row[aria-selected="true"] .fm__size, .fm__row[aria-selected="true"] .fm__date{ color:inherit }
+.fm__empty{ display:grid; place-items:center; align-content:center; gap:var(--s-3); height:100%; min-height:160px; color:var(--text-dim) }
+.fm__empty svg{ width:40px; height:40px; color:var(--text-ghost) }
+.fm__foot{ display:flex; align-items:center; justify-content:space-between; gap:var(--s-4); padding:var(--s-2) var(--s-3) var(--s-2) var(--s-5);
+  border-top:var(--hair) solid var(--divider); background:var(--surface-2) }
+.fm__foot > .f-dim{ font-size:var(--fs-200); white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.fm__actions{ display:flex; align-items:center; gap:var(--s-2); flex-wrap:wrap; justify-content:flex-end }
+.fm__actions .f-btn svg{ width:15px; height:15px }
+.fm__actions [hidden]{ display:none }
+.fm__sep{ width:var(--hair); height:20px; background:var(--stroke-2); margin:0 var(--s-1) }
+.fm__drop{ position:absolute; inset:var(--s-3); display:grid; place-items:center; border:2px dashed var(--acc-line); border-radius:var(--r-card);
+  background:var(--acc-soft); color:var(--acc); font-weight:600; pointer-events:none; animation:f-fade var(--dur-1) var(--ease) }
+
+/* ---------- editor ---------- */
+.ed{ display:flex; flex-direction:column }
+.ed__text{ flex:1; min-height:0; resize:none; border:0; outline:none; padding:var(--s-4) var(--s-5); background:var(--surface); color:var(--text);
+  font:400 13px/1.55 var(--mono); tab-size:4; user-select:text }
+.ed__text:disabled{ color:var(--text-dim) }
+.ed__foot{ display:flex; align-items:center; gap:var(--s-4); padding:var(--s-2) var(--s-3) var(--s-2) var(--s-5); border-top:var(--hair) solid var(--divider); background:var(--surface-2); font-size:var(--fs-200) }
+.ed__path{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+
+/* ---------- Linux apps ---------- */
+.xapp{ overflow:hidden; background:var(--surface) }
+.xapp__screen{ position:absolute; inset:0 }
+.xapp__screen > div{ background:transparent !important }
+.xapp__screen canvas{ display:block; outline:none }
+.xapp__veil{ position:absolute; inset:0; display:grid; place-content:center; justify-items:center; gap:var(--s-4); background:var(--surface);
+  animation:f-fade var(--dur-2) var(--ease) }
+.xapp__veil[hidden]{ display:none }
+.xapp__icon{ width:56px; height:56px; color:var(--text-ghost) }
+.desk, .win__bar, .dock, .bar{ user-select:none; -webkit-user-select:none }
+.win__body input, .win__body textarea, .term{ user-select:text; -webkit-user-select:text }
+
+/* ---------- the login screen (greeter) ---------- */
+/* rows: bar, space, clock, card, space, footer: clock and card sit in the middle */
+.greeter{ position:fixed; inset:0; display:grid; grid-template-rows:auto 1fr auto auto 1.3fr auto; justify-items:center; align-items:center;
+  padding:var(--s-5) var(--s-6); overflow:clip; user-select:none; -webkit-user-select:none }
+.greeter__top{ grid-row:1 }
+.greeter__clock{ grid-row:3 }
+.greeter__card{ grid-row:4 }
+.greeter__foot-line{ grid-row:6 }
+:root[data-mirror] .greeter{ --nova-angle:-68deg; --nova-x:100%; --nova-dir:-1 }
+.greeter__top{ justify-self:stretch; display:flex; align-items:center; justify-content:space-between }
+.greeter__os{ display:flex; align-items:center; gap:var(--s-3); font-weight:600; color:var(--text) }
+.greeter__os .lm{ width:30px; height:17px }
+.greeter__clock{ display:grid; justify-items:center; gap:var(--s-2); padding-bottom:var(--s-7); text-align:center }
+.greeter__time{ font:600 clamp(64px, 11vw, 112px)/1 var(--sans); letter-spacing:var(--tr-display); font-variant-numeric:tabular-nums; color:var(--text) }
+.greeter__date{ font-size:var(--fs-500); line-height:var(--lh-500); color:var(--text) }
+.greeter__card{ position:relative; width:min(380px, 100%); display:grid; justify-items:center; gap:var(--s-4); padding:var(--s-7) var(--s-6);
+  border-radius:var(--r-overlay); box-shadow:var(--shadow-28); align-self:start; text-align:center }
+.greeter__card[hidden]{ display:none }
+.greeter__card.is-in{ animation:greet-in var(--dur-3) var(--spring) backwards }
+.greeter__card.is-shake{ animation:greet-shake var(--dur-3) var(--ease-out) }
+.greeter__card .f-h3, .greeter__card p{ margin:0 }
+.greeter__card--setup{ width:min(440px, 100%); justify-items:stretch; text-align:left }
+.greeter__card--setup .f-input{ font-size:16px }
+@keyframes greet-in{ from{ opacity:0; transform:translateY(12px) scale(.97) } }
+@keyframes greet-shake{ 20%{ transform:translateX(-8px) } 40%{ transform:translateX(7px) } 60%{ transform:translateX(-4px) } 80%{ transform:translateX(2px) } }
+.greeter__back{ position:absolute; top:var(--s-3); left:var(--s-3) }
+.greeter__back[hidden]{ display:none }
+.greeter__name{ display:grid; gap:var(--s-0) }
+.greeter__name small{ font-size:var(--fs-200) }
+.greeter__pw{ width:100%; text-align:left }
+.greeter__pwrow{ display:flex; gap:var(--s-2) }
+.greeter__pwrow .f-input{ font-size:16px }
+.greeter__pwrow .f-btn{ flex:none }
+#login.is-busy #go{ opacity:.6 }
+.greeter__foot{ display:flex; align-items:center; justify-content:space-between; gap:var(--s-4); margin-top:var(--s-2) }
+.greeter__foot .f-dim{ font-size:var(--fs-200) }
+.greeter__code{ margin:0; padding:var(--s-3) var(--s-4); border-radius:var(--r-control); background:var(--surface-2); font:400 var(--fs-200)/var(--lh-200) var(--mono) }
+.greeter__foot-line{ display:flex; align-items:center; gap:var(--s-4); padding-top:var(--s-6); color:var(--text-dim); font:500 var(--fs-200)/1 var(--mono) }
+.greeter__foot-line .wordmark{ height:8px; color:var(--text-dim) }
+.who{ display:flex; flex-wrap:wrap; justify-content:center; gap:var(--s-3) }
+.who__one{ width:108px; display:grid; justify-items:center; gap:var(--s-2); padding:var(--s-4) var(--s-2); border:0; border-radius:var(--r-card);
+  background:none; cursor:pointer; transition:background-color var(--dur-1) var(--ease), transform var(--dur-2) var(--spring) }
+.who__one:hover{ background:var(--surface-2) }
+.who__one:active{ transform:var(--press) }
+.who__one:focus-visible{ outline:2px solid var(--acc); outline-offset:2px }
+.who__one b{ font-weight:600; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.who__one small{ color:var(--text-dim); font-size:var(--fs-200) }
+.who__one .f-avatar, .greeter__card > .f-avatar{ width:64px; height:64px }
+body.is-leaving .greeter > *{ transition:opacity var(--dur-2) var(--ease), transform var(--dur-2) var(--ease); opacity:0; transform:scale(.98) }
+@media (max-width: 639px){
+  .greeter{ padding:var(--s-4) var(--s-5) }
+  .greeter__clock{ padding-bottom:var(--s-6) }
+}
+body.is-leaving .desk{ transition:opacity var(--dur-2) var(--ease), filter var(--dur-2) var(--ease); opacity:0; filter:blur(6px) }
+.page__lede{ margin:0 0 var(--s-2); max-width:62ch; font-size:var(--fs-200); line-height:var(--lh-200) }
+.acct-row{ display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:var(--s-4); padding:var(--s-3) var(--s-5) }
+.acct-row .f-avatar{ width:34px; height:34px; font-size:var(--fs-300) }
+.acct-row__tags{ display:flex; flex-wrap:wrap; gap:var(--s-2); margin-top:var(--s-1) }
+.acct-row__act{ display:flex; gap:var(--s-1) }
+.acct-row__act .f-btn svg{ width:15px; height:15px }
+.grp--form .f-check{ font-size:var(--fs-300) }
+.bar #bar-avatar{ cursor:default }
+
+/* ---------- colour app icons (index.html: #app-*) ---------- */
+/* the tile is the icon: no box around it, a soft shadow under it */
+.app-art{ display:block; filter:drop-shadow(0 1px 1.5px var(--sh-a)) drop-shadow(0 4px 8px var(--sh-k)) }
+.dock__app{ background:none; border:0; border-radius:calc(var(--r-overlay) - var(--s-1)) }
+.dock__app:hover{ background:none; transform:translateY(-6px) scale(1.06) }
+.dock__app .app-art{ width:100%; height:100% }
+.icon__img{ background:none; border:0; box-shadow:none; -webkit-backdrop-filter:none; backdrop-filter:none; width:56px; height:56px }
+.icon__img .app-art{ width:56px; height:56px }
+.icon:hover{ background:var(--glass) }
+.icon__name{ text-shadow:none }
+.fx-lite .app-art{ filter:none }
+
+/* the desktop chooser on the login screen */
+.greeter__card--desks{ width:min(400px, 100%); justify-items:stretch; text-align:left; gap:var(--s-3) }
+.desks__who{ display:flex; align-items:center; gap:var(--s-3); margin-bottom:var(--s-1) }
+.desks__who .f-avatar{ width:36px; height:36px; font-size:var(--fs-300) }
+.desks__who b{ display:block }
+.desks__who small{ display:block; font-size:var(--fs-200) }
+.desks{ display:grid; gap:var(--s-1) }
+.dpick{ display:grid; gap:var(--s-0); padding:var(--s-3) var(--s-4); border:var(--hair) solid var(--stroke-2); border-radius:var(--r-card);
+  background:var(--card); text-align:left; cursor:pointer; transition:background-color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease), transform var(--dur-2) var(--spring) }
+.dpick:hover{ background:var(--surface-2); border-color:var(--acc-line) }
+.dpick:active{ transform:var(--press) }
+.dpick:focus-visible{ outline:2px solid var(--acc); outline-offset:2px }
+.dpick__name{ font-weight:600 }
+.dpick small{ color:var(--text-dim); font-size:var(--fs-200) }
+.desks__new{ display:flex; gap:var(--s-2); margin-top:var(--s-1) }
+.desks__new .f-input{ font-size:16px }
+.desks__new .f-btn{ flex:none }
+#desk-other{ justify-self:center }
+/* the desktop's name in the bar */
+.bar__desk{ padding:var(--s-1) var(--s-3); border:0; border-radius:var(--r-pill); background:var(--surface-2); color:var(--text-dim); cursor:pointer;
+  font:500 var(--fs-200)/1 var(--sans); white-space:nowrap }
+.bar__desk[hidden]{ display:none }
+.ssh-cmd{ display:block; padding:var(--s-3) var(--s-4); border-radius:var(--r-control); background:var(--surface-2); border:var(--hair) solid var(--stroke-2);
+  font:500 13px/1.4 var(--mono); user-select:all; -webkit-user-select:all; overflow-x:auto; white-space:nowrap }
+.ssh-fp{ font-family:var(--mono); font-size:11px; word-break:break-all }
+.ssh-key-in{ height:auto; min-height:72px; padding:var(--s-3) var(--s-4); font:400 13px/1.45 var(--mono); resize:vertical }
+
+/* MesloLGS NF: the font powerlevel10k is made for, served from the image (Apache 2.0) */
+@font-face{ font-family:'MesloLGS NF'; src:url('/vendor/meslo/MesloLGS%20NF%20Regular.ttf') format('truetype'); font-weight:400; font-style:normal; font-display:swap }
+@font-face{ font-family:'MesloLGS NF'; src:url('/vendor/meslo/MesloLGS%20NF%20Bold.ttf') format('truetype'); font-weight:700; font-style:normal; font-display:swap }
+@font-face{ font-family:'MesloLGS NF'; src:url('/vendor/meslo/MesloLGS%20NF%20Italic.ttf') format('truetype'); font-weight:400; font-style:italic; font-display:swap }
+@font-face{ font-family:'MesloLGS NF'; src:url('/vendor/meslo/MesloLGS%20NF%20Bold%20Italic.ttf') format('truetype'); font-weight:700; font-style:italic; font-display:swap }
+.xapp__switch{ width:auto; max-width:240px; height:26px; padding:0 var(--s-6) 0 var(--s-3); font-size:var(--fs-200) }
+.xapp__switch[hidden]{ display:none }
+.bar__desk:hover{ background:var(--surface-3); color:var(--text) }
+
+/* ---------- the Akari OS mark ("Schein"): the light edge takes the accent ---------- */
+.am-l{ fill:var(--acc) }
+.am-b{ fill:var(--text) }
+.am-d{ fill:var(--text-ghost) }
+.am{ display:block; flex:none }
+.bar__brand .am{ width:17px; height:18px }
+.greeter__os .am{ width:17px; height:18px }
+.about__mark.am{ width:72px; height:auto; aspect-ratio:95.64 / 100 }
+.about__by{ display:flex; align-items:center; gap:var(--s-2); color:var(--text-dim); font-size:var(--fs-200) }
+.about__by .wordmark{ height:8px }
+
+/* the mark as a character (U+F0000), for the prompt: "Akari Symbols" after MesloLGS NF */
+@font-face{ font-family:'Akari Symbols'; src:url('assets/fonts/AkariSymbols.woff2') format('woff2'); unicode-range:U+F0000; font-display:block }
+
+/* =====================================================================
+   0.4: the taskbar. Two floating glass pills at the bottom: apps left,
+   status right. No bar at the top any more; windows use the whole height
+   above the pills.
+   ===================================================================== */
+:root{ --bar-h:0px; --dock-icon:36px; --tb-h:54px; --tb-gap:var(--s-3); --tb-space:calc(var(--tb-h) + 2 * var(--tb-gap)) }
+:root[data-dock="s"]{ --dock-icon:30px; --tb-h:46px }
+:root[data-dock="l"]{ --dock-icon:44px; --tb-h:64px }
+:root[data-autohide]{ --tb-space:0px }
+
+.windows{ inset:0 0 var(--tb-space) 0 }
+.icons{ top:var(--s-6) }
+.win.is-max{ height:100% !important }
+:root[data-autohide] .win.is-max{ height:100% !important }
+
+.taskbar{ position:absolute; z-index:40; left:0; right:0; bottom:var(--tb-gap); display:flex; justify-content:center; align-items:flex-end;
+  gap:var(--s-4); padding:0 var(--s-4); pointer-events:none; transition:transform var(--dur-3) var(--spring) }
+:root[data-autohide] .taskbar:not(.is-shown){ transform:translateY(calc(100% + var(--tb-gap) * 2)) }
+.tb{ pointer-events:auto; display:flex; align-items:center; gap:var(--s-2); height:var(--tb-h); padding:0 var(--s-3);
+  border-radius:calc(var(--tb-h) / 2.6); box-shadow:var(--shadow-28); min-width:0 }
+.tb__sep{ flex:none; width:var(--hair); height:calc(var(--tb-h) * .42); margin:0 var(--s-1); background:var(--stroke-1); opacity:.7 }
+.tb__sep[hidden]{ display:none }
+.tb__launch, .tb__btn{ flex:none; width:calc(var(--tb-h) - 14px); height:calc(var(--tb-h) - 14px); display:grid; place-items:center;
+  border:0; border-radius:calc(var(--tb-h) / 3.6); background:none; color:var(--text); cursor:pointer;
+  transition:background-color var(--dur-1) var(--ease), transform var(--dur-2) var(--spring) }
+.tb__launch:hover, .tb__btn:hover, .tb__launch[aria-expanded="true"], .tb__btn[aria-expanded="true"]{ background:var(--surface-2) }
+.tb__launch:active, .tb__btn:active{ transform:var(--press) }
+.tb__launch .am{ width:22px; height:23px }
+.tb__btn svg{ width:20px; height:20px }
+.tb__launch:focus-visible, .tb__btn:focus-visible, .min__win:focus-visible, .tb__mbtn:focus-visible, .tb__cover:focus-visible, .tb__clock:focus-visible, .tb__desk:focus-visible{ outline:2px solid var(--acc); outline-offset:2px }
+
+/* the apps in the left pill: the colour tiles, a short bar under a running one */
+.tb__dock{ display:flex; align-items:center; gap:var(--s-2) }
+.tb__dock .dock__app{ width:var(--dock-icon); height:var(--dock-icon); border-radius:calc(var(--dock-icon) * .23) }
+.tb__dock .dock__app:hover{ transform:translateY(-3px) scale(1.06) }
+.tb__dock .dock__app::before{ bottom:calc((var(--tb-h) - var(--dock-icon)) / -2 + 3px); width:14px; height:3px; border-radius:var(--r-pill) }
+.tb__dock .dock__app.is-front::before{ background:var(--acc); width:18px }
+.tb__dock .dock__app.is-run:not(.is-front)::before{ background:var(--text-ghost) }
+
+/* minimised windows: a shelf right of the apps, each a small window with its app on it */
+.tb__min{ display:flex; align-items:center; gap:var(--s-2) }
+.tb__min:empty{ display:none }
+.min__win{ flex:none; width:calc(var(--dock-icon) * 1.18); height:var(--dock-icon); padding:0; border:0; background:none; cursor:pointer;
+  display:grid; place-items:center; transition:transform var(--dur-2) var(--spring) }
+.min__win:hover{ transform:translateY(-3px) scale(1.06) }
+.min__win:active{ transform:var(--press) }
+.min__frame{ position:relative; width:100%; height:86%; display:grid; place-items:center; border-radius:calc(var(--dock-icon) * .16);
+  background:var(--surface); box-shadow:0 0 0 var(--hair) var(--stroke-1), var(--shadow-4); overflow:hidden }
+.min__frame i{ position:absolute; left:0; right:0; top:0; height:18%; background:var(--surface-3) }
+.min__frame i::before{ content:""; position:absolute; left:12%; top:50%; width:calc(var(--dock-icon) * .07); aspect-ratio:1; border-radius:50%;
+  translate:0 -50%; background:#ff5f57; box-shadow:calc(var(--dock-icon) * .1) 0 0 #febc2e, calc(var(--dock-icon) * .2) 0 0 #28c840 }
+.min__frame .app-art{ width:52%; height:52%; margin-top:10% }
+.min__win.is-waiting{ visibility:hidden }
+.min__win:not(.is-waiting){ animation:min-in var(--dur-3) var(--spring) both }
+.min__win.is-leaving{ pointer-events:none; animation:dock-out var(--dur-3) var(--ease-out) forwards }
+@keyframes min-in{ from{ opacity:0; transform:scale(.6) } }
+
+/* what plays: cover, title and artist, the three buttons */
+.tb__media{ display:flex; align-items:center; gap:var(--s-2); min-width:0; animation:pop-in var(--dur-3) var(--spring) both }
+.tb__media[hidden]{ display:none }
+.tb__cover{ position:relative; flex:none; width:calc(var(--tb-h) - 16px); height:calc(var(--tb-h) - 16px); padding:0; border:0; cursor:pointer;
+  display:grid; place-items:center; border-radius:calc(var(--tb-h) / 5); background:linear-gradient(135deg, var(--acc-fill), color-mix(in oklab, var(--acc-fill) 40%, var(--surface-3)));
+  color:var(--on-acc); overflow:hidden; transition:transform var(--dur-2) var(--spring) }
+.tb__cover:hover{ transform:scale(1.05) }
+.tb__cover svg{ width:46%; height:46% }
+.tb__cover img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover }
+.tb__cover img[hidden]{ display:none }
+.tb__media.is-paused .tb__cover{ filter:saturate(.6) brightness(.92) }
+.tb__track{ display:grid; gap:2px; min-width:0; max-width:150px; line-height:1.15 }
+.tb__track b, .tb__track small{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.tb__track b{ font-weight:600; font-size:var(--fs-300) }
+.tb__track small{ color:var(--text-dim); font-size:var(--fs-200) }
+.tb__mctl{ display:flex; align-items:center; gap:var(--s-0) }
+.tb__mbtn{ flex:none; width:30px; height:30px; display:grid; place-items:center; padding:0; border:0; border-radius:50%; background:none; color:var(--text);
+  cursor:pointer; transition:background-color var(--dur-1) var(--ease), transform var(--dur-2) var(--spring) }
+.tb__mbtn:hover{ background:var(--surface-2) }
+.tb__mbtn:active{ transform:scale(.88) }
+.tb__mbtn svg{ width:16px; height:16px }
+.tb__mbtn--main svg{ width:20px; height:20px }
+
+/* status: desktop, connection, battery, quick settings, notifications, clock */
+.tb__desk{ display:flex; align-items:center; gap:var(--s-2); height:calc(var(--tb-h) - 14px); padding:0 var(--s-3); border:0; border-radius:var(--r-pill);
+  background:none; color:var(--text-dim); font-weight:500; cursor:pointer; white-space:nowrap }
+.tb__desk:hover{ background:var(--surface-2); color:var(--text) }
+.tb__desk[hidden]{ display:none }
+.tb__desk svg{ width:16px; height:16px }
+.tb__state{ display:flex; align-items:center; gap:var(--s-3); padding:0 var(--s-2); color:var(--text) }
+.tb__state svg{ width:19px; height:19px }
+#tb-net.is-off{ color:var(--err) }
+.tb__batt{ position:relative; display:flex }
+.tb__batt[hidden]{ display:none }
+.tb__batt i{ position:absolute; left:5px; top:9.5px; height:5px; width:calc(var(--lvl, 1) * 11px); border-radius:1px; background:currentColor }
+.tb__batt.is-low{ color:var(--err) }
+.tb__btn{ position:relative }
+.tb__dot{ position:absolute; top:8px; right:8px; width:7px; height:7px; border-radius:50%; background:var(--acc); box-shadow:0 0 0 2px var(--glass-hi) }
+.tb__dot[hidden]{ display:none }
+.tb__clock{ display:grid; justify-items:end; gap:var(--s-0); padding:0 var(--s-3); border:0; border-radius:var(--r-control); background:none; color:var(--text); cursor:pointer }
+.tb__clock:hover{ background:var(--surface-2) }
+.tb__clock time{ font:600 var(--fs-400)/1 var(--mono); font-variant-numeric:tabular-nums; letter-spacing:.02em }
+#clock-date{ font:400 var(--fs-200)/1 var(--mono); color:var(--text-dim); font-variant-numeric:tabular-nums }
+.taskbar .f-tip[data-tip]::after{ bottom:calc(100% + 12px); top:auto }
+
+/* popovers above the pills */
+.pop{ position:absolute; z-index:45; bottom:calc(var(--tb-h) + var(--tb-gap) * 2); box-shadow:var(--shadow-28);
+  border-radius:var(--r-overlay); transform-origin:bottom center; animation:pop-in var(--dur-2) var(--spring) both }
+.pop[hidden]{ display:none }
+@keyframes pop-in{ from{ opacity:0; transform:translateY(8px) scale(.96) } }
+.pop--launch{ width:min(380px, calc(100vw - 2 * var(--s-4))); padding:var(--s-4); display:grid; gap:var(--s-4) }
+.launch__me{ display:flex; align-items:center; gap:var(--s-3) }
+.launch__me .f-avatar{ width:36px; height:36px; font-size:var(--fs-300) }
+.launch__me b{ display:block } .launch__me small{ display:block; color:var(--text-dim); font-size:var(--fs-200) }
+.launch__search .f-input{ font-size:16px }
+.launch__apps{ display:grid; grid-template-columns:repeat(4, 1fr); gap:var(--s-2) }
+.launch__app{ display:grid; justify-items:center; gap:var(--s-2); padding:var(--s-3) var(--s-1); border:0; border-radius:var(--r-card); background:none;
+  color:var(--text); font-size:var(--fs-200); cursor:pointer; transition:background-color var(--dur-1) var(--ease) }
+.launch__app:hover, .launch__app:focus-visible{ background:var(--surface-2); outline:none }
+.launch__app .app-art{ width:44px; height:44px }
+.launch__app[hidden]{ display:none }
+.launch__acts{ min-width:0; padding:0; border:0; background:none; box-shadow:none }
+.pop--win{ min-width:200px }
+.pop--quick{ width:300px; padding:var(--s-4); display:grid; gap:var(--s-4) }
+.quick__theme{ display:flex } .quick__theme label{ flex:1; text-align:center }
+.quick__tints{ display:flex; justify-content:space-between }
+.quick__tints button{ padding:2px; border:2px solid transparent; border-radius:50%; background:none; cursor:pointer }
+.quick__tints button[aria-checked="true"]{ border-color:var(--acc) }
+.quick__tints .f-swatch{ width:24px; height:24px; display:block }
+.quick__tiles{ display:grid; grid-template-columns:1fr 1fr; gap:var(--s-2) }
+.quick__tile{ display:flex; align-items:center; gap:var(--s-3); padding:var(--s-3) var(--s-4); border:0; border-radius:var(--r-card); background:var(--surface-2);
+  color:var(--text); font-weight:500; text-align:left; cursor:pointer; transition:background-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease) }
+.quick__tile svg{ width:18px; height:18px; flex:none }
+.quick__tile[aria-pressed="true"]{ background:var(--acc-fill); color:var(--on-acc) }
+.quick__more{ justify-self:start }
+.pop--bell{ width:340px; max-height:min(480px, 70vh); display:grid; grid-template-rows:auto minmax(0,1fr); padding:var(--s-3) var(--s-2) var(--s-2) }
+.bell__head{ display:flex; align-items:center; justify-content:space-between; padding:0 var(--s-2) var(--s-2) var(--s-3) }
+.bell__list{ overflow:auto; display:grid; gap:var(--s-1); align-content:start }
+.bell__item{ display:grid; grid-template-columns:auto 1fr; gap:var(--s-1) var(--s-3); padding:var(--s-3); border-radius:var(--r-card); background:var(--surface-2) }
+.bell__item .f-status{ grid-row:span 2; align-self:start; margin-top:6px }
+.bell__item small{ color:var(--text-ghost); font-size:var(--fs-200) }
+.bell__empty{ padding:var(--s-6) var(--s-3); text-align:center; color:var(--text-dim) }
+.pop--cal{ width:280px; padding:var(--s-3) var(--s-4) var(--s-4) }
+.cal__head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--s-2) }
+.cal__grid{ display:grid; grid-template-columns:repeat(7, 1fr); gap:var(--s-0); text-align:center; font-variant-numeric:tabular-nums }
+.cal__grid span{ padding:var(--s-2) 0; border-radius:var(--r-control); font-size:var(--fs-200) }
+.cal__grid .is-dow{ color:var(--text-ghost); font:500 var(--fs-100)/1.6 var(--mono); text-transform:uppercase }
+.cal__grid .is-out{ color:var(--text-ghost) }
+.cal__grid .is-today{ background:var(--acc-fill); color:var(--on-acc); font-weight:600 }
+.pop--ctx{ bottom:auto; min-width:220px; transform-origin:top left }
+
+@media (max-width: 639px){
+  .taskbar{ gap:var(--s-2); padding:0 var(--s-2) }
+  .tb{ padding:0 var(--s-2) }
+  .tb__track, .tb__desk, #tb-desk-sep, .tb__state, .tb--status .tb__sep:not(:last-of-type){ display:none !important }
+  #clock-date{ display:none }
+  .win{ height:100% !important }
+}
+#ctx{ position:fixed; z-index:80; animation:pop-in var(--dur-1) var(--ease-out) both }
+#ctx button.is-danger{ color:var(--err) }
+#ctx button.is-danger:hover{ background:var(--err-soft); color:var(--err) }
+#ctx button:disabled{ opacity:.45; pointer-events:none }
+
+/* ---------- the surface: icons and widgets, free to move ---------- */
+.icons, .widgets{ position:absolute; inset:0 0 var(--tb-space) 0; pointer-events:none; display:block; top:0; right:0 }
+.icons > .icon, .widgets > .widget{ position:absolute; pointer-events:auto; touch-action:none }
+.icons > .icon[hidden], .widgets[hidden]{ display:none }
+.icon.is-dragging, .widget.is-dragging{ z-index:5; opacity:.85; cursor:grabbing; transition:none }
+.icon.is-dragging .icon__img{ transform:scale(1.06) }
+.widget{ padding:var(--s-4) var(--s-5); border-radius:var(--r-overlay); box-shadow:var(--shadow-16); cursor:grab; user-select:none;
+  animation:f-rise var(--dur-4) var(--ease-out) backwards }
+.w-clock__time{ display:block; font:600 44px/1 var(--sans); letter-spacing:var(--tr-display); font-variant-numeric:tabular-nums; color:var(--text) }
+.w-clock__date{ display:block; margin-top:var(--s-2); color:var(--text-dim); font-size:var(--fs-300) }
+.widget--perf{ display:grid; gap:var(--s-2) }
+.w-perf__row{ display:flex; justify-content:space-between; align-items:baseline; gap:var(--s-3); font-size:var(--fs-200); color:var(--text-dim) }
+.w-perf__row b{ color:var(--text); font:600 var(--fs-300)/1 var(--mono); font-variant-numeric:tabular-nums }
+.w-perf__net b{ font-size:var(--fs-200) }
+.w-perf__spark{ width:100%; height:34px; display:block }
+.w-perf__spark path{ fill:none; stroke:var(--acc); stroke-width:1.6; vector-effect:non-scaling-stroke; stroke-linejoin:round }
+.widget--note{ padding:var(--s-3) }
+.w-note__text{ width:100%; min-height:120px; resize:vertical; border:0; outline:none; background:transparent; color:var(--text);
+  font:400 var(--fs-300)/1.5 var(--sans); cursor:text; user-select:text }
+
+/* a picture as background: over Nova's ground, Nova's light switched off */
+:root[data-wall-image] .desk{ background:var(--wall) center / cover no-repeat, var(--bg) }
+:root[data-wall-image] .desk::before, :root[data-wall-image] .desk::after{ display:none }
+
+/* ---------- Aktivität ---------- */
+.tm{ display:grid; grid-template-rows:auto minmax(0,1fr) auto }
+.tm__bar{ display:flex; align-items:center; gap:var(--s-3); padding:var(--s-3) var(--s-4); border-bottom:var(--hair) solid var(--divider) }
+.tm__bar .f-search{ width:260px } .tm__bar .f-input{ height:30px; font-size:var(--fs-300) }
+.tm__spacer{ flex:1 }
+.tm__table{ display:grid; grid-template-rows:auto minmax(0,1fr); min-height:0 }
+.tm__head, .tm__row{ display:grid; grid-template-columns:minmax(0,1fr) 70px 90px 80px 90px 80px; gap:var(--s-3); align-items:center; padding:0 var(--s-5) }
+.tm__head{ height:30px; border-bottom:var(--hair) solid var(--divider) }
+.tm__head button{ border:0; background:none; padding:0; text-align:left; cursor:pointer; color:var(--text-dim);
+  font:500 var(--fs-chrome-xs)/1 var(--mono); letter-spacing:var(--tr-chrome-xs); text-transform:uppercase }
+.tm__head button:nth-child(n+4){ text-align:right }
+.tm__head button.is-sort{ color:var(--acc) }
+.tm__rows{ overflow:auto; padding:var(--s-1) var(--s-2) }
+.tm__row{ height:36px; padding:0 var(--s-3); border-radius:var(--r-control); font-size:var(--fs-200); cursor:default; font-variant-numeric:tabular-nums }
+.tm__row:hover{ background:var(--surface-2) }
+.tm__row.is-sel{ background:var(--acc-soft) }
+.tm__row.is-other{ color:var(--text-dim) }
+.tm__name{ display:flex; align-items:baseline; gap:var(--s-3); min-width:0 }
+.tm__name b{ font-weight:600; flex:none } .tm__name small{ color:var(--text-ghost); overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.tm__num{ text-align:right } .tm__num.is-hot{ color:var(--warn); font-weight:600 }
+.tm__foot{ padding:var(--s-2) var(--s-5); border-top:var(--hair) solid var(--divider); background:var(--surface-2); font-size:var(--fs-200) }
+
+/* ---------- Auslastung ---------- */
+.mon{ overflow:auto; padding:var(--s-5) }
+.mon__grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap:var(--s-4) }
+.mon__card{ display:grid; gap:var(--s-3); align-content:start; padding:var(--s-4); border-radius:var(--r-card); background:var(--card); border:var(--hair) solid var(--stroke-2) }
+.mon__card--wide{ grid-column:1 / -1 }
+.mon__card header{ display:flex; justify-content:space-between; align-items:baseline; gap:var(--s-3) }
+.mon__card header span{ font:500 var(--fs-200)/1 var(--mono); color:var(--text-dim); font-variant-numeric:tabular-nums }
+.mon__chart{ width:100%; height:90px; display:block; background:linear-gradient(var(--divider) 1px, transparent 1px) 0 0 / 100% 25%; border-radius:var(--r-control) }
+.mon__card--wide .mon__chart{ height:130px }
+.mon__line{ fill:none; stroke:var(--acc); stroke-width:1.8; vector-effect:non-scaling-stroke; stroke-linejoin:round }
+.mon__area{ fill:var(--acc-soft); stroke:none }
+.mon__line.mon--2{ stroke:var(--ok) } .mon__area.mon--2{ fill:var(--ok-soft) }
+.mon__line.mon--3{ stroke:var(--acc) } .mon__line.mon--4{ stroke:var(--warn) }
+.mon__key{ display:inline-block; width:10px; height:3px; border-radius:2px; margin:0 var(--s-1) 2px; background:var(--acc) } .mon__key.mon--4{ background:var(--warn) }
+.mon__cores{ display:grid; grid-template-columns:repeat(auto-fill, minmax(18px, 1fr)); gap:3px }
+.mon__cores span{ height:22px; border-radius:3px; background:var(--surface-3); position:relative; overflow:hidden }
+.mon__cores i{ position:absolute; left:0; right:0; bottom:0; height:var(--v); background:var(--acc); transition:height var(--dur-3) var(--ease) }
+.mon__kv{ display:grid; grid-template-columns:auto 1fr; gap:var(--s-2) var(--s-4); margin:0; font-size:var(--fs-200) }
+.mon__kv dt{ color:var(--text-dim) } .mon__kv dd{ margin:0; text-align:right; font-family:var(--mono); font-variant-numeric:tabular-nums }
+.mon__note{ margin:var(--s-4) 0 0; font-size:var(--fs-200) }
+
+/* the taskbar at the top instead (Einstellungen → Schreibtisch & Dock) */
+:root[data-bar="top"] .taskbar{ top:var(--tb-gap); bottom:auto; align-items:flex-start }
+:root[data-bar="top"] .windows{ inset:var(--tb-space) 0 0 0 }
+:root[data-bar="top"] .icons, :root[data-bar="top"] .widgets{ inset:var(--tb-space) 0 0 0 }
+:root[data-bar="top"] .pop{ bottom:auto; top:calc(var(--tb-h) + var(--tb-gap) * 2); transform-origin:top center }
+
+:root[data-bar="top"] .taskbar .f-tip[data-tip]::after{ top:calc(100% + 12px); bottom:auto }
+:root[data-bar="top"] .tb__dock .dock__app::before{ bottom:auto; top:calc((var(--tb-h) - var(--dock-icon)) / -2 + 3px) }
+:root[data-bar="top"][data-autohide] .taskbar:not(.is-shown){ transform:translateY(calc(-100% - var(--tb-gap) * 2)) }
+:root[data-bar="top"] .dock-edge{ top:0; bottom:auto }
+
+.opt__btns{ display:flex; gap:var(--s-2); flex:none }
+.opt__btns [hidden]{ display:none }
+.opt__go{ align-self:flex-start }
+
+/* ---------- account pictures ---------- */
+.f-avatar.has-img{ overflow:hidden; padding:0; background:var(--surface-3) }
+.f-avatar.has-img img{ width:100%; height:100%; object-fit:cover; display:block; border-radius:inherit }
+.acct__face{ position:relative; padding:0; border:0; background:none; border-radius:50%; cursor:pointer; flex:none }
+.acct__face:focus-visible{ outline:2px solid var(--acc); outline-offset:3px }
+.acct__edit{ position:absolute; right:-2px; bottom:-2px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%;
+  background:var(--ink); color:var(--on-ink); box-shadow:0 0 0 3px var(--card); transform:scale(.85); opacity:0;
+  transition:transform var(--dur-2) var(--spring), opacity var(--dur-1) var(--ease) }
+.acct__edit svg{ width:14px; height:14px }
+.acct__face:hover .acct__edit, .acct__face:focus-visible .acct__edit{ transform:scale(1); opacity:1 }
+.acct__btns{ margin-top:var(--s-3) }
+
+/* ---------- the start menu ---------- */
+.pop--launch{ width:min(460px, calc(100vw - 2 * var(--s-4))); padding:var(--s-4) var(--s-4) 0; display:grid; gap:var(--s-3);
+  grid-template-rows:auto minmax(0,1fr) auto; max-height:min(620px, calc(100dvh - var(--tb-space) - 2 * var(--s-4))); overflow:hidden }
+.launch__body, .launch__results{ min-height:0; overflow:auto; display:grid; gap:var(--s-4); align-content:start; padding-bottom:var(--s-2) }
+.launch__body[hidden], .launch__results[hidden]{ display:none }
+.launch__h{ margin:0 0 var(--s-2) var(--s-2); font:500 var(--fs-chrome-xs)/1 var(--mono); letter-spacing:var(--tr-chrome-xs); text-transform:uppercase; color:var(--text-dim) }
+.launch__apps{ grid-template-columns:repeat(5, 1fr) }
+.launch__app{ animation:launch-in var(--dur-3) var(--spring) backwards; animation-delay:calc(var(--i, 0) * 18ms) }
+@keyframes launch-in{ from{ opacity:0; transform:translateY(6px) scale(.92) } }
+.launch__list, .launch__results{ display:grid; gap:var(--s-0) }
+.launch__item{ display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:var(--s-3); padding:var(--s-2) var(--s-3);
+  border:0; border-radius:var(--r-card); background:none; color:var(--text); text-align:left; cursor:pointer;
+  transition:background-color var(--dur-1) var(--ease) }
+.launch__item:hover, .launch__item:focus-visible, .launch__item.is-first{ background:var(--surface-2); outline:none }
+.launch__item > svg{ width:20px; height:20px; color:var(--text-dim) }
+.launch__item > svg.app-art{ width:28px; height:28px }
+.launch__item b{ display:block; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.launch__item small{ display:block; color:var(--text-ghost); font-size:var(--fs-200); white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.launch__item time{ color:var(--text-ghost); font:400 var(--fs-200)/1 var(--mono) }
+.launch__empty{ margin:0; padding:var(--s-3); color:var(--text-dim); font-size:var(--fs-200) }
+.launch__foot{ display:flex; align-items:center; justify-content:space-between; gap:var(--s-3); margin:0 calc(var(--s-4) * -1); padding:var(--s-3) var(--s-4);
+  border-top:var(--hair) solid var(--divider); background:color-mix(in srgb, var(--surface-2) 70%, transparent) }
+.launch__me{ display:flex; align-items:center; gap:var(--s-3); min-width:0; padding:var(--s-1) var(--s-3) var(--s-1) var(--s-1); border:0; border-radius:var(--r-pill);
+  background:none; color:var(--text); text-align:left; cursor:pointer; transition:background-color var(--dur-1) var(--ease) }
+.launch__me:hover{ background:var(--surface-3) }
+.launch__me .f-avatar{ width:34px; height:34px; font-size:var(--fs-300); flex:none }
+.launch__me b{ display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.launch__me small{ display:block; color:var(--text-dim); font-size:var(--fs-200); white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.launch__acts{ display:flex; gap:var(--s-1); flex:none }
+.launch__acts .tb__btn{ width:34px; height:34px }
+.launch__acts .tb__btn svg{ width:17px; height:17px }
+.launch__power:hover{ color:var(--err) }
+
+/* the desktop grid: icons glide into their cell, a mark shows where one will land */
+.icons > .icon:not(.is-dragging){ transition:left var(--dur-3) var(--spring), top var(--dur-3) var(--spring), background-color var(--dur-1) var(--ease) }
+.desk-cell{ position:absolute; z-index:0; left:0; top:0; width:96px; height:96px; border-radius:var(--r-overlay); pointer-events:none;
+  background:var(--acc-soft); box-shadow:inset 0 0 0 1.5px var(--acc-line); transition:transform var(--dur-2) var(--spring) }
+.desk-cell[hidden]{ display:none }
+:root[data-bar="top"] .desk-cell{ margin-top:var(--tb-space) }
+
+/* =====================================================================
+   0.5: motion in the taskbar and around it
+   ===================================================================== */
+/* sizes change smoothly: the pill, its buttons, the icons */
+.tb{ transition:height var(--dur-3) var(--spring), border-radius var(--dur-3) var(--spring), padding var(--dur-3) var(--spring) }
+.tb__launch, .tb__btn, .tb__desk{ transition:width var(--dur-3) var(--spring), height var(--dur-3) var(--spring), background-color var(--dur-1) var(--ease), transform var(--dur-2) var(--spring) }
+
+/* magnification: --mag is set from the pointer; the icon grows upward (downward
+   when the bar is at the top) and its margin makes room, so neighbours move apart */
+.tb__dock .dock__app{ --mag:1; transform-origin:50% 100%;
+  transform:scale(var(--mag)) translateY(calc((var(--mag) - 1) * -6px));
+  margin:0 calc((var(--mag) - 1) * var(--dock-icon) * .5);
+  transition:transform var(--dur-2) var(--spring), margin var(--dur-2) var(--spring), width var(--dur-3) var(--spring), height var(--dur-3) var(--spring) }
+:root[data-bar="top"] .tb__dock .dock__app{ transform-origin:50% 0; transform:scale(var(--mag)) translateY(calc((var(--mag) - 1) * 6px)) }
+.tb__dock .dock__app:hover{ transform:scale(var(--mag)) translateY(calc((var(--mag) - 1) * -6px - 2px)) }
+.tb__dock .dock__app:active{ transform:scale(calc(var(--mag) * .92)) }
+.tb__dock .dock__app.is-dragging{ z-index:2; transition:none; cursor:grabbing; transform:scale(1.12) translateY(-4px); filter:drop-shadow(0 8px 14px var(--sh-k)) }
+
+/* coming and going */
+.tb__dock .dock__app.is-entering{ animation:dock-in var(--dur-4) var(--spring) both }
+.tb__dock .dock__app.is-leaving{ pointer-events:none; animation:dock-out var(--dur-3) var(--ease-out) forwards }
+@keyframes dock-in{ from{ opacity:0; transform:scale(.2) translateY(10px); margin:0 calc(var(--dock-icon) * -.5) } }
+@keyframes dock-out{ to{ opacity:0; transform:scale(.2) translateY(10px); margin:0 calc(var(--dock-icon) * -.5 - var(--s-1)) } }
+/* the running mark: a bar that grows in */
+.tb__dock .dock__app::before{ transition:transform var(--dur-3) var(--spring), width var(--dur-3) var(--spring), background-color var(--dur-2) var(--ease) }
+
+/* the active window's button slides in with its name */
+
+/* popovers leave the way they came */
+.pop.is-closing{ animation:pop-out var(--dur-2) var(--ease-out) forwards; pointer-events:none }
+@keyframes pop-out{ to{ opacity:0; transform:translateY(8px) scale(.96) } }
+:root[data-bar="top"] .pop{ animation-name:pop-in-top } :root[data-bar="top"] .pop.is-closing{ animation-name:pop-out-top }
+@keyframes pop-in-top{ from{ opacity:0; transform:translateY(-8px) scale(.96) } }
+@keyframes pop-out-top{ to{ opacity:0; transform:translateY(-8px) scale(.96) } }
+
+/* a minimised window comes back out of its dock icon */
+.win.is-restoring{ animation:win-restore var(--dur-3) var(--spring) both }
+@keyframes win-restore{ from{ opacity:0; transform:translate(var(--mx-to, 0), var(--my-to, 60vh)) scale(.12) } }
+
+/* the taskbar's popovers appear above the magnified icons */
+.pop{ z-index:46 }
+
+:root[data-motion="reduced"] .tb__dock .dock__app, :root[data-motion="reduced"] .tb{ transition:none !important; animation:none !important }
+@media (prefers-reduced-motion: reduce){ .tb__dock .dock__app, .tb, .pop{ transition:none !important; animation-duration:1ms !important } }
+
+/* ---------- 0.5.1: widgets on and off, the start menu's edge ---------- */
+.widget{ position:absolute }
+.widget__x{ position:absolute; top:6px; right:6px; width:22px; height:22px; display:grid; place-items:center; padding:0; border:0; border-radius:50%;
+  background:var(--surface-3); color:var(--text-dim); cursor:pointer; opacity:0; transform:scale(.8);
+  transition:opacity var(--dur-1) var(--ease), transform var(--dur-2) var(--spring), background-color var(--dur-1) var(--ease) }
+.widget__x svg{ width:12px; height:12px }
+.widget:hover .widget__x, .widget__x:focus-visible{ opacity:1; transform:scale(1) }
+.widget__x:hover{ background:var(--err); color:var(--on-acc) }
+.widget.is-leaving{ animation:widget-out var(--dur-3) var(--ease-out) forwards; pointer-events:none }
+@keyframes widget-out{ to{ opacity:0; transform:scale(.9); filter:blur(4px) } }
+.widget--calendar{ display:grid; gap:var(--s-2) }
+.w-cal__title{ font-weight:600 }
+.w-cal__grid{ display:grid; grid-template-columns:repeat(7, 1fr); gap:2px; text-align:center; font-size:var(--fs-200); font-variant-numeric:tabular-nums }
+.w-cal__grid span{ padding:3px 0; border-radius:var(--r-control) }
+.w-cal__grid .is-dow{ color:var(--text-ghost); font:500 var(--fs-100)/1.6 var(--mono); text-transform:uppercase }
+.w-cal__grid .is-today{ background:var(--acc-fill); color:var(--on-acc); font-weight:600 }
+.widget--storage{ display:grid; gap:var(--s-2) }
+.opt[hidden], .quick__tile[hidden]{ display:none }
+/* the start menu grows out of the left edge of the taskbar */
+.pop--launch{ transform-origin:bottom left }
+:root[data-bar="top"] .pop--launch{ transform-origin:top left }
+.fm__row.is-cut{ opacity:.45 }
+img.app-art, img.win__icon{ object-fit:contain; border-radius:22% }

@@ -1,0 +1,4 @@
+# Akari OS: accounts that may manage (Einstellungen -> Konten) may use sudo,
+# with their own Akari password.
+Defaults lecture=never
+%akari-admin ALL=(ALL:ALL) ALL

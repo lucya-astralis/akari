@@ -1,0 +1,10 @@
+PRETTY_NAME="Akari OS 0.4"
+NAME="Akari OS"
+VERSION_ID="0.4"
+VERSION="0.4 (trixie)"
+VERSION_CODENAME=trixie
+ID=akari
+ID_LIKE=debian
+HOME_URL="https://lucya.systems"
+SUPPORT_URL="https://lucya.systems"
+LOGO=akari

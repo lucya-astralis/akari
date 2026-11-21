@@ -1,0 +1,47 @@
+# Akari OS for development.
+#
+# Real Linux users and real sudo: accounts that manage may `sudo apt install`.
+# For that the root filesystem is writable and setuid programs (sudo, su) work,
+# unlike the other tools under lucya-aio. What apt installs is remembered in the
+# volume and installed again after an image update (akari/software.py).
+# Everything else that matters lives in the one volume, /data.
+#
+# akarid keeps these capabilities and drops the rest:
+#   SETUID, SETGID   start each account's session as that user; sudo
+#   CHOWN, FOWNER    make homes and their run folders belong to the account; dpkg
+#   DAC_OVERRIDE     reach each session's 0700 socket
+#   KILL             end a session's processes when it signs out
+#   SYS_CHROOT       sshd's privilege separation (only used when SSH is on)
+#   AUDIT_WRITE      sshd and sudo write logins to the kernel audit, else they refuse
+#   FSETID, SETFCAP  dpkg keeps setuid bits and file capabilities of the packages it installs
+# And shm_size: Firefox needs more than Docker's 64 MB of /dev/shm.
+#
+# Without sudo (read-only root, no setuid): docker compose -f compose.yaml -f compose.locked.yaml up -d
+services:
+  akari:
+    build: .
+    image: akari:dev
+    container_name: akari-dev
+    hostname: akari
+    ports:
+      - "127.0.0.1:8130:8130"
+      - "127.0.0.1:2222:2222"          # SSH, when an admin turns it on
+    cap_drop: [ALL]
+    cap_add: [SETUID, SETGID, CHOWN, FOWNER, DAC_OVERRIDE, KILL, SYS_CHROOT, AUDIT_WRITE, FSETID, SETFCAP]
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=128m
+      - /run:rw,noexec,nosuid,size=4m,mode=755
+    shm_size: "512m"
+    volumes:
+      - akari-data:/data
+      # development: the code from this checkout, read-only; restart to pick up Python changes
+      - ./akari:/opt/akari/akari:ro
+      - ./image/rootfs/etc/xdg/fastfetch:/etc/xdg/fastfetch:ro
+      - ./image/rootfs/usr/share/akari/fastfetch:/usr/share/akari/fastfetch:ro
+      - ./image/rootfs/usr/share/akari/zsh:/usr/share/akari/zsh:ro
+    environment:
+      AKARI_TOKEN: ${AKARI_TOKEN:-}
+      AKARI_SSH_PUBLIC: "127.0.0.1:2222"
+
+volumes:
+  akari-data: {}

@@ -1,0 +1,3 @@
+// Akari OS: after every dpkg run, remember what was installed on top of the
+// image, so akarid can put it back after an image update.
+DPkg::Post-Invoke { "if [ -x /usr/local/sbin/akari-apt-record ]; then /usr/local/sbin/akari-apt-record || true; fi"; };
