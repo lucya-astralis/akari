@@ -60,6 +60,21 @@ Der Link `http://127.0.0.1:8130/?token=…` führt zur Einrichtung des ersten
 Kontos. Danach meldet man sich am Login-Bildschirm an; weitere Konten legt
 ein Konto, das verwalten darf, unter **Einstellungen → Konten** an.
 
+## Entwickeln
+
+Akari OS wird zur echten Distribution ([docs/distro.md](docs/distro.md)); gearbeitet
+wird deshalb in einer Debian-13-VM in QEMU, ohne Fenster, nur über SSH:
+
+```bash
+tools/devvm.sh init && tools/devvm.sh start && tools/devvm.sh wait
+tools/devvm.sh deploy             # den Checkout nach /opt/akari/src
+tools/devvm.sh ssh                # eine Shell in der VM
+```
+
+Gebraucht wird QEMU (macOS: MacPorts `sudo port install qemu`, Linux: `apt install
+qemu-system-x86`) und in `.devvm/` das Image `debian-13-genericcloud-amd64.qcow2`
+von cloud.debian.org. Die Tests: `python -m pytest`.
+
 ## Aufbau
 
 ```
