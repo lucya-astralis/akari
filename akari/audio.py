@@ -77,6 +77,7 @@ def _frames(path: Path, want_picture: bool = False):
         if n <= 0 or len(body) < n:
             break
         if fid == b"APIC" and not want_picture:
+            yield "APIC", b""          # there is a picture; its bytes only when asked for
             continue
         yield fid.decode("latin-1", "replace"), body
 

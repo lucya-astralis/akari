@@ -1,14 +1,15 @@
-# Builds this repository's image for amd64 and arm64 and pushes it to
+# Builds the Akari container for amd64 and arm64 and pushes it to
 # ghcr.io/lucya-astralis/<IMAGE>. Tags, as lucya-aio pulls them:
-#   main        -> :stable
-#   v1.2.3 tag  -> :1.2.3 and :1.2
-#   every build -> :sha-<short>
+#   container-0.10  -> :stable
+#   every build     -> :sha-<short>
 name: image
 
+# Frozen on Akari 0.10: main is becoming the Akari OS distribution (docs/distro.md),
+# so only the branch container-0.10 still builds the container that Lucent's
+# store offers (:stable). Fixes for it go to that branch.
 on:
   push:
-    branches: [main]
-    tags: ["v*"]
+    branches: [container-0.10]
   workflow_dispatch:
 
 env:
@@ -39,9 +40,7 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE }}
           tags: |
-            type=raw,value=stable,enable={{is_default_branch}}
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=stable,enable=${{ github.ref == 'refs/heads/container-0.10' }}
             type=sha
       - uses: docker/build-push-action@v6
         with:

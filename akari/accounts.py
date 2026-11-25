@@ -27,7 +27,7 @@ from pathlib import Path
 from . import config
 
 FILE = config.SYSTEM / "accounts.json"
-NAME_RE = re.compile(r"^[a-z][a-z0-9_-]{1,31}$")
+NAME_RE = re.compile(r"^[a-z][a-z0-9_-]{1,31}\Z")     # \Z, not $: "ada\n" is no name
 UID_MIN, UID_MAX = 1000, 59999
 PW_MIN = 8
 SCRYPT = {"n": 2 ** 14, "r": 8, "p": 1}
