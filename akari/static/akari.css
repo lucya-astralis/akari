@@ -1379,3 +1379,9 @@ body{ touch-action:manipulation; -webkit-tap-highlight-color:transparent }
 .launch__app{ min-width:0 }
 .launch__app > span{ max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
 :root[data-phone] .launch__apps{ grid-template-columns:repeat(4, minmax(0, 1fr)) }
+
+/* the rainbow behind glass on WebKit (accent.js): a hue turn too small to see makes
+   WebKit draw the picture behind the glass anew, else it keeps an old colour */
+:root[data-glass-tick] .f-glass{ -webkit-backdrop-filter:var(--blur-2) hue-rotate(.01deg); backdrop-filter:var(--blur-2) hue-rotate(.01deg) }
+:root[data-glass-tick] .f-glass--thin{ -webkit-backdrop-filter:var(--blur-1) hue-rotate(.01deg); backdrop-filter:var(--blur-1) hue-rotate(.01deg) }
+:root[data-glass-tick] .f-glass--deep{ -webkit-backdrop-filter:var(--blur-3) hue-rotate(.01deg); backdrop-filter:var(--blur-3) hue-rotate(.01deg) }

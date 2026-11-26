@@ -57,15 +57,26 @@
      writes that). A new tint glides to its hue (Facet, 0.7 s): painted at once
      the cursors would keep a colour from halfway, so they are painted once more
      when the glide has ended. The rainbow never ends: it is followed every 2 s. */
-  let t, t2, walk;
+  /* WebKit (Safari, every browser on an iPad or iPhone) keeps the picture behind
+     glass (backdrop-filter) until something about the glass itself changes;
+     Nova's colours walking with --tint-h are not such a change, so the glass
+     froze in one colour. While the hue walks, the glass's filter gets a hue turn
+     too small to see and loses it again (data-glass-tick, see akari.css), three
+     times a second: each time WebKit draws what is behind anew. */
+  const webkit = /AppleWebKit/.test(navigator.userAgent) && !/Chrome|Chromium|Edg\//.test(navigator.userAgent);
+  let t, t2, walk, tick;
   const soon = () => {
     clearTimeout(t); clearTimeout(t2);
     t = setTimeout(paint, 80);
     t2 = setTimeout(paint, 900);
-    clearInterval(walk);
-    if (['rainbow', 'spectrum'].includes(root.dataset.tint)) walk = setInterval(paint, 2000);
+    clearInterval(walk); clearInterval(tick);
+    root.removeAttribute('data-glass-tick');
+    if (['rainbow', 'spectrum'].includes(root.dataset.tint)) {
+      walk = setInterval(paint, 2000);
+      if (webkit && root.dataset.motion !== 'reduced') tick = setInterval(() => root.toggleAttribute('data-glass-tick'), 333);
+    }
   };
-  new MutationObserver(soon).observe(root, { attributes: true, attributeFilter: ['data-tint', 'data-theme', 'data-cursors', 'class'] });
+  new MutationObserver(soon).observe(root, { attributes: true, attributeFilter: ['data-tint', 'data-theme', 'data-cursors', 'data-motion', 'class'] });
   root.addEventListener('transitionend', e => { if (e.target === root && e.propertyName === '--tint-h') paint(); });
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', soon);
   // a hue of one's own changes by style (--akari-h), which the observer leaves out
