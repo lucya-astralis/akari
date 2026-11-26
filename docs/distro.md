@@ -253,6 +253,25 @@ Gelernt dabei:
 *Fertig, wenn:* Das ISO installiert sich in einer VM ohne Hilfe, bootet in
 die Konsole, und der Desktop ist im Browser erreichbar.
 
+*Stand (26.11.2026): erster Schritt erledigt.* Statt eines eigenen
+debian-cd-Baus wird Debians offizielles Netinst umgebaut
+(`akari-distro/iso/build-iso.sh`): geprüft gegen Debians signierte
+`SHA256SUMS`, mit xorriso neu geschrieben (`-boot_image any replay`), dazu
+Akaris Vorbelegung (`/preseed/akari.cfg`), der Archiv-Schlüssel und ein
+erster Booteintrag „Akari OS installieren“ für BIOS und UEFI. Debians
+signierte Bootkette bleibt unberührt, Secure Boot also auch. Der Workflow
+`iso` baut es bei Änderungen und wöchentlich, installiert es in QEMU
+unbeaufsichtigt (4 Minuten), bootet und meldet sich mit dem Konto aus dem
+Installer an; das ISO ist ein Artefakt des Laufs.
+
+Gelernt dabei: Auf einer seriellen Konsole zeigt der Installer kein
+Deutsch und fragt dann nach der Sprache; der Test installiert auf Englisch
+und bricht bei jeder offenen Frage (`[!!]`) sofort ab.
+
+Offen: Veröffentlichung als Release, Installer-Banner und Bootmenü im
+Akari-Look, Akari im GRUB-Menü (UEFI mit Secure Boot prüfen), von Hand in
+Proxmox, VirtualBox und Hyper-V.
+
 ### Phase 4: Akari verwaltet den Rechner
 Über akarid und die Dienste des Systems (hostnamed, timedated,
 NetworkManager, logind):
@@ -297,4 +316,4 @@ betreiben, ohne Konsole.
 
 ## Nächster Schritt
 
-Phase 3: das ISO mit debian-cd im Repo `akari-distro`.
+Phase 3 weiter: das ISO als Release, dann der Akari-Look im Installer.
