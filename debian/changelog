@@ -1,3 +1,18 @@
+akari (0.12.0) trixie; urgency=medium
+
+  * Akari on the phone and as a web app: a home screen with the apps,
+    full-screen windows with back and close, popovers as sheets, safe
+    areas; manifest and icons to add it to the home screen (iOS, Android).
+  * Taskbar: the apps pill never shrinks, the status pill gives way in two
+    steps; the width animation clips sideways; the glass rim has no seam;
+    no hover that sticks on touch.
+  * Rainbow and spectrum tint: the glass no longer freezes on WebKit
+    (Safari, iPad, iPhone).
+  * Facet as the reference: corners by role, spacing from the scale, hover
+    as a colour step instead of a lift, no glow.
+
+ -- Akari OS <packages@lucya.systems>  Fri, 27 Nov 2026 18:00:00 +0100
+
 akari (0.11.1) trixie; urgency=medium
 
   * The console shows the address also on networks without a default route

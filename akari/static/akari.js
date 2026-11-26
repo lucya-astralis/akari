@@ -12,7 +12,7 @@
   const $$ = (s, el = document) => [...el.querySelectorAll(s)];
   // a phone: narrow, or a touch screen lying on its side. Then the desktop is a
   // home screen with every app, and apps fill the screen (root[data-phone])
-  const narrow = matchMedia('(max-width: 639px), (pointer: coarse) and (max-height: 500px)');
+  const narrow = matchMedia('(max-width: 639px), (pointer: coarse) and (max-height: 479px)');
   const setForm = () => root.toggleAttribute('data-phone', narrow.matches);
   setForm();
   // language (i18n.js): German is the source, t() gives the reader's language
