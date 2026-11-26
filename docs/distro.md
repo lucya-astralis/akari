@@ -210,9 +210,19 @@ besteht `tools/e2e-system.sh`, die Konsole grüßt als Akari OS mit Adresse
 und QR-Code, auch nach einem Neustart. Entfernen bringt Debians os-release
 und Caddys eigene Konfiguration zurück, Purge räumt `/var/lib/akari`.
 
+Paketquelle (26.11.2026): GitHub Pages aus `akari-distro`
+(`.github/workflows/apt.yml`, `tools/ci-archive.sh`), bei jedem Push, jede
+Nacht und von Hand von Grund auf gebaut. `stable` kommt aus akaris neuestem
+Tag `v*`, `testing` aus akaris `main` (Version `+git<datum>.<commit>`).
+Signiert mit `A38DAB2E86C2099967A0DD57C3054B2F114DBD27`
+(`packages@lucya.systems`, gültig bis 25.11.2029); der private Schlüssel
+liegt nur als Secret `APT_SIGNING_KEY` in akari-distro und als Sicherung
+beim Betreiber. Erreichbar unter `https://lucya-astralis.github.io/akari-distro`,
+bis `apt.lucya.systems` per CNAME darauf zeigt.
+
 Offen:
-- `apt.lucya.systems` (Hosting, echter Signierschlüssel, CI lädt hoch).
-  Getestet ist eine Quelle mit Entwicklungsschlüssel in der VM.
+- DNS: `apt.lucya.systems` als CNAME auf `lucya-astralis.github.io`, dann
+  die eigene Domain in den Pages-Einstellungen und `APT_URL` als Variable.
 - Installer-Banner (rootskel-gtk) und GRUB-Thema wandern in Phase 3: Sie
   zeigen sich erst mit dem ISO.
 
@@ -287,5 +297,4 @@ betreiben, ohne Konsole.
 
 ## Nächster Schritt
 
-Phase 2 abschließen: `apt.lucya.systems` mit echtem Schlüssel. Dann
 Phase 3: das ISO mit debian-cd im Repo `akari-distro`.

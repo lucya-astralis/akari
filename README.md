@@ -82,6 +82,17 @@ Die Pakete: `akari` (akarid, Agent, Oberfläche, Units, PAM, Caddy-Konfiguration
 Was Debian nicht hat, holt `tools/vendor.sh` auf festen Ständen (`vendor.lock`).
 Systemidentität und Paketquelle liegen im Repo `akari-distro`.
 
+## Installieren
+
+Auf einem Debian 13, aus der Paketquelle (Anleitung und Schlüssel:
+[lucya-astralis.github.io/akari-distro](https://lucya-astralis.github.io/akari-distro/)):
+
+```bash
+sudo curl -fsSLo /usr/share/keyrings/akari-archive-keyring.gpg https://lucya-astralis.github.io/akari-distro/akari-archive-keyring.gpg
+sudo curl -fsSLo /etc/apt/sources.list.d/akari.sources https://lucya-astralis.github.io/akari-distro/akari.sources
+sudo apt update && sudo apt install akari-desktop akari-base
+```
+
 Gebraucht wird QEMU (macOS: MacPorts `sudo port install qemu`, Linux: `apt install
 qemu-system-x86`) und in `.devvm/` das Image `debian-13-genericcloud-amd64.qcow2`
 von cloud.debian.org. Die Tests: `python -m pytest`.
