@@ -268,9 +268,15 @@ Gelernt dabei: Auf einer seriellen Konsole zeigt der Installer kein
 Deutsch und fragt dann nach der Sprache; der Test installiert auf Englisch
 und bricht bei jeder offenen Frage (`[!!]`) sofort ab.
 
-Offen: Veröffentlichung als Release, Installer-Banner und Bootmenü im
-Akari-Look, Akari im GRUB-Menü (UEFI mit Secure Boot prüfen), von Hand in
-Proxmox, VirtualBox und Hyper-V.
+Akari-Look (27.11.2026): Banner des grafischen Installers (als zweites
+cpio-Archiv hinter Debians initrd, das Debians Logo ersetzt), Hintergrund
+und Farben des Bootmenüs für BIOS und UEFI, alles aus SVGs in
+`akari-distro/iso/art`. Jeder Lauf legt Bilder von Bootmenü und Installer
+als Artefakt ab (`iso/test/screens.sh`).
+
+Offen: Veröffentlichung als Release, die Farben im Installer selbst (GTK,
+noch Debians Blau), Akari im GRUB-Menü des installierten Systems (UEFI mit
+Secure Boot prüfen), von Hand in Proxmox, VirtualBox und Hyper-V.
 
 ### Phase 4: Akari verwaltet den Rechner
 Über akarid und die Dienste des Systems (hostnamed, timedated,
