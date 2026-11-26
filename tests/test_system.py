@@ -84,3 +84,23 @@ def test_agetty_escapes_cannot_come_from_us(monkeypatch):
     monkeypatch.setattr(accounts, "needs_setup", lambda: False)
     monkeypatch.setattr(console, "_qr", lambda t: "\\n\\l")
     assert "\\\\n\\\\l" in console.text("10.0.2.15")
+
+
+def test_the_address_without_a_default_route(monkeypatch):
+    """A host-only network: no route to the world, but an address all the same."""
+    answers = {("-4", "-o", "route", "get", "1.1.1.1"): "",
+               ("-4", "-o", "addr", "show", "scope", "global"):
+                   "2: enp0s3    inet 192.168.56.101/24 brd 192.168.56.255 scope global dynamic enp0s3\\       valid_lft 590sec"}
+    monkeypatch.setattr(console, "_ip", lambda *a: answers.get(a, ""))
+    assert console.address() == "192.168.56.101"
+
+
+def test_the_address_from_the_default_route_comes_first(monkeypatch):
+    monkeypatch.setattr(console, "_ip", lambda *a: "1.1.1.1 via 10.0.2.2 dev ens3 src 10.0.2.15 uid 0" if "route" in a
+                        else "2: ens3 inet 10.9.9.9/24 scope global ens3")
+    assert console.address() == "10.0.2.15"
+
+
+def test_only_ipv6_gives_a_bracketed_address(monkeypatch):
+    monkeypatch.setattr(console, "_ip", lambda *a: "2: ens3    inet6 2001:db8::5/64 scope global dynamic" if a[0] == "-6" else "")
+    assert console.address() == "[2001:db8::5]"

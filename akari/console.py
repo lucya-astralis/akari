@@ -15,6 +15,7 @@ import asyncio
 import contextlib
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 from . import accounts, auth, config
@@ -22,12 +23,26 @@ from . import accounts, auth, config
 ISSUE = Path(os.environ.get("AKARI_ISSUE", "/run/issue.d/50-akari.issue"))
 
 
-def address() -> str | None:
-    """The IPv4 address the machine reaches the world from (its main one)."""
+def _ip(*args: str) -> str:
     with contextlib.suppress(OSError, subprocess.SubprocessError):
-        out = subprocess.run(["ip", "-4", "-o", "route", "get", "1.1.1.1"], capture_output=True, text=True, timeout=3).stdout.split()
-        if "src" in out:
-            return out[out.index("src") + 1]
+        return subprocess.run(["ip", *args], capture_output=True, text=True, timeout=3).stdout
+    return ""
+
+
+def address() -> str | None:
+    """The address the machine is reached at: the one it reaches the world from,
+    else the first global IPv4 address it has (a network without a default
+    route, as host-only networks of VMs), else a global IPv6 address."""
+    out = _ip("-4", "-o", "route", "get", "1.1.1.1").split()
+    if "src" in out:
+        return out[out.index("src") + 1]
+    for family in ("-4", "-6"):
+        for line in _ip(family, "-o", "addr", "show", "scope", "global").splitlines():
+            parts = line.split()
+            if "inet" in parts or "inet6" in parts:
+                addr = parts[parts.index("inet" if family == "-4" else "inet6") + 1].split("/")[0]
+                if addr and "tentative" not in parts:
+                    return addr if family == "-4" else f"[{addr}]"
     return None
 
 
@@ -73,9 +88,11 @@ async def watch() -> None:
     """Keep the console right: at start, and whenever the address or the setup state changes."""
     last = None
     while True:
-        now = (await asyncio.to_thread(address), accounts.needs_setup())
-        if now != last:
-            with contextlib.suppress(OSError):
+        try:
+            now = (await asyncio.to_thread(address), accounts.needs_setup())
+            if now != last:
                 await asyncio.to_thread(write, now[0])
-            last = now
+                last = now
+        except Exception as e:       # one bad round must not leave the console behind for good
+            print(f"  Konsole: {e!r}", file=sys.stderr, flush=True)
         await asyncio.sleep(10)
