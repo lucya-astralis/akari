@@ -85,11 +85,11 @@ Systemidentität und Paketquelle liegen im Repo `akari-distro`.
 ## Installieren
 
 Auf einem Debian 13, aus der Paketquelle (Anleitung und Schlüssel:
-[lucya-astralis.github.io/akari-distro](https://lucya-astralis.github.io/akari-distro/)):
+[apt.lucya.systems](https://apt.lucya.systems/)):
 
 ```bash
-sudo curl -fsSLo /usr/share/keyrings/akari-archive-keyring.gpg https://lucya-astralis.github.io/akari-distro/akari-archive-keyring.gpg
-sudo curl -fsSLo /etc/apt/sources.list.d/akari.sources https://lucya-astralis.github.io/akari-distro/akari.sources
+sudo curl -fsSLo /usr/share/keyrings/akari-archive-keyring.gpg https://apt.lucya.systems/akari-archive-keyring.gpg
+sudo curl -fsSLo /etc/apt/sources.list.d/akari.sources https://apt.lucya.systems/akari.sources
 sudo apt update && sudo apt install akari-desktop akari-base
 ```
 
