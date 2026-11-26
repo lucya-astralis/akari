@@ -1263,3 +1263,27 @@ img.app-art, img.win__icon{ object-fit:contain; border-radius:22% }
 .mu.is-narrow .mu__song{ grid-template-columns:36px minmax(0, 1fr) 32px 40px } .mu.is-narrow .mu__sa{ display:none }
 .mu.is-narrow .mu__grid{ grid-template-columns:repeat(auto-fill, minmax(118px, 1fr)); gap:var(--s-4) var(--s-3) }
 :root[data-motion="reduced"] .mu__song.is-playing .mu__eq i{ animation:none; height:12px }
+
+/* ---------- 0.11.1: the pills, cleaner on touch and while they move ----------
+   A pill that glides to a new width clips its content sideways meanwhile
+   (glidePill), so a new tile never sticks out under the other pill. The glass
+   edge is one line drawn inside and one outside, with nothing between them, and
+   the sheen has the same corners. On a touch screen nothing keeps its hover
+   look after a tap (iPad). */
+.tb.is-gliding{ overflow-x:clip; overflow-y:visible }
+.tb.f-glass{ border-color:transparent;
+  box-shadow:inset 0 0 0 var(--hair) var(--glass-line), 0 0 0 var(--hair) var(--glass-edge), var(--shadow-28) }
+.tb.f-glass::before{ inset:calc(var(--hair) * -1) }
+@media (hover: none){
+  .tb__launch:hover, .tb__btn:hover, .tb__desk:hover, .tb__clock:hover, .tb__mbtn:hover{ background:none }
+  .tb__launch[aria-expanded="true"], .tb__btn[aria-expanded="true"]{ background:var(--surface-2) }
+  .tb__desk:hover{ color:var(--text-dim) }
+  .tb__dock .dock__app:hover{ transform:scale(var(--mag)) }
+  .min__win:hover, .tb__cover:hover{ transform:none }
+}
+/* the apps pill keeps its width; the status pill gives way (fitBar in akari.js) */
+.tb--apps{ flex-shrink:0 }
+.tb--status{ flex-shrink:1; overflow-x:clip; overflow-y:visible }
+.taskbar.is-tight .tb__track, .taskbar.is-tight .tb__desk span, .taskbar.is-tight #clock-date{ display:none }
+.taskbar.is-tighter .tb__state, .taskbar.is-tighter .tb__desk, .taskbar.is-tighter #tb-desk-sep,
+.taskbar.is-tighter .tb--status .tb__sep:not(:last-of-type){ display:none !important }

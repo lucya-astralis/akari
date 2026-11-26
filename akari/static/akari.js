@@ -246,12 +246,21 @@
     renderDock();
   };
   // the pill takes its new width with a spring instead of jumping
+  // a pill glides to its new width. Its content is already where it ends up, so
+  // while the pill is narrower than that it clips sideways (never up: the icons
+  // grow out of it); a glide that is still running is stopped first, else the
+  // new width would be measured on the old animation's width.
   const glidePill = (pill, change) => {
     const w0 = pill.getBoundingClientRect().width;
+    pill.getAnimations().forEach(a => a.cancel());
     change();
     if (reduced()) return;
     const w1 = pill.getBoundingClientRect().width;
-    if (Math.abs(w1 - w0) > 1) pill.animate([{ width: `${w0}px` }, { width: `${w1}px` }], { duration: 420, easing: SPRING });
+    if (Math.abs(w1 - w0) <= 1) return;
+    pill.classList.add('is-gliding');
+    const a = pill.animate([{ width: `${w0}px` }, { width: `${w1}px` }], { duration: 420, easing: SPRING });
+    const done = () => { if (!pill.getAnimations().length) pill.classList.remove('is-gliding'); };
+    a.finished.then(done, done);
   };
   const renderDock = () => {
     const dock = $('#dock');
@@ -1087,8 +1096,36 @@
     get prefs() { return P; }, set, get system() { return SYS; }, get me() { return ME; }, loadSystem, loadSession, windows: () => [...WINS],
   };
 
+  /* the taskbar fits the screen: the apps pill never shrinks (its content would
+     slide under the status pill); when both do not fit, the status pill gives
+     way in two steps: first the track title, the desktop's name and the date,
+     then the status icons too. Measured, not guessed by width: how wide the
+     pills are depends on what is pinned, what plays, the desktop's name. */
+  const fitBar = () => {
+    const bar = $('#taskbar'), st = $('.tb--status');
+    if (!bar || !st) return;
+    bar.classList.remove('is-tight', 'is-tighter');
+    const over = () => {
+      const edge = st.getBoundingClientRect().right - parseFloat(getComputedStyle(st).paddingRight) + 1;
+      const end = Math.max(0, ...[...st.children].filter(k => k.offsetWidth).map(k => k.getBoundingClientRect().right));
+      // the pills themselves, never scrollWidth: hidden tooltips count there too
+      const b = bar.getBoundingClientRect(), pills = [...bar.querySelectorAll(':scope > .tb')].map(p => p.getBoundingClientRect());
+      return end > edge || pills.some(p => p.left < b.left - 1 || p.right > b.right + 1);
+    };
+    if (over()) bar.classList.add('is-tight');
+    if (over()) bar.classList.add('is-tighter');
+  };
+  let fitting = 0;
+  const fitSoon = () => { cancelAnimationFrame(fitting); fitting = requestAnimationFrame(fitBar); };
+
   /* ---------- start ---------- */
   const start = async () => {
+    const tbar = $('#taskbar');
+    if (tbar) {
+      const ro = new ResizeObserver(fitSoon);
+      ro.observe(tbar);
+      new MutationObserver(fitSoon).observe(tbar, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
+    }
     // this account's desktop, from the workspace, never from the browser: a
     // browser is shared by every account that signs in on it (the cache in
     // localStorage is only for the login screen's colour)
