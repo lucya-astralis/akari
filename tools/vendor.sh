@@ -10,7 +10,7 @@
 #
 # Every download is checked against vendor.lock (sha256). A new pin: change it
 # below, delete its line in vendor.lock, run this; the new sum is written
-# there and goes into the commit.
+# there and goes into the commit. VENDOR_STRICT=1 (CI) takes nothing that is not in it.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 V="$ROOT/vendor"; LOCK="$ROOT/vendor.lock"
@@ -20,19 +20,24 @@ GITSTATUS=v1.5.4
 MEDIA=145eb9fbc2f42ee408dacd9b22d8e6e0e553f83d
 
 say() { printf '\033[36m▸\033[0m %s\n' "$*"; }
-sum() { shasum -a 256 "$1" 2>/dev/null | cut -d' ' -f1 || sha256sum "$1" | cut -d' ' -f1; }
+sum() {  # sha256 of a file, on macOS and on Debian
+  if command -v sha256sum >/dev/null; then sha256sum "$1" | cut -d' ' -f1; else shasum -a 256 "$1" | cut -d' ' -f1; fi
+}
 
 fetch() {  # fetch NAME URL → $V/dl/NAME, checked against vendor.lock
   local name=$1 url=$2 f="$V/dl/$1" want got
   mkdir -p "$V/dl"
-  want=$(awk -v n="$name" '$2 == n { print $1 }' "$LOCK" 2>/dev/null || true)
+  # "<sha256>  <name>", and names may have spaces (the fonts)
+  want=$(awk -v n="$name" 'substr($0, index($0, "  ") + 2) == n { print $1 }' "$LOCK" 2>/dev/null || true)
   if [[ ! -s "$f" || ( -n "$want" && "$(sum "$f")" != "$want" ) ]]; then
     say "$name"
     curl -4 -fsSL --retry 5 -C - -o "$f.part" "$url" || curl -4 -fsSL --retry 5 -o "$f.part" "$url"
     mv "$f.part" "$f"
   fi
   got=$(sum "$f")
-  if [[ -z "$want" ]]; then
+  if [[ -z "$want" && -n "${VENDOR_STRICT:-}" ]]; then
+    echo "✗ $name steht nicht in vendor.lock (VENDOR_STRICT: nichts Ungeprüftes)" >&2; exit 1
+  elif [[ -z "$want" ]]; then
     echo "$got  $name" >> "$LOCK"; say "neu in vendor.lock: $name"
   elif [[ "$got" != "$want" ]]; then
     echo "✗ $name: sha256 $got, erwartet $want" >&2; exit 1

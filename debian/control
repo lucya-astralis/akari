@@ -1,7 +1,7 @@
 Source: akari
 Section: misc
 Priority: optional
-Maintainer: lucya <root@lucya.sh>
+Maintainer: Akari OS <packages@lucya.systems>
 Build-Depends: debhelper-compat (= 13), librsvg2-bin, x11-apps
 Standards-Version: 4.7.2
 Homepage: https://lucya.systems
