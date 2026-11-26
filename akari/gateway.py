@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import mimetypes
 import time
 from contextlib import asynccontextmanager
 
@@ -47,6 +48,8 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+# the web app's manifest (installing Akari on a phone's home screen); Python does not know the type
+mimetypes.add_type("application/manifest+json", ".webmanifest")
 app.include_router(lucent.router)     # /lucent/v1 (Lucent asks), /auth/lucent (sign-in), /api/lucent
 
 

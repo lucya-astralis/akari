@@ -10,7 +10,11 @@
   const root = document.documentElement;
   const $ = (s, el = document) => el.querySelector(s);
   const $$ = (s, el = document) => [...el.querySelectorAll(s)];
-  const narrow = matchMedia('(max-width: 639px)');
+  // a phone: narrow, or a touch screen lying on its side. Then the desktop is a
+  // home screen with every app, and apps fill the screen (root[data-phone])
+  const narrow = matchMedia('(max-width: 639px), (pointer: coarse) and (max-height: 500px)');
+  const setForm = () => root.toggleAttribute('data-phone', narrow.matches);
+  setForm();
   // language (i18n.js): German is the source, t() gives the reader's language
   const t = s => window.AkariI18n?.t(s) ?? s;
   const locale = () => window.AkariI18n?.locale() ?? 'de-DE';
@@ -155,6 +159,11 @@
     const date = $('#clock-date');
     date.hidden = !P.date;
     date.textContent = d.toLocaleDateString(locale(), { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const ht = $('#home-time');
+    if (ht) {
+      ht.textContent = d.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' });
+      $('#home-date').textContent = d.toLocaleDateString(locale(), { weekday: 'long', day: 'numeric', month: 'long' });
+    }
   };
   setInterval(tick, 1000);
 
@@ -318,6 +327,17 @@
       b.lastChild.textContent = a.title;
       grid.append(b);
     });
+    const home = $('#home-apps');
+    if (home) {
+      home.innerHTML = '';
+      apps.filter(a => a.launch !== false && (!a.extra || P.showAllApps)).forEach((a, i) => {
+        const b = document.createElement('button');
+        b.className = 'home__app'; b.dataset.app = a.id; b.style.setProperty('--i', i);
+        b.innerHTML = `<span class="home__art">${artHtml(a)}</span><span class="home__name"></span>`;
+        b.lastChild.textContent = a.title;
+        home.append(b);
+      });
+    }
     const icons = $('#icons');
     icons.innerHTML = '';
     apps.filter(a => a.desk).forEach((a, i) => {
@@ -347,6 +367,7 @@
   const updateBar = () => {
     const f = front();
     WINS.forEach(w => w.el.classList.toggle('is-front', w === f));
+    root.toggleAttribute('data-app-open', !!(f && !f.el.hidden));
     renderDock();
     renderMin();
   };
@@ -464,7 +485,8 @@
     w.minimised = true; w.minAt = Date.now();
     renderMin();
     const tl = minTile(w);
-    if (tl) aim(w, tl.target || tl.getBoundingClientRect());
+    if (narrow.matches) aim(w, $(`.dock__app[data-app="${w.app}"]`)?.getBoundingClientRect() || { left: innerWidth / 2, top: innerHeight, width: 0, height: 0 });
+    else if (tl) aim(w, tl.target || tl.getBoundingClientRect());
     await anim(w.el, 'is-minimising');
     if (!w.minimised) return;            // restored while it was still on its way
     w.el.hidden = true;
@@ -541,7 +563,7 @@
     if (e.target.closest('#bar-desk')) return leave('desktop');
     const tile = e.target.closest('.min__win');
     if (tile) return tile.win && focus(tile.win);
-    const t = e.target.closest('.dock__app, .icon, .launch__app, .launch__item[data-app], [data-open]');
+    const t = e.target.closest('.dock__app, .icon, .home__app, .launch__app, .launch__item[data-app], [data-open]');
     if (!t) return;
     const id = t.dataset.app || t.dataset.open;
     closeMenu();
@@ -771,7 +793,7 @@
     if (e.ctrlKey && e.shiftKey && (e.key === 'T' || e.key === 't')) { e.preventDefault(); open('terminal', {}, { fresh: true }); }
     if (e.key === 'Escape' && openPop) { const b = openPop.btn; closePops(); b?.focus(); }
   });
-  narrow.addEventListener('change', () => Facet.layout());
+  narrow.addEventListener('change', () => { setForm(); updateBar(); Facet.layout(); });
 
   const fmtBytes = n => {
     if (n == null) return '–';

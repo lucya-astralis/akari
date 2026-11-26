@@ -1287,3 +1287,95 @@ img.app-art, img.win__icon{ object-fit:contain; border-radius:22% }
 .taskbar.is-tight .tb__track, .taskbar.is-tight .tb__desk span, .taskbar.is-tight #clock-date{ display:none }
 .taskbar.is-tighter .tb__state, .taskbar.is-tighter .tb__desk, .taskbar.is-tighter #tb-desk-sep,
 .taskbar.is-tighter .tb--status .tb__sep:not(:last-of-type){ display:none !important }
+
+/* =====================================================================
+   0.12: Akari on a phone, and as a web app on the home screen
+   ---------------------------------------------------------------------
+   root[data-phone] (akari.js: under 640 px, or a touch screen on its side):
+   the desktop becomes a home screen with the time and every app; the status
+   pill sits on top, the apps pill at the bottom; an app fills the screen and
+   its bar turns into a navigation bar (back to home, close); the popovers
+   are sheets as wide as the screen. Everywhere: the safe areas of a notch
+   and a home indicator, no double-tap zoom, no rubber band.
+   ===================================================================== */
+:root{ --safe-t:env(safe-area-inset-top, 0px); --safe-b:env(safe-area-inset-bottom, 0px);
+  --safe-l:env(safe-area-inset-left, 0px); --safe-r:env(safe-area-inset-right, 0px) }
+html, body{ overscroll-behavior:none }
+body{ touch-action:manipulation; -webkit-tap-highlight-color:transparent }
+.taskbar{ bottom:calc(var(--tb-gap) + var(--safe-b)); padding-left:calc(var(--s-4) + var(--safe-l)); padding-right:calc(var(--s-4) + var(--safe-r)) }
+.taskbar, .home{ -webkit-touch-callout:none; -webkit-user-select:none; user-select:none }
+.home, .win__nav{ display:none }
+
+:root[data-phone]{ --dock-icon:38px; --tb-h:56px; --tb-gap:10px }
+:root[data-phone] .icons, :root[data-phone] .widgets, :root[data-phone] .desk__logo, :root[data-phone] .desk-cell{ display:none !important }
+
+/* the home screen */
+:root[data-phone] .home{ position:absolute; z-index:1; display:flex; flex-direction:column; gap:var(--s-5);
+  inset:calc(var(--safe-t) + 66px) calc(var(--s-4) + var(--safe-r)) calc(var(--tb-h) + 2 * var(--tb-gap) + var(--safe-b)) calc(var(--s-4) + var(--safe-l));
+  overflow-y:auto; scrollbar-width:none; transition:opacity var(--dur-3) var(--ease), transform var(--dur-3) var(--spring) }
+:root[data-phone][data-app-open] .home{ opacity:0; transform:scale(.94); pointer-events:none }
+.home__head{ display:grid; justify-items:center; gap:var(--s-1); padding-top:var(--s-3) }
+.home__time{ font:500 clamp(56px, 18vw, 84px)/1 var(--sans); letter-spacing:-.035em; font-variant-numeric:tabular-nums; color:var(--text);
+  text-shadow:0 2px 24px rgba(0,0,0,.35) }
+.home__date{ font-size:var(--fs-400); color:var(--text-dim) }
+.home__apps{ display:grid; grid-template-columns:repeat(auto-fill, minmax(72px, 1fr)); gap:var(--s-5) var(--s-2); align-content:start }
+.home__app{ display:grid; justify-items:center; gap:7px; padding:0; border:0; background:none; color:var(--text); cursor:pointer;
+  animation:home-in var(--dur-3) var(--spring) both; animation-delay:calc(var(--i, 0) * 16ms) }
+.home__art{ width:60px; height:60px; display:grid; place-items:center; border-radius:23%; transition:transform var(--dur-2) var(--spring);
+  filter:drop-shadow(0 6px 14px rgba(0,0,0,.28)) }
+.home__art .app-art{ width:100%; height:100% }
+.home__app:active .home__art{ transform:scale(.88) }
+.home__app:focus-visible .home__art{ outline:2px solid var(--acc); outline-offset:3px }
+.home__name{ max-width:78px; font-size:12px; font-weight:500; line-height:1.2; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  text-shadow:0 1px 8px rgba(0,0,0,.55) }
+@keyframes home-in{ from{ opacity:0; transform:translateY(10px) scale(.9) } }
+
+/* the bars: status on top, apps at the bottom; both step aside while an app is open */
+:root[data-phone] .taskbar{ top:0; bottom:0; flex-direction:column-reverse; justify-content:space-between; align-items:center; gap:0;
+  padding:calc(var(--safe-t) + 10px) calc(10px + var(--safe-r)) calc(var(--tb-gap) + var(--safe-b)) calc(10px + var(--safe-l)); transform:none !important }
+:root[data-phone] .tb{ transition:transform var(--dur-3) var(--spring), opacity var(--dur-2) var(--ease) }
+:root[data-phone] .tb--apps{ flex:0 1 auto; max-width:100%; min-width:0; overflow-x:auto; overflow-y:hidden; scrollbar-width:none; overscroll-behavior-x:contain }
+:root[data-phone] .tb--apps::-webkit-scrollbar{ display:none }
+:root[data-phone] .tb__min, :root[data-phone] #tb-min-sep{ display:none !important }
+:root[data-phone] .tb--status{ width:min(100%, 560px); height:46px; justify-content:flex-end; border-radius:23px }
+:root[data-phone] .tb--status .tb__clock{ display:none }
+:root[data-phone] .tb{ gap:6px; padding:0 var(--s-2) }
+:root[data-phone] .tb__dock{ gap:6px }
+:root[data-phone] .tb__sep{ margin:0 2px }
+/* the status pill on a phone: the connection and the desktop on the left, the buttons on the right */
+:root[data-phone] .tb--status .tb__state{ display:flex !important; order:-2; padding-left:var(--s-2) }
+:root[data-phone] .tb--status .tb__desk:not([hidden]){ display:flex !important; order:-1; margin-right:auto; padding:0 var(--s-2) }
+:root[data-phone] .tb--status .tb__desk span{ display:inline !important }
+:root[data-phone] .tb--status .tb__state + .tb__sep, :root[data-phone] #tb-desk-sep{ display:none !important }
+:root[data-phone] .tb--status .tb__media{ order:-1; margin-right:auto }
+:root[data-phone] .tb--status .tb__sep:last-of-type{ display:none }
+:root[data-phone][data-app-open] .tb--apps{ transform:translateY(calc(100% + var(--tb-gap) + var(--safe-b) + 24px)); opacity:0; pointer-events:none }
+:root[data-phone][data-app-open] .tb--status{ transform:translateY(calc(-100% - var(--safe-t) - 24px)); opacity:0; pointer-events:none }
+
+/* the popovers: sheets as wide as the screen; quick settings and messages hang from the top */
+:root[data-phone] .pop{ left:calc(8px + var(--safe-l)) !important; right:calc(8px + var(--safe-r)); width:auto !important; max-width:none;
+  bottom:calc(var(--tb-h) + 2 * var(--tb-gap) + var(--safe-b)); max-height:calc(100dvh - var(--safe-t) - var(--safe-b) - var(--tb-h) - 96px); overflow:auto;
+  transform-origin:bottom center }
+:root[data-phone] #pop-quick, :root[data-phone] #pop-bell, :root[data-phone] #pop-cal{ top:calc(var(--safe-t) + 64px); bottom:auto; transform-origin:top center }
+:root[data-phone] #ctx{ right:auto; width:auto !important }
+
+/* an app fills the screen; its bar becomes a navigation bar */
+:root[data-phone] .windows{ inset:0 }
+:root[data-phone] .win, :root[data-phone] .win.is-max{ left:0 !important; top:0 !important; width:100% !important; height:100% !important;
+  border:0; border-radius:0; box-shadow:none; padding:var(--safe-t) var(--safe-r) var(--safe-b) var(--safe-l) }
+:root[data-phone] .win__lights, :root[data-phone] .win__grip{ display:none }
+:root[data-phone] .win__bar{ display:flex; align-items:center; gap:var(--s-1); min-height:52px; padding:0 var(--s-1); cursor:default }
+:root[data-phone] .win__title{ flex:1; min-width:0; justify-content:flex-start; font-weight:600 }
+:root[data-phone] .win__nav{ flex:none; display:grid; place-items:center; width:44px; height:44px; padding:0; border:0; border-radius:var(--r-control);
+  background:none; color:var(--text); cursor:pointer; transition:background-color var(--dur-1) var(--ease), transform var(--dur-2) var(--spring) }
+:root[data-phone] .win__nav--home{ order:-1; color:var(--acc) }
+:root[data-phone] .win__nav--close{ order:9 }
+:root[data-phone] .win__nav svg{ width:22px; height:22px }
+:root[data-phone] .win__nav:active{ transform:scale(.88); background:var(--surface-2) }
+:root[data-phone] .win.is-opening{ animation:phone-in var(--dur-3) var(--spring) both }
+@keyframes phone-in{ from{ opacity:0; transform:translateY(28px) scale(.97) } }
+/* the start menu's grid: columns never grow with a long app name (ImageMagick …), the name is cut */
+.launch__apps{ grid-template-columns:repeat(5, minmax(0, 1fr)) }
+.launch__app{ min-width:0 }
+.launch__app > span{ max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+:root[data-phone] .launch__apps{ grid-template-columns:repeat(4, minmax(0, 1fr)) }

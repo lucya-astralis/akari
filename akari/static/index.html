@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Akari OS</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#050508">
+<meta name="color-scheme" content="dark light">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Akari">
 <script src="boot.js"></script>
 <link rel="stylesheet" href="facet.css">
 <link rel="stylesheet" href="/vendor/xterm/xterm.css">
@@ -202,6 +210,11 @@
     <svg class="desk__mark desk__mark--akari am" viewBox="0 0 95.64 100"><use href="#am"/></svg>
     <svg class="desk__mark desk__mark--lucya" viewBox="0 0 964 543"><use href="#lm"/></svg>
   </div>
+  <!-- the phone's home screen (only under 640 px): the time, then every app -->
+  <section class="home" id="home" aria-label="Home-Bildschirm">
+    <header class="home__head"><time class="home__time" id="home-time"></time><span class="home__date" id="home-date"></span></header>
+    <div class="home__apps" id="home-apps"></div>
+  </section>
   <div class="icons" id="icons"></div>
   <div class="widgets" id="widgets"></div>
   <div class="windows" id="windows"></div>
@@ -354,6 +367,9 @@
       </div>
       <span class="win__title"><svg class="win__icon"><use href=""/></svg><span class="win__name"></span></span>
       <div class="win__tools"></div>
+      <!-- on a phone: back to the home screen (the app keeps running), and close -->
+      <button class="win__nav win__nav--home" data-win="min" aria-label="Zum Home-Bildschirm"><svg><use href="#i-back"/></svg></button>
+      <button class="win__nav win__nav--close" data-win="close" aria-label="Schließen"><svg><use href="#i-x"/></svg></button>
     </header>
     <div class="win__body"></div>
     <span class="win__grip" data-grip aria-hidden="true"></span>

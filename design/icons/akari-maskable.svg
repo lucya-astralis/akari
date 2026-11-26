@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- Akari OS app icon (maskable): Facet's deep ground, a violet glow from the top right, the Schein mark -->
+  <defs>
+    <radialGradient id="g" cx="1" cy="0" r="1.2"><stop offset="0" stop-color="#5865f2" stop-opacity=".42"/><stop offset=".6" stop-color="#5865f2" stop-opacity=".06"/><stop offset="1" stop-color="#5865f2" stop-opacity="0"/></radialGradient>
+    <linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#14141c"/><stop offset="1" stop-color="#050508"/></linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#b)"/>
+  <rect width="512" height="512" fill="url(#g)"/>
+  <svg x="147.9" y="147.6" width="225.3" height="216.7" viewBox="-4 -4 112.27 108">
+    <path fill="#5865f2" d="M40.4 0L51.4 0L11 100L0 100Z"/><path fill="#f2f2f4" d="M55.45 14L79.45 14L44.71 100L20.71 100Z"/><path fill="#8b8b94" d="M80.27 36L104.27 36L78.41 100L54.41 100Z"/>
+  </svg>
+</svg>
