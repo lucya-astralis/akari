@@ -1,8 +1,9 @@
 [Unit]
 Description=Akari OS (akarid: sign-in, accounts and sessions of the desktop in the browser)
 Documentation=https://lucya.systems
-After=network.target systemd-logind.service systemd-user-sessions.service
-Wants=caddy.service
+# the console shows the address: wait until the network has one
+After=network-online.target systemd-logind.service systemd-user-sessions.service
+Wants=network-online.target caddy.service
 
 [Service]
 Type=exec

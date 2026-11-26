@@ -3,6 +3,9 @@ akari (0.11.1) trixie; urgency=medium
   * The console shows the address also on networks without a default route
     (host-only networks of VMs), and an IPv6 address if there is no other;
     its check keeps running after an error.
+  * Right after boot the console says it waits for the network and looks
+    every second, and akarid starts once the network is online: the
+    address is there as soon as DHCP is done, not up to ten seconds later.
 
  -- Akari OS <packages@lucya.systems>  Fri, 27 Nov 2026 11:00:00 +0100
 

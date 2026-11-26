@@ -16,6 +16,7 @@ import contextlib
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 from . import accounts, auth, config
@@ -54,10 +55,10 @@ def _qr(text: str) -> str:
     return ""
 
 
-def text(ip: str | None) -> str:
+def text(ip: str | None, waiting: bool = False) -> str:
     # agetty reads backslashes as escapes (\n is the hostname): none may come from us unescaped
     if not ip:
-        body = ["  Noch keine Netzwerkadresse. Ist das Netzwerk verbunden?"]
+        body = ["  Warte auf das Netzwerk …" if waiting else "  Noch keine Netzwerkadresse. Ist das Netzwerk verbunden?"]
         qr = ""
     else:
         url = f"https://{ip}/"
@@ -74,10 +75,10 @@ def text(ip: str | None) -> str:
     return "\n".join(l.replace("\\", "\\\\") for l in lines) + "\n"
 
 
-def write(ip: str | None) -> None:
+def write(ip: str | None, waiting: bool = False) -> None:
     ISSUE.parent.mkdir(parents=True, exist_ok=True)
     tmp = ISSUE.with_suffix(".tmp")
-    tmp.write_text(text(ip), encoding="utf-8")
+    tmp.write_text(text(ip, waiting), encoding="utf-8")
     os.chmod(tmp, 0o644 if not accounts.needs_setup() else 0o600)
     os.replace(tmp, ISSUE)
     with contextlib.suppress(OSError, subprocess.SubprocessError):
@@ -87,12 +88,16 @@ def write(ip: str | None) -> None:
 async def watch() -> None:
     """Keep the console right: at start, and whenever the address or the setup state changes."""
     last = None
+    started = time.monotonic()
     while True:
+        # right after boot the network may still be coming: look every second and
+        # say so, for two minutes; after that every ten seconds
+        early = time.monotonic() - started < 120
         try:
-            now = (await asyncio.to_thread(address), accounts.needs_setup())
+            now = (await asyncio.to_thread(address), accounts.needs_setup(), early)
             if now != last:
-                await asyncio.to_thread(write, now[0])
+                await asyncio.to_thread(write, now[0], early)
                 last = now
         except Exception as e:       # one bad round must not leave the console behind for good
             print(f"  Konsole: {e!r}", file=sys.stderr, flush=True)
-        await asyncio.sleep(10)
+        await asyncio.sleep(1 if early else 10)

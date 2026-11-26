@@ -104,3 +104,9 @@ def test_the_address_from_the_default_route_comes_first(monkeypatch):
 def test_only_ipv6_gives_a_bracketed_address(monkeypatch):
     monkeypatch.setattr(console, "_ip", lambda *a: "2: ens3    inet6 2001:db8::5/64 scope global dynamic" if a[0] == "-6" else "")
     assert console.address() == "[2001:db8::5]"
+
+
+def test_right_after_boot_the_console_waits_for_the_network(monkeypatch):
+    monkeypatch.setattr(accounts, "needs_setup", lambda: False)
+    assert "Warte auf das Netzwerk" in console.text(None, waiting=True)
+    assert "Ist das Netzwerk verbunden?" in console.text(None)
