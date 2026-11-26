@@ -23,9 +23,9 @@ else
   plugins=(git colored-man-pages extract z zsh-autosuggestions zsh-syntax-highlighting)
 fi
 
-# --- powerlevel10k: never the wizard on its own, gitstatusd from the image ---
+# --- powerlevel10k: never the wizard on its own, gitstatusd from akari-shell ---
 typeset -g POWERLEVEL9K_DISABLE_CONFIGURATION_WIZARD=true
-typeset -g GITSTATUS_CACHE_DIR=/usr/share/powerlevel10k/gitstatus/usrbin
+typeset -g GITSTATUS_CACHE_DIR=/usr/libexec/akari-shell
 typeset -g GITSTATUS_AUTO_INSTALL=0
 
 HISTFILE=~/.zsh_history

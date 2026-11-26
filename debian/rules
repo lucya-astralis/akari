@@ -1,0 +1,72 @@
+#!/usr/bin/make -f
+# Akari OS: three packages from one source, nothing downloaded while building
+# (what Debian does not have is in vendor/, from tools/vendor.sh).
+include /usr/share/dpkg/architecture.mk
+
+GITSTATUS_ARCH := $(if $(filter arm64,$(DEB_HOST_ARCH)),aarch64,x86_64)
+A := debian/akari
+S := debian/akari-shell
+D := debian/akari-desktop
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	# the cursor theme for X, from the SVGs the browser shows
+	rm -rf debian/build && mkdir -p debian/build
+	sh image/cursors/build.sh $(CURDIR)/akari/static/assets/cursors $(CURDIR)/debian/build/Akari >/dev/null
+	printf '[Icon Theme]\nInherits=Akari\n' > debian/build/Akari/cursor.theme
+
+override_dh_auto_test:
+	# the tests need pytest and run in CI and the dev VM, not here
+
+override_dh_auto_install:
+	# --- akari: akarid, agent, web interface, units, PAM, Caddy ---
+	install -d $(A)/usr/lib/akari
+	cp -r akari $(A)/usr/lib/akari/
+	find $(A)/usr/lib/akari \( -name __pycache__ -o -name .DS_Store \) -prune -exec rm -rf {} +
+	install -D -m 644 system/systemd/akarid.service $(A)/usr/lib/systemd/system/akarid.service
+	install -D -m 644 system/systemd/akari-session@.service $(A)/usr/lib/systemd/system/akari-session@.service
+	install -D -m 644 system/caddy/caddy-akari.conf $(A)/usr/lib/systemd/system/caddy.service.d/akari.conf
+	install -D -m 644 system/caddy/Caddyfile $(A)/etc/akari/Caddyfile
+	install -D -m 644 system/pam.d/akari $(A)/etc/pam.d/akari
+	install -D -m 440 system/sudoers.d/akari $(A)/etc/sudoers.d/akari
+	# --- akari-shell: oh-my-zsh, powerlevel10k, gitstatusd, fonts, zsh and fastfetch setup ---
+	install -d $(S)/usr/share/oh-my-zsh $(S)/usr/share/powerlevel10k
+	cp -r vendor/oh-my-zsh/. $(S)/usr/share/oh-my-zsh/
+	cp -r vendor/powerlevel10k/. $(S)/usr/share/powerlevel10k/
+	cd $(S)/usr/share && rm -rf oh-my-zsh/.github oh-my-zsh/.gitignore oh-my-zsh/.editorconfig oh-my-zsh/.gitpod.Dockerfile \
+	  oh-my-zsh/.gitpod.yml oh-my-zsh/.devcontainer powerlevel10k/.gitattributes powerlevel10k/.gitignore \
+	  powerlevel10k/gitstatus/.gitignore powerlevel10k/gitstatus/.gitattributes powerlevel10k/gitstatus/.clang-format \
+	  powerlevel10k/gitstatus/.vscode powerlevel10k/.github
+	# their own test suites are no part of a shell
+	find $(S)/usr/share/oh-my-zsh -type d -name tests -prune -exec rm -rf {} +
+	install -d $(S)/usr/share/oh-my-zsh/custom/themes \
+	  $(S)/usr/share/oh-my-zsh/custom/plugins/zsh-autosuggestions $(S)/usr/share/oh-my-zsh/custom/plugins/zsh-syntax-highlighting
+	ln -s /usr/share/powerlevel10k $(S)/usr/share/oh-my-zsh/custom/themes/powerlevel10k
+	echo 'source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh' \
+	  > $(S)/usr/share/oh-my-zsh/custom/plugins/zsh-autosuggestions/zsh-autosuggestions.plugin.zsh
+	echo 'source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh' \
+	  > $(S)/usr/share/oh-my-zsh/custom/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.plugin.zsh
+	install -D -m 755 vendor/gitstatusd/gitstatusd-linux-$(GITSTATUS_ARCH) $(S)/usr/libexec/akari-shell/gitstatusd-linux-$(GITSTATUS_ARCH)
+	install -d $(S)/usr/share/fonts/truetype/meslo-nf $(S)/usr/share/fonts/truetype/akari
+	install -m 644 vendor/meslo/*.ttf $(S)/usr/share/fonts/truetype/meslo-nf/
+	install -m 644 image/rootfs/usr/share/fonts/truetype/akari/*.ttf $(S)/usr/share/fonts/truetype/akari/
+	install -d $(S)/usr/share/akari
+	cp -r image/rootfs/usr/share/akari/zsh image/rootfs/usr/share/akari/fastfetch $(S)/usr/share/akari/
+	install -D -m 644 image/rootfs/etc/xdg/fastfetch/config.jsonc $(S)/etc/xdg/fastfetch/config.jsonc
+	install -D -m 644 image/rootfs/etc/skel/.zshrc $(S)/etc/skel/.zshrc
+	# --- akari-desktop: the cursor theme ---
+	install -d $(D)/usr/share/icons
+	cp -r debian/build/Akari $(D)/usr/share/icons/Akari
+
+override_dh_fixperms:
+	dh_fixperms
+	chmod 440 $(A)/etc/sudoers.d/akari
+
+override_dh_installsystemd:
+	# akarid on and running; the sessions are templates akarid starts itself
+	dh_installsystemd -pakari akarid.service
+
+override_dh_clean:
+	dh_clean debian/build

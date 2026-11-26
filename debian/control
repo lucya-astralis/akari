@@ -1,0 +1,114 @@
+Source: akari
+Section: misc
+Priority: optional
+Maintainer: lucya <root@lucya.sh>
+Build-Depends: debhelper-compat (= 13), librsvg2-bin, x11-apps
+Standards-Version: 4.7.2
+Homepage: https://lucya.systems
+Vcs-Git: https://github.com/lucya-astralis/akari.git
+Vcs-Browser: https://github.com/lucya-astralis/akari
+Rules-Requires-Root: no
+
+Package: akari
+Architecture: all
+Depends: ${misc:Depends},
+         python3 (>= 3.13),
+         python3-fastapi,
+         python3-uvicorn,
+         python3-websockets (>= 15),
+         python3-httpx,
+         python3-multipart,
+         python3-pil,
+         python3-pampy,
+         libpam-systemd,
+         dbus-user-session,
+         systemd,
+         passwd,
+         procps,
+         iproute2,
+         sudo,
+         openssh-server,
+         caddy,
+         qrencode,
+         libjs-xterm,
+         novnc
+Recommends: akari-shell
+Description: desktop in the browser for a Linux machine (akarid)
+ Akari OS puts a desktop in the browser on top of a Debian system: windows,
+ a terminal, files, music and Linux apps (each in its own Xvnc, shown with
+ noVNC), for every account of the machine.
+ .
+ This package has akarid, the system service that signs accounts in with
+ PAM and starts their sessions (akari-session@.service, with a logind
+ session each), the session agent, the web interface, and the HTTPS front
+ (a Caddy configuration with its own certificate).
+
+Package: akari-desktop
+Architecture: all
+Depends: ${misc:Depends},
+         akari (= ${binary:Version}),
+         akari-shell (>= ${source:Version}),
+         tigervnc-standalone-server,
+         matchbox-window-manager,
+         x11-xserver-utils,
+         x11-utils,
+         xauth,
+         dbus-x11,
+         dbus-daemon,
+         wmctrl,
+         playerctl,
+         firefox-esr,
+         xterm,
+         fonts-noto-core,
+         fonts-dejavu-core,
+         fonts-noto-color-emoji,
+         fonts-jetbrains-mono,
+         fonts-noto-cjk,
+         bash-completion,
+         less,
+         nano,
+         vim-tiny,
+         git,
+         curl,
+         wget,
+         htop,
+         tree,
+         unzip,
+         file,
+         iputils-ping,
+         iputils-tracepath,
+         bind9-dnsutils,
+         netcat-openbsd,
+         traceroute,
+         mtr-tiny,
+         whois
+Recommends: firefox-esr-l10n-de,
+            qemu-guest-agent,
+            open-vm-tools,
+            hyperv-daemons
+Description: Akari OS desktop: akari with its apps, fonts and cursors
+ Everything a machine needs to be an Akari OS desktop: akari and
+ akari-shell, the display stack for Linux apps (TigerVNC, matchbox),
+ Firefox ESR, fonts with CJK, network tools, and the guest tools for
+ QEMU/KVM, VMware and Hyper-V, which only start on their own hypervisor.
+ .
+ It also has the Akari cursor theme for X, made from the same pictures the
+ browser shows, and makes it the default.
+
+Package: akari-shell
+Architecture: amd64 arm64
+Depends: ${misc:Depends},
+         ${shlibs:Depends},
+         zsh,
+         zsh-autosuggestions,
+         zsh-syntax-highlighting,
+         fastfetch,
+         fontconfig
+Description: zsh as Akari OS sets it up: oh-my-zsh, powerlevel10k, fastfetch
+ The shell of Akari OS, for the terminal in the browser and for ssh:
+ oh-my-zsh and powerlevel10k on fixed versions, read-only in /usr/share,
+ with gitstatusd for git in the prompt; the font MesloLGS NF that
+ powerlevel10k is made for, the Akari Symbols font, and fastfetch with the
+ Akari logo in the account's accent colour.
+ .
+ New accounts get a ~/.zshrc that loads it (/etc/skel/.zshrc).

@@ -1,0 +1,7 @@
+akari (0.11.0) trixie; urgency=medium
+
+  * Akari OS as a real system: accounts are the system's users (PAM),
+    sessions are systemd units with logind, ssh is ssh.service, HTTPS with
+    Caddy, the console shows the address. First packaged release.
+
+ -- lucya <root@lucya.sh>  Thu, 26 Nov 2026 09:00:00 +0100

@@ -1,0 +1,9 @@
+# the downloads tools/vendor.sh unpacked into vendor/ stay out of the source
+tar-ignore = vendor/dl
+tar-ignore = .devvm
+tar-ignore = .venv
+tar-ignore = __pycache__
+tar-ignore = .pytest_cache
+tar-ignore = design
+tar-ignore = .env
+tar-ignore = .DS_Store

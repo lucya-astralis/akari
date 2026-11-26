@@ -67,10 +67,20 @@ wird deshalb in einer Debian-13-VM in QEMU, ohne Fenster, nur über SSH:
 
 ```bash
 tools/devvm.sh init && tools/devvm.sh start && tools/devvm.sh wait
-tools/devvm.sh install            # Checkout nach /opt/akari/src, dazu Pakete, Dienste, PAM, Caddy
-tools/devvm.sh deploy             # danach: nur den Code, akarid startet neu
+tools/devvm.sh build              # die Pakete (.deb) aus diesem Checkout, gebaut in der VM
+tools/devvm.sh install            # … und mit apt in die VM installiert
+tools/devvm.sh deploy             # danach: nur den Code über das Paket legen, akarid startet neu
 tools/devvm.sh ssh                # eine Shell in der VM
 ```
+
+Im Browser auf dem Mac: `https://127.0.0.1:8443` (eigenes Zertifikat, der Browser
+fragt einmal). Prüfen von außen: `tools/devvm.sh ssh sudo /opt/akari/src/tools/e2e-system.sh`.
+
+Die Pakete: `akari` (akarid, Agent, Oberfläche, Units, PAM, Caddy-Konfiguration),
+`akari-shell` (zsh mit oh-my-zsh, powerlevel10k, Schriften, fastfetch) und
+`akari-desktop` (alles zusammen mit Apps, Schriften, Zeigern und Gast-Werkzeugen).
+Was Debian nicht hat, holt `tools/vendor.sh` auf festen Ständen (`vendor.lock`).
+Systemidentität und Paketquelle liegen im Repo `akari-distro`.
 
 Gebraucht wird QEMU (macOS: MacPorts `sudo port install qemu`, Linux: `apt install
 qemu-system-x86`) und in `.devvm/` das Image `debian-13-genericcloud-amd64.qcow2`

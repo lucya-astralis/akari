@@ -6,14 +6,18 @@
 #   tools/devvm.sh start     boot it (headless, in the background)
 #   tools/devvm.sh wait      until SSH answers
 #   tools/devvm.sh ssh [cmd] a shell, or one command, in the VM
-#   tools/devvm.sh deploy    this checkout to /opt/akari/src in the VM (rsync), akarid restarts
-#   tools/devvm.sh install   deploy, then tools/install-system.sh in the VM (packages, units, PAM, Caddy)
+#   tools/devvm.sh build     the .debs from this checkout, built in the VM, into .devvm/debs
+#   tools/devvm.sh install   those .debs into the VM, with apt
+#   tools/devvm.sh archive   a signed test archive from them and akari-distro, into .devvm/apt
+#   tools/devvm.sh fromarchive  Akari from that archive, as a user installs it (keyring, source, apt)
+#   tools/devvm.sh deploy    this checkout over the installed package (/opt/akari/src), akarid restarts
+#   tools/devvm.sh undeploy  back to the installed package
 #   tools/devvm.sh stop      shut it down
 #   tools/devvm.sh reset     back to a fresh Debian (the working disk goes)
 #   tools/devvm.sh status
 #
 # Ports on this machine (127.0.0.1 only):
-#   2223 → 22 (SSH)   8443 → 443 (Caddy, from phase 1)   8131 → 8130 (akarid)
+#   2223 → 22 (SSH)   8443 → 443 (Caddy)   8131 → 8130 (akarid)
 #
 # Needs: qemu (MacPorts: sudo port install qemu; Linux: apt install qemu-system-x86), and in .devvm/ the image
 # debian-13-genericcloud-amd64.qcow2 from cloud.debian.org. .devvm/ is not
@@ -119,7 +123,10 @@ cmd_start() {
 cmd_wait() {
   say "waiting for SSH …"
   for _ in $(seq 1 120); do
-    if ssh_vm true 2>/dev/null; then say "up: tools/devvm.sh ssh"; return; fi
+    if ssh_vm true 2>/dev/null; then
+      ssh_vm "cloud-init status --wait >/dev/null 2>&1 || true"     # its first apt run holds the dpkg lock
+      say "up: tools/devvm.sh ssh"; return
+    fi
     running || die "QEMU stopped; see $LOG"
     sleep 2
   done
@@ -128,20 +135,102 @@ cmd_wait() {
 
 cmd_ssh() { ssh_vm "$@"; }
 
-cmd_deploy() {
+_sync() {
   say "this checkout → /opt/akari/src"
   ssh_vm "sudo mkdir -p /opt/akari/src && sudo chown $USER_NAME: /opt/akari/src"
   rsync -a --delete -e "ssh -i $KEY -p $SSH_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=$DIR/known_hosts -o LogLevel=ERROR" \
     --exclude .git --exclude .venv --exclude .devvm --exclude __pycache__ --exclude .pytest_cache --exclude .env \
-    --exclude design/showcase/export \
+    --exclude design/showcase/export --exclude vendor/dl --exclude debian/build \
     "$ROOT/" "$USER_NAME@127.0.0.1:/opt/akari/src/"
-  ssh_vm "sudo chmod -R a+rX /opt/akari/src; systemctl is-enabled -q akarid 2>/dev/null && sudo systemctl restart akarid || true"
-  say "deployed"
+  ssh_vm "sudo chmod -R a+rX /opt/akari/src"
+}
+
+cmd_deploy() {
+  # over the installed package: akarid and the sessions run this checkout
+  # (a drop-in sets PYTHONPATH); tools/devvm.sh undeploy goes back to the package
+  _sync
+  ssh_vm 'set -e; dpkg -s akari >/dev/null 2>&1 || { echo "akari is not installed: tools/devvm.sh build && tools/devvm.sh install" >&2; exit 1; }
+          for u in akarid.service akari-session@.service; do
+            sudo mkdir -p /etc/systemd/system/$u.d
+            printf "[Service]\nEnvironment=PYTHONPATH=/opt/akari/src\n" | sudo tee /etc/systemd/system/$u.d/dev.conf >/dev/null
+          done
+          sudo systemctl daemon-reload && sudo systemctl restart akarid'
+  say "deployed (akarid restarted; open sessions keep their code until they end)"
+}
+
+cmd_undeploy() {
+  ssh_vm 'sudo rm -f /etc/systemd/system/akarid.service.d/dev.conf /etc/systemd/system/akari-session@.service.d/dev.conf
+          sudo systemctl daemon-reload && sudo systemctl restart akarid'
+  say "the installed package again"
+}
+
+cmd_build() {
+  # the packages from this checkout (vendor/ from tools/vendor.sh), built in the VM;
+  # the .debs, the source package and lintian's report land in .devvm/debs
+  [[ -d "$ROOT/vendor/oh-my-zsh" ]] || "$ROOT/tools/vendor.sh"
+  _sync
+  ssh_vm 'set -e; dpkg -s build-essential >/dev/null 2>&1 || sudo apt-get install -y -qq --no-install-recommends build-essential debhelper dpkg-dev lintian fakeroot librsvg2-bin x11-apps >/dev/null
+          rm -rf ~/build && mkdir -p ~/build && cp -a /opt/akari/src ~/build/akari && cd ~/build/akari
+          dpkg-buildpackage -us -uc -sa >../build.log 2>&1 || { tail -30 ../build.log; exit 1; }
+          cd .. && lintian --profile debian --info --display-info *.changes > lintian.txt 2>&1 || true
+          grep -E "^[EW]:" lintian.txt | sort | uniq -c | sort -rn | head -40'
+  mkdir -p "$DIR/debs" && rm -f "$DIR/debs"/*
+  scp -q -i "$KEY" -P "$SSH_PORT" -o StrictHostKeyChecking=no -o UserKnownHostsFile="$DIR/known_hosts" -o LogLevel=ERROR \
+    "$USER_NAME@127.0.0.1:build/*.deb" "$USER_NAME@127.0.0.1:build/*.dsc" "$USER_NAME@127.0.0.1:build/*.tar.xz" \
+    "$USER_NAME@127.0.0.1:build/*.changes" "$USER_NAME@127.0.0.1:build/lintian.txt" "$DIR/debs/"
+  say "built: $(cd "$DIR/debs" && ls *.deb | tr '\n' ' ')"
+}
+
+cmd_archive() {
+  # a signed test archive like apt.lucya.systems: the .debs of tools/devvm.sh build
+  # plus akari-base and akari-archive-keyring from akari-distro (next to this repo,
+  # or AKARI_DISTRO), signed with a development key that never leaves .devvm/
+  local distro="${AKARI_DISTRO:-$ROOT/../akari-distro}" rs="ssh -i $KEY -p $SSH_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=$DIR/known_hosts -o LogLevel=ERROR"
+  [[ -d "$distro/packages" ]] || die "akari-distro not found at $distro"
+  ls "$DIR"/debs/*.deb >/dev/null 2>&1 || die "no packages yet: tools/devvm.sh build"
+  rsync -a --delete -e "$rs" --exclude .git --exclude build "$distro/" "$USER_NAME@127.0.0.1:akari-distro/"
+  ssh_vm "rm -rf ~/debs && mkdir ~/debs"
+  rsync -a -e "$rs" "$DIR"/debs/*.deb "$USER_NAME@127.0.0.1:debs/"
+  [[ -d "$DIR/apt-gnupg" ]] && rsync -a --delete -e "$rs" "$DIR/apt-gnupg/" "$USER_NAME@127.0.0.1:akari-apt-gnupg/"
+  ssh_vm 'set -e; export GNUPGHOME=~/akari-apt-gnupg; mkdir -p -m 700 $GNUPGHOME
+    dpkg -s reprepro gnupg build-essential debhelper lintian >/dev/null 2>&1 || sudo apt-get install -y -qq --no-install-recommends reprepro gnupg build-essential debhelper lintian fakeroot >/dev/null 2>&1
+    gpg -k "Akari OS Archive (dev)" >/dev/null 2>&1 || gpg --batch -q --passphrase "" --quick-gen-key "Akari OS Archive (dev) <dev@akari.invalid>" ed25519 sign 1y
+    FPR=$(gpg --with-colons -k "Akari OS Archive (dev)" | awk -F: "/^fpr/{print \$10; exit}")
+    gpg --armor --export $FPR > ~/akari-archive-dev.asc
+    AKARI_ARCHIVE_KEY=~/akari-archive-dev.asc ~/akari-distro/tools/build.sh ~/distro-build | grep -E "^[EW]:" || true
+    rm -rf ~/apt && ~/akari-distro/tools/archive.sh ~/apt $FPR stable ~/debs/*.deb ~/distro-build/*.deb >/dev/null
+    echo "signed with $FPR"'
+  rsync -a --delete -e "$rs" "$USER_NAME@127.0.0.1:akari-apt-gnupg/" "$DIR/apt-gnupg/"
+  rsync -a --delete -e "$rs" "$USER_NAME@127.0.0.1:apt/" "$DIR/apt/"
+  say "archive in .devvm/apt (stable: $(ls "$DIR"/apt/pool/main/a | tr '\n' ' '))"
+}
+
+cmd_fromarchive() {
+  # Akari OS the way a user gets it: the keyring, the source, apt install akari-desktop akari-base.
+  # .devvm/apt-cache (if there) fills apt's cache first, to spare a slow network.
+  local rs="ssh -i $KEY -p $SSH_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=$DIR/known_hosts -o LogLevel=ERROR"
+  [[ -d "$DIR/apt/dists" ]] || die "no archive yet: tools/devvm.sh archive"
+  ssh_vm "dpkg -s rsync >/dev/null 2>&1 || sudo apt-get install -y -qq rsync >/dev/null"
+  [[ -d "$DIR/apt-cache" ]] && rsync -a -e "$rs" --rsync-path="sudo rsync" "$DIR/apt-cache/" "$USER_NAME@127.0.0.1:/var/cache/apt/archives/"
+  rsync -a --delete -e "$rs" --rsync-path="sudo rsync" "$DIR/apt/" "$USER_NAME@127.0.0.1:/srv/akari-apt/"
+  ssh_vm 'set -e
+    sudo dpkg -i /srv/akari-apt/pool/main/a/akari-archive-keyring/*.deb >/dev/null
+    printf "Types: deb\nURIs: file:/srv/akari-apt\nSuites: stable\nComponents: main\nSigned-By: /usr/share/keyrings/akari-archive-keyring.gpg\n" \
+      | sudo tee /etc/apt/sources.list.d/akari.sources >/dev/null
+    sudo apt-get update -qq
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq akari-desktop akari-base </dev/null >/tmp/akari-install.log 2>&1 \
+      || { tail -25 /tmp/akari-install.log; exit 1; }
+    . /etc/os-release; echo "$PRETTY_NAME; akarid $(systemctl is-active akarid), caddy $(systemctl is-active caddy)"'
 }
 
 cmd_install() {
-  cmd_deploy
-  ssh_vm "sudo /opt/akari/src/tools/install-system.sh"
+  # the .debs from tools/devvm.sh build, installed with apt (it pulls what they depend on)
+  ls "$DIR"/debs/*.deb >/dev/null 2>&1 || die "no packages yet: tools/devvm.sh build"
+  ssh_vm "rm -rf ~/debs && mkdir ~/debs"
+  scp -q -i "$KEY" -P "$SSH_PORT" -o StrictHostKeyChecking=no -o UserKnownHostsFile="$DIR/known_hosts" -o LogLevel=ERROR \
+    "$DIR"/debs/*.deb "$USER_NAME@127.0.0.1:debs/"
+  ssh_vm 'sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --reinstall ~/debs/*.deb >/tmp/akari-install.log 2>&1 || { tail -20 /tmp/akari-install.log; exit 1; }'
+  say "installed: $(ssh_vm "dpkg-query -W -f='\${Package} \${Version}  ' akari akari-desktop akari-shell")"
 }
 
 cmd_stop() {
@@ -168,6 +257,6 @@ cmd_status() {
 }
 
 case "${1:-}" in
-  init|start|wait|ssh|deploy|install|stop|reset|status) c="$1"; shift; "cmd_$c" "$@" ;;
-  *) sed -n '2,21p' "$0"; exit 1 ;;
+  init|start|wait|ssh|deploy|undeploy|build|archive|fromarchive|install|stop|reset|status) c="$1"; shift; "cmd_$c" "$@" ;;
+  *) sed -n '2,25p' "$0"; exit 1 ;;
 esac

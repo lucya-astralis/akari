@@ -1,0 +1,66 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: Akari OS
+Upstream-Contact: lucya.systems <https://lucya.systems>
+Source: https://github.com/lucya-astralis/akari
+Comment: Akari OS is AGPL-3.0-or-later with additional terms under its
+ section 7 (attribution, trademarks); see NOTICE and TRADEMARKS.md, installed
+ as /usr/share/doc/akari/NOTICE.
+
+Files: *
+Copyright: 2026 lucya.systems
+License: AGPL-3.0-or-later
+
+Files: vendor/oh-my-zsh/*
+Copyright: 2009-2026 Robby Russell and contributors
+License: Expat
+
+Files: vendor/powerlevel10k/*
+Copyright: 2009-2026 Roman Perepelitsa and contributors
+License: Expat
+
+Files: vendor/gitstatusd/*
+Copyright: 2019-2026 Roman Perepelitsa
+License: GPL-3.0-only
+Comment: The prebuilt gitstatusd binary of the gitstatus release that
+ powerlevel10k names; its source is https://github.com/romkatv/gitstatus.
+
+Files: vendor/meslo/*
+Copyright: 2009-2026 André Berg, Apple Inc. (Menlo), Bitstream (Vera), Nerd Fonts
+License: Apache-2.0
+
+Files: akari/static/assets/fonts/JetBrainsMono-* akari/static/assets/fonts/SpaceGrotesk-*
+Copyright: 2020 The JetBrains Mono Project Authors; 2020 The Space Grotesk Project Authors
+License: OFL-1.1
+Comment: The full text is in akari/static/assets/fonts/OFL.txt.
+
+License: AGPL-3.0-or-later
+ On Debian systems, the full text of the GNU Affero General Public License
+ version 3 is not in /usr/share/common-licenses; it is in /usr/share/doc/akari/LICENSE.
+
+License: Expat
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+ .
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+ .
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ SOFTWARE.
+
+License: GPL-3.0-only
+ On Debian systems, the full text is in /usr/share/common-licenses/GPL-3.
+
+License: Apache-2.0
+ On Debian systems, the full text is in /usr/share/common-licenses/Apache-2.0.
+
+License: OFL-1.1
+ SIL Open Font License, version 1.1; see akari/static/assets/fonts/OFL.txt.

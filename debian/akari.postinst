@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+#DEBHELPER#
+if [ "$1" = configure ] && [ -d /run/systemd/system ]; then
+	# Caddy reads Akari's Caddyfile (caddy.service.d/akari.conf) from now on;
+	# debhelper's snippet above has reloaded systemd
+	deb-systemd-invoke try-restart caddy.service || true
+fi
+exit 0

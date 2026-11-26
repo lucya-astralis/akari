@@ -1,0 +1,12 @@
+#!/bin/sh
+set -e
+if [ "$1" = purge ]; then
+	# account pictures, Lucent pairing, what Akari knows about accounts (the accounts stay)
+	rm -rf /var/lib/akari
+	rm -f /run/issue.d/50-akari.issue
+fi
+if [ -d /run/systemd/system ]; then
+	deb-systemd-invoke try-restart caddy.service || true
+fi
+#DEBHELPER#
+exit 0

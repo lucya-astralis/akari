@@ -1,0 +1,15 @@
+# oh-my-zsh and powerlevel10k are shipped as their projects release them:
+# zsh sources files, it does not run them, and plugins bring their own helpers
+akari-shell: script-not-executable [usr/share/oh-my-zsh/*]
+akari-shell: executable-not-elf-or-script [usr/share/*]
+akari-shell: unusual-interpreter * [usr/share/oh-my-zsh/*]
+akari-shell: wrong-path-for-interpreter * [usr/share/oh-my-zsh/*]
+akari-shell: python3-script-but-no-python3-dep * [usr/share/oh-my-zsh/plugins/shell-proxy/*]
+akari-shell: package-contains-vcs-control-file [usr/share/*]
+# gitstatusd is the static binary of the gitstatus release powerlevel10k pins
+akari-shell: embedded-library zlib [usr/libexec/akari-shell/gitstatusd-linux-*]
+akari-shell: shared-library-lacks-prerequisites [usr/libexec/akari-shell/gitstatusd-linux-*]
+# Akari OS is a distribution: new accounts get a ~/.zshrc that loads Akari's shell
+akari-shell: package-contains-file-in-etc-skel [etc/skel/.zshrc]
+# Akari Symbols is Akari's own icon font, for the terminal
+akari-shell: truetype-font-prohibits-installable-embedding (preview/print only) [usr/share/fonts/truetype/akari/AkariSymbols.ttf]

@@ -167,9 +167,8 @@ den heutigen Stand von Hand.
 *Fertig, wenn:* In der Entwicklungs-VM läuft Akari als Dienst; Konsole, SSH
 und Browser zeigen dieselben Konten; Neustart der VM übersteht alles.
 
-*Stand (26.11.2026): erledigt.* `tools/install-system.sh` richtet ein Debian
-13 ein (bis zu den Paketen in Phase 2 der Ersatz für deren postinst),
-`tools/e2e-system.sh` prüft es von außen: Einrichten über den Link der
+*Stand (26.11.2026): erledigt.* Zuerst mit einem Installationsskript, seit
+Phase 2 mit den Paketen; `tools/e2e-system.sh` prüft es von außen: Einrichten über den Link der
 Konsole, Anmelden über PAM, Sitzung als Unit mit logind-Sitzung, Konten
 mit sudo, SSH-Passwort pro Konto (`sshd -T`), Abmelden räumt Apps und
 logind-Sitzung ab, Löschen samt Home, akarid-Neustart lässt Sitzungen
@@ -201,6 +200,36 @@ Gelernt dabei:
 
 *Fertig, wenn:* Auf einem frischen trixie macht `apt install akari-desktop`
 nach Einbinden der Quelle daraus ein Akari OS mit Namen, Logo und Diensten.
+
+*Stand (26.11.2026): bis auf die öffentliche Quelle erledigt.* Die fünf
+Pakete bauen in der VM (`tools/devvm.sh build`, `archive`); lintian meldet
+nur noch die Maintainer-Adresse `root@…`. Auf einem frischen Debian 13 macht
+`tools/devvm.sh fromarchive` (Keyring, Quelle, `apt install akari-desktop
+akari-base`) in zwei Minuten ein Akari OS, ohne eine Rückfrage; danach
+besteht `tools/e2e-system.sh`, die Konsole grüßt als Akari OS mit Adresse
+und QR-Code, auch nach einem Neustart. Entfernen bringt Debians os-release
+und Caddys eigene Konfiguration zurück, Purge räumt `/var/lib/akari`.
+
+Offen:
+- `apt.lucya.systems` (Hosting, echter Signierschlüssel, CI lädt hoch).
+  Getestet ist eine Quelle mit Entwicklungsschlüssel in der VM.
+- Installer-Banner (rootskel-gtk) und GRUB-Thema wandern in Phase 3: Sie
+  zeigen sich erst mit dem ISO.
+
+Gelernt dabei:
+- `/etc/issue` ist eine Conffile von base-files: per `dpkg-divert`
+  umgelenkt, fragt dpkg trotzdem nach (und hängt ohne Terminal). akari-base
+  lässt sie deshalb in Ruhe und gibt agetty per Drop-in Akaris issue
+  (`--issue-file`). Nur `os-release` (keine Conffile) wird umgelenkt.
+- GRUB heißt weiter „Debian“ (`/etc/default/grub.d/akari.cfg`): Der Name
+  bestimmt den EFI-Ordner, und Debians signiertes GRUB gehört nach
+  `EFI/debian`. Ob und wie Akari im Bootmenü steht, klärt Phase 3 an einer
+  UEFI-Installation mit Secure Boot.
+- `/etc/caddy/Caddyfile` gehört dem Paket caddy; Akari bringt eine eigene
+  (`/etc/akari/Caddyfile`) und ein Drop-in für `caddy.service`.
+- oh-my-zsh, powerlevel10k, gitstatusd und MesloLGS NF kommen über
+  `tools/vendor.sh` auf festen Ständen mit Prüfsummen (`vendor.lock`); die
+  von gitstatusd stimmen mit denen überein, die powerlevel10k selbst nennt.
 
 ### Phase 3: Das ISO
 - Installer-ISO mit debian-cd: grafisch und im Akari-Look, Bootmenü,
@@ -258,6 +287,5 @@ betreiben, ohne Konsole.
 
 ## Nächster Schritt
 
-Phase 2: die Pakete `akari`, `akari-desktop`, `akari-shell` und das Repo
-`akari-distro` mit `akari-base`; `tools/install-system.sh` wird dabei zu
-deren postinst.
+Phase 2 abschließen: `apt.lucya.systems` mit echtem Schlüssel. Dann
+Phase 3: das ISO mit debian-cd im Repo `akari-distro`.

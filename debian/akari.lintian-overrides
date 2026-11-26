@@ -1,0 +1,2 @@
+# "Abmelden" for everyone before akari goes: its sessions are units of their own
+akari: maintainer-script-calls-systemctl [prerm:*]
