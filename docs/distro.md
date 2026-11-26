@@ -135,7 +135,7 @@ Container-Anpassung) oder aus dem Store nehmen.
 | eigener sshd auf 2222, eigene Hostschlüssel | `ssh.service`, sshd_config.d |
 | packages.list, apt-Hook, Wiedereinspielen | entfällt |
 | dbus-daemon pro Desktop | Session-Bus von logind (Desktops trennen über Namen) |
-| `/data/system`, `/data/homes`, `/tmp/akari` | `/var/lib/akari`, `/home`, `/run/akari` |
+| `/data/system`, `/data/homes`, `/tmp/akari` | `/var/lib/akari`, `/home`, `/run/user/<uid>/akari` |
 | akarid auf 0.0.0.0:8130 | akarid auf 127.0.0.1, Caddy auf 443 |
 | Setup-Token im Log | erstes Konto im Installer, sonst Token an der Konsole |
 | venv mit PyPI-Paketen | python3-Pakete von Debian |
@@ -166,6 +166,25 @@ den heutigen Stand von Hand.
 
 *Fertig, wenn:* In der Entwicklungs-VM läuft Akari als Dienst; Konsole, SSH
 und Browser zeigen dieselben Konten; Neustart der VM übersteht alles.
+
+*Stand (26.11.2026): erledigt.* `tools/install-system.sh` richtet ein Debian
+13 ein (bis zu den Paketen in Phase 2 der Ersatz für deren postinst),
+`tools/e2e-system.sh` prüft es von außen: Einrichten über den Link der
+Konsole, Anmelden über PAM, Sitzung als Unit mit logind-Sitzung, Konten
+mit sudo, SSH-Passwort pro Konto (`sshd -T`), Abmelden räumt Apps und
+logind-Sitzung ab, Löschen samt Home, akarid-Neustart lässt Sitzungen
+leben, VM-Neustart. Offen für später: der dbus-daemon pro Desktop (media)
+bleibt vorerst; `ProtectSystem` für akarid.
+
+Gelernt dabei:
+- `PAMName=` legt die Prozesse in den Scope der logind-Sitzung, nicht in
+  den Cgroup der Unit. Abmelden beendet deshalb zusätzlich die Sitzung mit
+  Dienst `akari` (`loginctl terminate-session`); ssh-Sitzungen bleiben.
+- Caddy mit `tls internal` und `on_demand` bedient auch Aufrufe über die
+  IP-Adresse ohne SNI.
+- sshd: ein `Match` in `sshd_config.d/akari.conf` gilt bis zum Ende dieser
+  Datei, nicht bis in sshd_config hinein; darum steht er dort zuletzt.
+- PAM-Modul ist `python3-pampy` (`import pam`), nicht `python3-pam`.
 
 ### Phase 2: Pakete, Paketquelle, Identität
 - `debian/` im Akari-Repo, gebaut mit dpkg-buildpackage, geprüft mit lintian:
@@ -225,7 +244,8 @@ betreiben, ohne Konsole.
 ## Risiken
 
 - **websockets 15 und httpx 0.28** ändern APIs, die akarid nutzt (Relay,
-  Proxy, Lucent). Früh in Phase 1 prüfen.
+  Proxy, Lucent). In Phase 1 geprüft: Proxy und Terminal-Relay laufen mit
+  Debians Paketen durch Caddy; Lucent gegen ein echtes Lucent steht aus.
 - **Konten von außerhalb:** Wer an der Konsole mit `adduser` oder über SSH
   arbeitet, ändert Konten an Akari vorbei. Akari liest den Zustand deshalb
   immer vom System und hält selbst nur Zusatzdaten.
@@ -238,4 +258,6 @@ betreiben, ohne Konsole.
 
 ## Nächster Schritt
 
-Phase 0: Tests und Entwicklungs-VM, Container auf `container-0.10` einfrieren.
+Phase 2: die Pakete `akari`, `akari-desktop`, `akari-shell` und das Repo
+`akari-distro` mit `akari-base`; `tools/install-system.sh` wird dabei zu
+deren postinst.

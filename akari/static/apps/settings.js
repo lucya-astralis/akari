@@ -285,26 +285,16 @@
         if (e.target.closest('[data-reset-layout]')) { Akari.set('layout', { icons: {}, widgets: {} }); Akari.set('hiddenIcons', []); Akari.set('widgetsOff', []); }
       });
 
-      /* software: sudo and what apt installed */
+      /* software: sudo and apt, as on any Debian */
       const loadSoftware = async () => {
         let r; try { r = await Akari.api('/api/software'); } catch { return; }
-        const ok = r.sudo && r.writable && r.setuid;
         const badge = $('[data-sw-badge]', el);
-        badge.className = `f-badge ${ok ? 'f-badge--ok' : 'f-badge--warn'}`;
-        badge.textContent = Akari.t(ok ? 'Verfügbar' : 'Aus');
-        $('[data-sw-state]', el).textContent = Akari.t(!ok
-          ? 'Dieser Container läuft ohne sudo (nur lesbares System). So ist er abgeschlossener; Programme kommen dann nur über das Image.'
-          : r.admin ? 'Du darfst sudo nutzen, mit deinem Akari-Passwort.' : 'Nur Konten, die verwalten, dürfen sudo nutzen.');
-        $('[data-sw-howto]', el).hidden = !(ok && r.admin);
-        $('[data-sw-list]', el).innerHTML = r.packages.length ? r.packages.map(p => `
-          <div class="acct-row"><span class="f-tile"><svg><use href="#i-box"/></svg></span>
-            <span class="opt__txt" translate="no"><b>${esc(p.name)}</b></span>
-            <span class="f-badge ${p.installed ? 'f-badge--ok' : 'f-badge--warn'}">${Akari.t(p.installed ? 'Installiert' : 'Fehlt')}</span></div>`).join('')
-          : `<div class="opt"><span class="opt__txt"><small>${Akari.t('Noch nichts. Was du mit apt installierst, steht hier und kommt nach einem Update wieder.')}</small></span></div>`;
-        const st = r.restore.state;
-        $('[data-sw-restore]', el).textContent = Akari.t(st === 'restoring' ? 'Spiele Pakete nach dem Update wieder ein …'
-          : st === 'failed' ? 'Wiedereinspielen ist gescheitert. Mehr in /data/system/logs/apt-restore.log.'
-          : st === 'done' ? 'Nach dem letzten Update wieder eingespielt.' : '');
+        badge.className = `f-badge ${r.sudo && r.admin ? 'f-badge--ok' : ''}`;
+        badge.textContent = Akari.t(r.sudo && r.admin ? 'Verfügbar' : 'Aus');
+        $('[data-sw-state]', el).textContent = Akari.t(!r.sudo ? 'sudo ist nicht installiert.'
+          : r.admin ? 'Du darfst sudo nutzen, mit deinem Passwort.' : 'Nur Konten, die verwalten, dürfen sudo nutzen.');
+        $('[data-sw-howto]', el).hidden = !(r.sudo && r.admin);
+        $('[data-sw-count]', el).textContent = r.packages ? Akari.t('{n} Pakete installiert.').replace('{n}', r.packages.toLocaleString()) : '';
       };
 
       /* lucent: pairing (admins) and linking the own account */
@@ -361,11 +351,11 @@
         sshOn.checked = r.enabled;
         $('[data-ssh-admin]', el).hidden = !r.admin;
         $('[data-ssh-state]', el).textContent = r.running ? 'Läuft. Anmelden geht mit Schlüssel' + (r.me.password ? ' oder Passwort.' : '.')
-          : r.enabled ? 'Eingeschaltet, startet aber nicht. Mehr in /data/system/logs/sshd.log.'
+          : r.enabled ? 'Eingeschaltet, startet aber nicht. Mehr mit: journalctl -u ssh'
           : r.admin ? 'Aus. Einschalten gilt für alle Konten.' : 'Aus. Ein Konto, das verwaltet, kann es einschalten.';
         $('[data-ssh-connect]', el).hidden = !r.running;
         const [host, port] = (r.public || `${location.hostname}:${r.port}`).split(':');
-        $('[data-ssh-cmd]', el).textContent = `ssh -p ${port} ${r.me.name}@${host}`;
+        $('[data-ssh-cmd]', el).textContent = port === '22' ? `ssh ${r.me.name}@${host}` : `ssh -p ${port} ${r.me.name}@${host}`;
         $('[data-ssh-fp]', el).textContent = r.fingerprints.length ? `Beim ersten Mal fragt ssh nach dem Fingerabdruck. Er muss so lauten: ${r.fingerprints.join(' · ')}` : '';
         sshPw.checked = r.me.password;
         keyBox.innerHTML = k.keys.length ? k.keys.map(key => `
@@ -382,7 +372,7 @@
       sshPw.addEventListener('change', async () => {
         let password = null;
         if (sshPw.checked) {
-          password = await Akari.ask({ title: 'Passwort über SSH erlauben', text: 'Gib dein Akari-Passwort ein. Daraus entsteht der Eintrag, den sshd prüft.', label: 'Passwort', value: '', ok: 'Erlauben', type: 'password' });
+          password = await Akari.ask({ title: 'Passwort über SSH erlauben', text: 'Gib zur Bestätigung dein Passwort ein.', label: 'Passwort', value: '', ok: 'Erlauben', type: 'password' });
           if (!password) { sshPw.checked = false; return; }
         }
         try { await Akari.api('/api/ssh/password', { method: 'POST', json: { allow: sshPw.checked, password } }); } catch {}

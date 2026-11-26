@@ -3,8 +3,7 @@ Runs in the session agent, as the user.
 
 Everything comes from /proc. CPU shares are the difference between two
 looks, so the first answer after a pause covers a short sample. The numbers
-are the container's view; CPU, memory and network are the computer's
-underneath, shared by everyone on it.
+are the whole machine's, shared by every account on it.
 
 Everyone sees every process (as on any Linux without hidepid); a process can
 only be ended by its own user, which the kernel checks anyway."""

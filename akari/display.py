@@ -6,7 +6,7 @@ one window at a time, dialogs centred on top), and the app. The browser
 draws the display with noVNC; the stream reaches it through akarid and this
 agent, never through a published port.
 
-Several accounts share the container, so nobody may reach another's display:
+Several accounts share the machine, so nobody may reach another's display:
   - VNC listens only on a Unix socket in the user's 0700 run folder
     (-rfbport -1, -rfbunixpath, mode 0600), never on TCP;
   - the X server only takes clients with the user's MIT cookie (-auth), so
@@ -105,7 +105,7 @@ def _title(s: "Session") -> str:
 
 
 def _taken(n: int) -> bool:
-    # displays are shared across the container (abstract X sockets, lock files in /tmp)
+    # displays are shared across the machine (abstract X sockets, lock files in /tmp)
     return any(s.display == n for s in SESSIONS.values()) or os.path.exists(f"/tmp/.X{n}-lock")
 
 

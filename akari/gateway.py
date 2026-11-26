@@ -1,5 +1,5 @@
-"""akarid: the door of Akari OS. Root in the container, with only SETUID,
-SETGID, CHOWN, DAC_OVERRIDE, FOWNER and KILL.
+"""akarid: the door of Akari OS. A system service (akarid.service), root with
+a narrow set of capabilities, on 127.0.0.1 behind Caddy.
 
   /                  the desktop when signed in, else the login screen
   /api/login/*       who can sign in, sign in, first-time setup (public)
@@ -25,7 +25,7 @@ from starlette.background import BackgroundTask
 from websockets.asyncio.client import unix_connect
 from websockets.exceptions import ConnectionClosed
 
-from . import accounts, agents, auth, avatars, config, lucent, software, ssh
+from . import accounts, agents, auth, avatars, config, console, lucent, software, ssh
 
 # style-src allows inline styles: xterm.js writes its theme into a <style> element.
 CSP = ("default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; "
@@ -40,10 +40,10 @@ PASS_HEADERS = ("content-type", "content-length", "content-disposition", "conten
 async def lifespan(_app: FastAPI):
     accounts.init()
     await ssh.boot()
-    await software.boot()
+    watch = asyncio.create_task(console.watch())
     yield
-    await ssh.stop()
-    await agents.stop_all()
+    watch.cancel()
+    # sessions are units of their own and outlive a restart of akarid
 
 
 app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
@@ -133,7 +133,6 @@ async def login(body: LoginIn, request: Request) -> Response:
         await asyncio.sleep(0.4)
         raise HTTPException(401, "Name oder Passwort stimmt nicht.")
     auth.succeeded(key)
-    await asyncio.to_thread(accounts.ensure_shadow, acct.name, body.password)
     try:
         await agents.ensure(acct)
     except RuntimeError as e:
@@ -155,7 +154,7 @@ async def setup(body: SetupIn, request: Request) -> Response:
     if not accounts.needs_setup():
         raise HTTPException(409, "Akari OS ist schon eingerichtet.")
     if not auth.setup_token_ok(body.token):
-        raise HTTPException(403, "Der Einrichtungslink stimmt nicht. Er steht im Log des Containers.")
+        raise HTTPException(403, "Der Einrichtungslink stimmt nicht. Die Konsole des Rechners zeigt ihn (oder: journalctl -u akarid).")
     try:
         acct = await asyncio.to_thread(accounts.create, body.name, body.fullname, body.password, True)
     except accounts.AccountError as e:
@@ -243,7 +242,7 @@ class MeIn(BaseModel):
 @app.patch("/api/accounts/me")
 async def update_me(body: MeIn, request: Request) -> dict:
     acct = _me(request)
-    if body.password is not None and not await asyncio.to_thread(accounts.check_pw, body.old_password or "", acct.pw):
+    if body.password is not None and not await asyncio.to_thread(accounts.verify, acct.name, body.old_password or ""):
         raise HTTPException(403, "Das bisherige Passwort stimmt nicht.")
     try:
         acct = await asyncio.to_thread(accounts.update, acct.name, fullname=body.fullname, password=body.password)
@@ -344,6 +343,7 @@ async def delete_account(name: str, request: Request) -> dict:
         await asyncio.to_thread(accounts.delete, name)
     except accounts.AccountError as e:
         raise HTTPException(400, str(e))
+    await ssh.reload()          # its Match line goes
     return {"ok": True}
 
 
@@ -358,9 +358,9 @@ async def software_info(request: Request) -> dict:
 # ---------- ssh ----------
 
 @app.get("/api/ssh")
-def ssh_info(request: Request) -> dict:
+async def ssh_info(request: Request) -> dict:
     acct = _me(request)
-    return {**ssh.info(), "me": {"name": acct.name, "password": acct.ssh_password}, "admin": acct.admin}
+    return {**await ssh.info(), "me": {"name": acct.name, "password": acct.ssh_password}, "admin": acct.admin}
 
 
 class SshIn(BaseModel):
@@ -374,7 +374,7 @@ async def ssh_switch(body: SshIn, request: Request) -> dict:
         await ssh.set_enabled(body.enabled)
     except RuntimeError as e:
         raise HTTPException(500, str(e))
-    return ssh.info()
+    return await ssh.info()
 
 
 class SshPwIn(BaseModel):
@@ -384,11 +384,11 @@ class SshPwIn(BaseModel):
 
 @app.post("/api/ssh/password")
 async def ssh_password(body: SshPwIn, request: Request) -> dict:
-    """An account allows its password over ssh (it must type it, the hash is made from it) or forbids it."""
+    """An account allows its password over ssh (it confirms with the password) or forbids it."""
     acct = _me(request)
-    if body.allow and not await asyncio.to_thread(accounts.check_pw, body.password or "", acct.pw):
+    if body.allow and not await asyncio.to_thread(accounts.verify, acct.name, body.password or ""):
         raise HTTPException(403, "Das Passwort stimmt nicht.")
-    acct = await asyncio.to_thread(accounts.set_ssh_password, acct.name, body.allow, body.password if body.allow else None)
+    acct = await asyncio.to_thread(accounts.set_ssh_password, acct.name, body.allow)
     await ssh.reload()
     return {"password": acct.ssh_password}
 

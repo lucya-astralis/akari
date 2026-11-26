@@ -5,7 +5,7 @@ when Lucent is gone. What Lucent gets is only this contract:
 
   pairing            an admin enters Lucent's one-time code in Einstellungen
                      → Lucent (or `python -m akari --lucent-join URL CODE`).
-                     The pairing lives in /data/system/lucent.json, root only:
+                     The pairing lives in /var/lib/akari/lucent.json, root only:
                      the OIDC client secret and a hash of the connector secret.
   /lucent/v1/*       manifest, status, two maintenance actions and three pages
                      Lucent draws itself (Übersicht, Konten, System), each
@@ -195,7 +195,7 @@ async def _figures() -> dict:
     from . import stats
     cpu, _ = await stats._cpu()
     mem = stats._mem()
-    disk = shutil.disk_usage(config.DATA)
+    disk = shutil.disk_usage("/")
     return {"cpu": cpu, "mem": mem, "disk": disk, "load": os.getloadavg()}
 
 

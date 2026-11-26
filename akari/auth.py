@@ -2,7 +2,7 @@
 
 A session is a random token in an HttpOnly, SameSite=Strict cookie, kept in
 memory (a restart signs everyone out; their apps keep running until the
-container stops). One browser holds one session; another account signs in
+session ends). One browser holds one session; another account signs in
 through the login screen ("Benutzer wechseln").
 
 The setup token: while no account exists, the first one can only be made

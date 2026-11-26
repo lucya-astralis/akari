@@ -1,4 +1,4 @@
-"""Account pictures. akarid keeps them in /data/system/avatars/<name>.png.
+"""Account pictures. akarid keeps them in /var/lib/akari/avatars/<name>.png.
 
 Every upload is decoded with Pillow, cropped to a centred square, scaled to
 256 px and written as a new PNG: what is served is always a plain picture

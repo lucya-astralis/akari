@@ -6,7 +6,8 @@
 #   tools/devvm.sh start     boot it (headless, in the background)
 #   tools/devvm.sh wait      until SSH answers
 #   tools/devvm.sh ssh [cmd] a shell, or one command, in the VM
-#   tools/devvm.sh deploy    this checkout to /opt/akari/src in the VM (rsync)
+#   tools/devvm.sh deploy    this checkout to /opt/akari/src in the VM (rsync), akarid restarts
+#   tools/devvm.sh install   deploy, then tools/install-system.sh in the VM (packages, units, PAM, Caddy)
 #   tools/devvm.sh stop      shut it down
 #   tools/devvm.sh reset     back to a fresh Debian (the working disk goes)
 #   tools/devvm.sh status
@@ -134,7 +135,13 @@ cmd_deploy() {
     --exclude .git --exclude .venv --exclude .devvm --exclude __pycache__ --exclude .pytest_cache --exclude .env \
     --exclude design/showcase/export \
     "$ROOT/" "$USER_NAME@127.0.0.1:/opt/akari/src/"
+  ssh_vm "sudo chmod -R a+rX /opt/akari/src; systemctl is-enabled -q akarid 2>/dev/null && sudo systemctl restart akarid || true"
   say "deployed"
+}
+
+cmd_install() {
+  cmd_deploy
+  ssh_vm "sudo /opt/akari/src/tools/install-system.sh"
 }
 
 cmd_stop() {
@@ -161,6 +168,6 @@ cmd_status() {
 }
 
 case "${1:-}" in
-  init|start|wait|ssh|deploy|stop|reset|status) c="$1"; shift; "cmd_$c" "$@" ;;
-  *) sed -n '2,20p' "$0"; exit 1 ;;
+  init|start|wait|ssh|deploy|install|stop|reset|status) c="$1"; shift; "cmd_$c" "$@" ;;
+  *) sed -n '2,21p' "$0"; exit 1 ;;
 esac

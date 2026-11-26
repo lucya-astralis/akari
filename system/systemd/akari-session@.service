@@ -1,0 +1,17 @@
+[Unit]
+Description=Akari-Sitzung von %i
+Documentation=https://lucya.systems
+After=systemd-user-sessions.service akarid.service
+
+[Service]
+Type=exec
+User=%i
+# PAM opens a real logind session: /run/user/<uid>, the user's own systemd,
+# the locale from /etc/default/locale
+PAMName=akari
+WorkingDirectory=~
+Environment=PYTHONPATH=/usr/lib/akari PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3 -m akari.agent
+# "Abmelden" stops the unit: the agent ends its apps, systemd whatever is left
+KillMode=control-group
+TimeoutStopSec=10

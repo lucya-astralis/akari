@@ -1,59 +1,41 @@
-"""SSH into Akari OS. akarid runs sshd as a child when an admin turns it on.
+"""SSH into Akari OS: the system's own OpenSSH (ssh.service, port 22).
 
-  /data/system/ssh/          host keys (made once per volume), sshd_config, settings
-  port 2222 in the container (no NET_BIND_SERVICE needed for 22)
-
-Who gets in: every account, with a key from its own ~/.ssh/authorized_keys;
-with its password only if the account chose that (accounts.set_ssh_password
-writes a crypt hash into shadow, otherwise the entry is '*'). No root, no
-forwarding, no X11. sshd's privilege separation needs SYS_CHROOT and a /run
-it can write (a tmpfs in compose.yaml)."""
+An admin turns it on and off in Einstellungen → SSH (systemctl enable/disable
+--now ssh). Akari writes /etc/ssh/sshd_config.d/akari.conf: no root, no
+passwords, except for accounts that chose to allow theirs (a Match block).
+Keys come from each account's ~/.ssh/authorized_keys, as anywhere else.
+Debian makes the host keys when openssh-server is installed."""
 
 from __future__ import annotations
 
 import asyncio
 import base64
-import contextlib
 import hashlib
-import json
 import os
-import signal
 from pathlib import Path
 
-from . import accounts, config
+from . import accounts
 
-DIR = config.SYSTEM / "ssh"
-SETTINGS = DIR / "settings.json"
-CONF = DIR / "sshd_config"
-PORT = int(os.environ.get("AKARI_SSH_PORT", "2222"))
-PUBLIC = os.environ.get("AKARI_SSH_PUBLIC", "")       # how it is reached from outside, e.g. 127.0.0.1:2222
-KEYS = ("ed25519", "rsa")
+UNIT = "ssh.service"
+ETC = Path(os.environ.get("AKARI_SSH_ETC", "/etc/ssh"))
+CONF = ETC / "sshd_config.d" / "akari.conf"
+PORT = int(os.environ.get("AKARI_SSH_PORT", "22"))
+PUBLIC = os.environ.get("AKARI_SSH_PUBLIC", "")       # how it is reached from outside, e.g. 127.0.0.1:2223
+KEYS = ("ed25519", "ecdsa", "rsa")
 
-_proc: asyncio.subprocess.Process | None = None
 _lock = asyncio.Lock()
 
 
-def enabled() -> bool:
-    try:
-        return bool(json.loads(SETTINGS.read_text()).get("enabled"))
-    except (OSError, ValueError):
-        return False
-
-
-def running() -> bool:
-    return bool(_proc and _proc.returncode is None)
-
-
-def _write_settings(on: bool) -> None:
-    DIR.mkdir(parents=True, exist_ok=True)
-    os.chmod(DIR, 0o700)
-    SETTINGS.write_text(json.dumps({"enabled": on}))
+async def _systemctl(*args: str) -> tuple[int, str]:
+    p = await asyncio.create_subprocess_exec("systemctl", *args, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT)
+    out, _ = await p.communicate()
+    return p.returncode or 0, out.decode(errors="replace").strip()
 
 
 def fingerprints() -> list[str]:
     out = []
     for k in KEYS:
-        pub = DIR / f"ssh_host_{k}_key.pub"
+        pub = ETC / f"ssh_host_{k}_key.pub"
         try:
             kind, blob = pub.read_text().split()[:2]
         except (OSError, ValueError):
@@ -63,97 +45,65 @@ def fingerprints() -> list[str]:
     return out
 
 
-async def _run(*cmd: str) -> int:
-    p = await asyncio.create_subprocess_exec(*cmd, stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL)
-    return await p.wait()
-
-
-async def _prepare() -> None:
-    DIR.mkdir(parents=True, exist_ok=True)
-    os.chmod(DIR, 0o700)
-    for k in KEYS:
-        key = DIR / f"ssh_host_{k}_key"
-        if not key.exists():
-            extra = ["-b", "3072"] if k == "rsa" else []
-            await _run("ssh-keygen", "-q", "-t", k, *extra, "-N", "", "-C", f"akari-{k}", "-f", str(key))
-    CONF.write_text("\n".join([
-        "# written by akarid at every start; changes here do not last",
-        f"Port {PORT}",
-        *[f"HostKey {DIR}/ssh_host_{k}_key" for k in KEYS],
-        "PidFile /run/akari-sshd.pid",
-        "UsePAM no",
+def config_text() -> str:
+    users = accounts.ssh_password_users()
+    return "\n".join([
+        "# Akari OS: written by akarid (Einstellungen → SSH); changes here do not last.",
+        "# sshd takes the first value it reads, and this file comes before sshd_config.",
         "PermitRootLogin no",
-        "PubkeyAuthentication yes",
-        "AuthorizedKeysFile .ssh/authorized_keys",
-        # every account has a hash in shadow (sudo needs it); sshd takes it only from those that allow it
         "PasswordAuthentication no",
-        "PermitEmptyPasswords no",
         "KbdInteractiveAuthentication no",
-        "StrictModes yes",
-        "MaxAuthTries 4",
-        "LoginGraceTime 30",
-        "X11Forwarding no",
-        "AllowTcpForwarding no",
-        "AllowAgentForwarding no",
-        "PermitTunnel no",
-        "PrintMotd no",
-        "PrintLastLog no",
-        "AcceptEnv LANG LC_*",
-        "Subsystem sftp internal-sftp",
-        *([f"Match User {','.join(users)}", "    PasswordAuthentication yes"] if (users := accounts.ssh_password_users()) else []),
+        "PermitEmptyPasswords no",
+        # Match goes last: it holds until the end of this file
+        *([f"Match User {','.join(users)}", "    PasswordAuthentication yes"] if users else []),
         "",
-    ]))
-    os.chmod(CONF, 0o600)
-    Path("/run/sshd").mkdir(mode=0o755, exist_ok=True)
+    ])
 
 
-async def start() -> None:
-    global _proc
-    async with _lock:
-        if running():
-            return
-        await _prepare()
-        logs = config.SYSTEM / "logs"
-        logs.mkdir(parents=True, exist_ok=True)
-        with open(logs / "sshd.log", "ab", buffering=0) as log:
-            _proc = await asyncio.create_subprocess_exec("/usr/sbin/sshd", "-D", "-e", "-f", str(CONF),
-                                                         stdout=log, stderr=log, start_new_session=True)
-        await asyncio.sleep(0.4)
-        if _proc.returncode is not None:
-            raise RuntimeError("sshd ist nicht gestartet. Mehr in /data/system/logs/sshd.log.")
+def write_config() -> bool:
+    """akari.conf as the accounts want it. True if it changed."""
+    text = config_text()
+    try:
+        if CONF.read_text() == text:
+            return False
+    except OSError:
+        pass
+    CONF.parent.mkdir(parents=True, exist_ok=True)
+    tmp = CONF.with_suffix(".tmp")
+    tmp.write_text(text)
+    os.chmod(tmp, 0o644)
+    os.replace(tmp, CONF)
+    return True
 
 
-async def stop() -> None:
-    global _proc
-    async with _lock:
-        p, _proc = _proc, None
-        if p and p.returncode is None:
-            with contextlib.suppress(ProcessLookupError):
-                p.send_signal(signal.SIGTERM)
-            with contextlib.suppress(asyncio.TimeoutError):
-                await asyncio.wait_for(p.wait(), 4)
+async def state() -> tuple[bool, bool]:
+    """(enabled at boot, running now)"""
+    _, enabled = await _systemctl("is-enabled", UNIT)
+    code, _ = await _systemctl("is-active", "--quiet", UNIT)
+    return enabled.splitlines()[-1:] == ["enabled"], code == 0
 
 
 async def reload() -> None:
-    """New config (who may use passwords), read by the running sshd on SIGHUP."""
-    if running():
-        await _prepare()
-        with contextlib.suppress(ProcessLookupError):
-            _proc.send_signal(signal.SIGHUP)
+    """New config (who may use passwords): sshd reads it again on reload."""
+    async with _lock:
+        if write_config():
+            await _systemctl("try-reload-or-restart", UNIT)
 
 
 async def set_enabled(on: bool) -> None:
-    _write_settings(on)
-    await (start() if on else stop())
+    async with _lock:
+        write_config()
+        code, out = await _systemctl("enable" if on else "disable", "--now", UNIT)
+        if code != 0:
+            raise RuntimeError(f"ssh ließ sich nicht {'einschalten' if on else 'ausschalten'}: {out}")
 
 
 async def boot() -> None:
-    """At akarid's start: sshd again if it was on."""
-    if enabled():
-        with contextlib.suppress(RuntimeError):
-            await start()
+    """At akarid's start: akari.conf follows the accounts (one may have gone meanwhile)."""
+    await reload()
 
 
-def info() -> dict:
-    return {"enabled": enabled(), "running": running(), "port": PORT, "public": PUBLIC or None,
+async def info() -> dict:
+    enabled, running = await state()
+    return {"enabled": enabled, "running": running, "port": PORT, "public": PUBLIC or None,
             "fingerprints": fingerprints()}

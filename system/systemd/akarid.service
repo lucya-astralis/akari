@@ -1,0 +1,28 @@
+[Unit]
+Description=Akari OS (akarid: sign-in, accounts and sessions of the desktop in the browser)
+Documentation=https://lucya.systems
+After=network.target systemd-logind.service systemd-user-sessions.service
+Wants=caddy.service
+
+[Service]
+Type=exec
+Environment=PYTHONPATH=/usr/lib/akari PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3 -m akari
+Restart=on-failure
+RestartSec=2
+StateDirectory=akari
+StateDirectoryMode=0700
+# root, but only with what a login manager needs: users and their files
+# (useradd, chpasswd, userdel), reading shadow for PAM, ending processes.
+# Sessions are units of their own (akari-session@.service), started over D-Bus.
+CapabilityBoundingSet=CAP_CHOWN CAP_DAC_OVERRIDE CAP_DAC_READ_SEARCH CAP_FOWNER CAP_FSETID CAP_KILL CAP_SETUID CAP_SETGID CAP_AUDIT_WRITE
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictRealtime=yes
+LockPersonality=yes
+
+[Install]
+WantedBy=multi-user.target

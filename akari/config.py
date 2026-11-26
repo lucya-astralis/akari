@@ -1,34 +1,33 @@
 """Where things are.
 
 Two processes share this module:
-  akarid (python -m akari)        root in the container, a handful of capabilities:
-                                   login, accounts, sessions, the static files, and a
-                                   proxy to each person's session agent.
-  agent  (python -m akari.agent)  one per signed-in account, running as that Linux
-                                   user: terminal, files, apps, preferences.
+  akarid (python -m akari)        root, a system service (akarid.service): login,
+                                   accounts, sessions, the static files, and a proxy
+                                   to each person's session agent. Listens on
+                                   127.0.0.1; Caddy in front of it speaks HTTPS.
+  agent  (python -m akari.agent)  one per signed-in account, as that Linux user,
+                                   in its own unit (akari-session@<name>.service):
+                                   terminal, files, apps, preferences.
 
-Everything lives in the one volume, /data. The root filesystem is read-only;
-/etc/passwd, /etc/group and /etc/shadow are symlinks into /data/system."""
+Accounts are the system's own users (/etc/passwd, PAM). What Akari keeps
+about them on top lives in /var/lib/akari, root only."""
 
 from __future__ import annotations
 
 import os
+import pwd
 import time
 from pathlib import Path
 
-VERSION = "0.10.0"
+VERSION = "0.11.0"
 OS_NAME = "Akari OS"
 STARTED = time.time()
 
-DATA = Path(os.environ.get("AKARI_DATA", "/data"))
-SYSTEM = DATA / "system"          # accounts, passwd, group, shadow (root only)
-HOMES = DATA / "homes"            # one home per account, 0700
-RUN = Path(os.environ.get("AKARI_RUN", "/tmp/akari"))   # sockets, one dir per uid, 0700
-SKEL = Path("/etc/skel")
-ETC_SEED = Path("/usr/share/akari/etc")   # the image's own passwd/group/shadow
+SYSTEM = Path(os.environ.get("AKARI_STATE", "/var/lib/akari"))   # extras for accounts, avatars, Lucent (root only)
+RUN = Path(os.environ.get("AKARI_RUN", "/run/user"))   # each user's runtime dir (logind), the agent's socket in it
 
 PORT = int(os.environ.get("AKARI_PORT", "8130"))
-HOST = os.environ.get("AKARI_BIND", "0.0.0.0")
+HOST = os.environ.get("AKARI_BIND", "127.0.0.1")
 HOSTNAME = os.environ.get("AKARI_HOSTNAME") or os.uname().nodename
 
 STATIC = Path(__file__).parent / "static"
@@ -39,9 +38,16 @@ VENDOR = {
 }
 
 # --- inside an agent: whose session this is -------------------------------
+def _gecos(name: str) -> str:
+    try:
+        return pwd.getpwnam(name).pw_gecos.split(",", 1)[0].strip() or name
+    except KeyError:
+        return name
+
+
 HOME = Path(os.environ.get("HOME", "/tmp"))
 NAME = os.environ.get("USER", "akari")
-FULLNAME = os.environ.get("AKARI_FULLNAME", NAME)
+FULLNAME = os.environ.get("AKARI_FULLNAME") or _gecos(NAME)
 SHELL = os.environ.get("SHELL", "/bin/zsh")
 CONFIG = HOME / ".config" / "akari"
 CACHE = HOME / ".cache" / "akari"
@@ -49,7 +55,8 @@ TRASH = HOME / ".local" / "share" / "Trash" / "files"
 
 
 def user_run(uid: int) -> Path:
-    return RUN / str(uid)
+    """Akari's folder in the user's runtime dir (/run/user/<uid>/akari, 0700)."""
+    return RUN / str(uid) / "akari"
 
 
 def agent_socket(uid: int) -> Path:

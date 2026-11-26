@@ -67,7 +67,8 @@ wird deshalb in einer Debian-13-VM in QEMU, ohne Fenster, nur über SSH:
 
 ```bash
 tools/devvm.sh init && tools/devvm.sh start && tools/devvm.sh wait
-tools/devvm.sh deploy             # den Checkout nach /opt/akari/src
+tools/devvm.sh install            # Checkout nach /opt/akari/src, dazu Pakete, Dienste, PAM, Caddy
+tools/devvm.sh deploy             # danach: nur den Code, akarid startet neu
 tools/devvm.sh ssh                # eine Shell in der VM
 ```
 

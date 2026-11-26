@@ -1,36 +1,42 @@
-"""Accounts, and the Linux users behind them.
+"""Accounts: the system's own users.
 
-The truth is /data/system/accounts.json (root, 0600): name, full name, uid,
-admin, password hash. From it akarid writes /data/system/{passwd,group,shadow},
-which /etc/passwd, /etc/group and /etc/shadow point to: the image's own system
-users first, then one line per account. Every account is a real Linux user
-with its own uid and a home of its own (0700).
+An account is a Linux user like any other: in /etc/passwd with a uid from
+UID_MIN to UID_MAX (/etc/login.defs), a login shell, and a password in
+/etc/shadow. Akari makes and changes them with useradd, usermod, chpasswd,
+gpasswd and userdel, and checks passwords with PAM (service "akari"), so an
+account made in the installer, with adduser or here is the same thing.
+Accounts that manage are the members of the group sudo.
 
-Passwords are checked by Akari (scrypt), not by PAM: the shadow entry is
-locked ('!'), and su/sudo cannot work anyway under no-new-privileges."""
+What Linux has no place for lives in /var/lib/akari/accounts.json (root,
+0600), by name: when the account came to Akari, its picture, the Lucent
+person it is linked to, whether it may use its password over ssh.
+
+The login screen shows only accounts that can sign in with a password: a
+user whose password is locked ('!', '*', as for a key-only admin) can't."""
 
 from __future__ import annotations
 
-import contextlib
-import hashlib
+import grp
 import hmac
 import json
 import os
+import pwd
 import re
-import secrets
-import shutil
+import subprocess
 import threading
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
 
 from . import config
 
 FILE = config.SYSTEM / "accounts.json"
 NAME_RE = re.compile(r"^[a-z][a-z0-9_-]{1,31}\Z")     # \Z, not $: "ada\n" is no name
-UID_MIN, UID_MAX = 1000, 59999
+ADMIN_GROUP = "sudo"
+PAM_SERVICE = "akari"
+SHELL = "/bin/zsh"
 PW_MIN = 8
-SCRYPT = {"n": 2 ** 14, "r": 8, "p": 1}
+NO_LOGIN = ("/usr/sbin/nologin", "/sbin/nologin", "/bin/false", "/usr/bin/false")
 
 _lock = threading.RLock()
 
@@ -39,23 +45,35 @@ class AccountError(ValueError):
     pass
 
 
+def _login_defs() -> tuple[int, int]:
+    lo, hi = 1000, 59999
+    try:
+        for line in Path("/etc/login.defs").read_text().splitlines():
+            parts = line.split()
+            if len(parts) == 2 and parts[0] == "UID_MIN":
+                lo = int(parts[1])
+            elif len(parts) == 2 and parts[0] == "UID_MAX":
+                hi = int(parts[1])
+    except (OSError, ValueError):
+        pass
+    return lo, hi
+
+
+UID_MIN, UID_MAX = _login_defs()
+
+
 @dataclass
 class Account:
     name: str
     fullname: str
     uid: int
     admin: bool
-    pw: str
     created: int
-    ssh_pw: str | None = None      # crypt hash of the password for /etc/shadow (sudo checks it, sshd too)
-    ssh_password: bool = False     # may this account sign in over ssh with that password?
+    home: Path
+    ssh_password: bool = False     # may this account sign in over ssh with its password?
     avatar: int = 0                # when the picture last changed (0: none, the initial is shown)
     lucent_sub: str | None = None  # the Lucent person this account is linked to ("<issuer>#<sub>")
     lucent_email: str | None = None
-
-    @property
-    def home(self) -> Path:
-        return config.HOMES / self.name
 
     def public(self) -> dict:
         return {"name": self.name, "fullname": self.fullname, "admin": self.admin,
@@ -63,66 +81,86 @@ class Account:
                 "avatar": f"/api/avatars/{self.name}?v={self.avatar}" if self.avatar else None}
 
 
-# ---------- passwords ----------
+# ---------- what Akari keeps on top ----------
 
-def hash_pw(password: str) -> str:
-    salt = secrets.token_bytes(16)
-    dk = hashlib.scrypt(password.encode(), salt=salt, dklen=32, **SCRYPT)
-    return f"scrypt${SCRYPT['n']}${SCRYPT['r']}${SCRYPT['p']}${salt.hex()}${dk.hex()}"
+EXTRAS = ("created", "ssh_password", "avatar", "lucent_sub", "lucent_email")
 
 
-def check_pw(password: str, stored: str) -> bool:
-    try:
-        _alg, n, r, p, salt, want = stored.split("$")
-        dk = hashlib.scrypt(password.encode(), salt=bytes.fromhex(salt), dklen=32, n=int(n), r=int(r), p=int(p))
-    except (ValueError, TypeError):
-        return False
-    return hmac.compare_digest(dk.hex(), want)
-
-
-def crypt_pw(password: str) -> str:
-    """SHA-512 crypt for /etc/shadow, which sshd checks itself (no PAM here).
-    Python 3.13 has no crypt module; openssl reads the password from stdin."""
-    import subprocess
-    out = subprocess.run(["openssl", "passwd", "-6", "-stdin"], input=password.encode(), capture_output=True, check=True)
-    return out.stdout.decode().strip()
-
-
-# a hash to compare against when the name does not exist, so a wrong name and
-# a wrong password take the same time
-_DUMMY = hash_pw(secrets.token_urlsafe(12))
-
-
-# ---------- the store ----------
-
-def _load() -> dict[str, Account]:
+def _load() -> dict[str, dict]:
     try:
         raw = json.loads(FILE.read_text(encoding="utf-8"))
-    except FileNotFoundError:
+    except (FileNotFoundError, ValueError):
         return {}
-    out = {}
-    for a in raw:
-        if a.get("ssh_pw") and "ssh_password" not in a:
-            a["ssh_password"] = True      # 0.3: a hash meant "ssh passwords allowed"
-        out[a["name"]] = Account(**a)
-    return out
+    return raw if isinstance(raw, dict) else {}
 
 
-def _save(accts: dict[str, Account]) -> None:
+def _save(extras: dict[str, dict]) -> None:
+    FILE.parent.mkdir(parents=True, exist_ok=True)
     tmp = FILE.with_suffix(".tmp")
-    tmp.write_text(json.dumps([asdict(a) for a in accts.values()], ensure_ascii=False, indent=1), encoding="utf-8")
+    tmp.write_text(json.dumps(extras, ensure_ascii=False, indent=1), encoding="utf-8")
     os.chmod(tmp, 0o600)
     os.replace(tmp, FILE)
 
 
-def all() -> list[Account]:  # noqa: A001 - the module reads as accounts.all()
+def _set_extra(name: str, **values) -> None:
     with _lock:
-        return sorted(_load().values(), key=lambda a: a.uid)
+        extras = _load()
+        extras.setdefault(name, {}).update(values)
+        _save(extras)
+
+
+# ---------- reading the system ----------
+
+def _locked() -> set[str]:
+    """Users whose shadow entry holds no usable password. Unreadable shadow (tests, no root): none."""
+    try:
+        lines = Path("/etc/shadow").read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return set()
+    out = set()
+    for line in lines:
+        f = line.split(":")
+        if len(f) > 1 and (not f[1] or f[1][0] in "!*"):
+            out.add(f[0])
+    return out
+
+
+def _admins() -> set[str]:
+    try:
+        g = grp.getgrnam(ADMIN_GROUP)
+    except KeyError:
+        return set()
+    return set(g.gr_mem) | {p.pw_name for p in pwd.getpwall() if p.pw_gid == g.gr_gid}
+
+
+def _humans() -> list[pwd.struct_passwd]:
+    return [p for p in pwd.getpwall()
+            if UID_MIN <= p.pw_uid <= UID_MAX and p.pw_shell not in NO_LOGIN and NAME_RE.match(p.pw_name)]
+
+
+def _account(p: pwd.struct_passwd, admins: set[str], extras: dict[str, dict]) -> Account:
+    x = extras.get(p.pw_name, {})
+    home = Path(p.pw_dir)
+    created = x.get("created")
+    if not created:
+        try:
+            created = int(home.stat().st_ctime)
+        except OSError:
+            created = 0
+    return Account(name=p.pw_name, fullname=p.pw_gecos.split(",", 1)[0].strip() or p.pw_name, uid=p.pw_uid,
+                   admin=p.pw_name in admins, created=created, home=home,
+                   **{k: x[k] for k in EXTRAS if k in x and k != "created"})
+
+
+def all() -> list[Account]:  # noqa: A001 - the module reads as accounts.all()
+    """The accounts that can sign in, by uid."""
+    with _lock:
+        admins, extras, locked = _admins(), _load(), _locked()
+        return sorted((_account(p, admins, extras) for p in _humans() if p.pw_name not in locked), key=lambda a: a.uid)
 
 
 def get(name: str) -> Account | None:
-    with _lock:
-        return _load().get(name)
+    return next((a for a in all() if a.name == name), None)
 
 
 def by_uid(uid: int) -> Account | None:
@@ -133,202 +171,142 @@ def needs_setup() -> bool:
     return not all()
 
 
-# ---------- /etc/passwd and friends ----------
-
-def _seed(name: str) -> list[str]:
-    try:
-        return [l for l in (config.ETC_SEED / name).read_text().splitlines() if l.strip()]
-    except FileNotFoundError:
-        return []
-
-
-def _system_names() -> set[str]:
-    return {l.split(":", 1)[0] for l in _seed("passwd")} | {l.split(":", 1)[0] for l in _seed("group")}
-
-
-def _write(name: str, lines: list[str], mode: int, gid: int = 0) -> None:
-    path = config.SYSTEM / name
-    tmp = path.with_name(f".{name}.tmp")
-    tmp.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    os.chmod(tmp, mode)
-    os.chown(tmp, 0, gid)
-    os.replace(tmp, path)
-
-
-def sync() -> None:
-    """Write passwd/group/shadow from the accounts. Called at start and after every change."""
-    accts = all()
-    days = int(time.time() // 86400)
-    shadow_gid = next((int(l.split(":")[2]) for l in _seed("group") if l.startswith("shadow:")), 0)
-    _write("passwd", _seed("passwd") + [
-        f"{a.name}:x:{a.uid}:{a.uid}:{a.fullname},,,:{a.home}:/bin/zsh" for a in accts], 0o644)
-    admins = ",".join(a.name for a in accts if a.admin)
-    group = [f"{l}{admins}" if l.startswith("akari-admin:") and l.endswith(":") else l for l in _seed("group")]
-    _write("group", group + [f"{a.name}:x:{a.uid}:" for a in accts], 0o644)
-    # the crypt hash (for sudo; sshd only takes it from accounts that allow it, see ssh.py),
-    # '*' until the account has signed in once since 0.4: not locked, so ssh keys still work
-    _write("shadow", _seed("shadow") + [f"{a.name}:{a.ssh_pw or '*'}:{days}:0:99999:7:::" for a in accts], 0o640, shadow_gid)
-    _write("gshadow", _seed("gshadow") + [f"{a.name}:!::" for a in accts], 0o640, shadow_gid)
-
-
 def init() -> None:
-    """At start: the system folders with the right modes, and the files in sync."""
+    """At start: Akari's folder, root only."""
     config.SYSTEM.mkdir(parents=True, exist_ok=True)
-    os.chmod(config.SYSTEM, 0o711)          # users must read passwd, never list or read the rest
-    config.HOMES.mkdir(parents=True, exist_ok=True)
-    os.chmod(config.HOMES, 0o711)
-    config.RUN.mkdir(parents=True, exist_ok=True)
-    os.chmod(config.RUN, 0o711)
+    os.chmod(config.SYSTEM, 0o700)
     if FILE.exists():
         os.chmod(FILE, 0o600)
-    adopt_etc()
-    sync()
 
 
-ETC = Path("/etc")
+# ---------- passwords ----------
+
+def verify(name: str, password: str) -> bool:
+    """The password, checked by PAM as at any other login."""
+    import pam   # python3-pampy; only akarid (root) needs it
+    return bool(pam.pam().authenticate(name or "", password or "", service=PAM_SERVICE))
 
 
-def adopt_etc() -> bool:
-    """Put /etc/passwd and friends back into Akari's hands after dpkg.
-
-    A package that makes a system user (polkitd, messagebus …) has useradd
-    write /etc/passwd, and that replaces the link into /data/system with a
-    plain file: accounts made afterwards are unknown to Linux. Here the new
-    system entries go into the image's seed, the links come back, and the
-    files are written again. Called at start, after software is put back,
-    and by the apt hook after every dpkg run."""
-    akari = {a.name for a in all()}
-    changed = False
-    for name in ("passwd", "group", "shadow", "gshadow"):
-        path = ETC / name
-        if path.is_symlink() or not path.exists():
-            continue
-        seed_file = config.ETC_SEED / name
-        seed = _seed(name)
-        known = {l.split(":", 1)[0] for l in seed}
-        extra = [l for l in path.read_text(encoding="utf-8").splitlines()
-                 if l.strip() and l.split(":", 1)[0] not in known and l.split(":", 1)[0] not in akari]
-        if extra and seed_file.exists():
-            st = seed_file.stat()
-            tmp = seed_file.with_name(f".{name}.tmp")
-            tmp.write_text("\n".join(seed + extra) + "\n", encoding="utf-8")
-            os.chmod(tmp, st.st_mode & 0o777)
-            os.chown(tmp, st.st_uid, st.st_gid)
-            os.replace(tmp, seed_file)
-        link = path.with_name(f".{name}.akari-link")
-        with contextlib.suppress(FileNotFoundError):
-            link.unlink()
-        os.symlink(config.SYSTEM / name, link)
-        os.replace(link, path)
-        changed = True
-    if changed:
-        sync()
-    return changed
+def authenticate(name: str, password: str) -> Account | None:
+    """An account and its password. PAM is asked about every name, so a wrong
+    name and a wrong password take the same time; only accounts get in (never root)."""
+    name = (name or "").strip().lower()
+    ok = verify(name, password) if NAME_RE.match(name) else False
+    acct = get(name) if ok else None
+    return acct
 
 
 # ---------- changes ----------
+
+def _run(*cmd: str, stdin: str | None = None) -> None:
+    r = subprocess.run(cmd, input=stdin, capture_output=True, text=True)
+    if r.returncode != 0:
+        raise AccountError(f"{cmd[0]}: {(r.stderr or r.stdout).strip() or f'Fehler {r.returncode}'}")
+
 
 def _clean_fullname(s: str, fallback: str) -> str:
     s = re.sub(r"[:,\n\r\t\0]", " ", s or "").strip()[:64]
     return s or fallback
 
 
-def _chown_tree(root: Path, uid: int) -> None:
-    os.chown(root, uid, uid)
-    for d, dirs, files in os.walk(root):
-        for n in dirs + files:
-            os.chown(os.path.join(d, n), uid, uid, follow_symlinks=False)
+def _check_pw(password: str | None) -> None:
+    if len(password or "") < PW_MIN:
+        raise AccountError(f"Das Passwort braucht mindestens {PW_MIN} Zeichen.")
+    if "\n" in password or "\r" in password or "\0" in password:   # chpasswd reads one line per user
+        raise AccountError("Das Passwort darf keinen Zeilenumbruch enthalten.")
+
+
+def _set_password(name: str, password: str) -> None:
+    _run("chpasswd", stdin=f"{name}:{password}\n")
+
+
+def _exists(name: str) -> bool:
+    for lookup in (pwd.getpwnam, grp.getgrnam):
+        try:
+            lookup(name)
+            return True
+        except KeyError:
+            pass
+    return False
 
 
 def create(name: str, fullname: str, password: str, admin: bool = False) -> Account:
     name = (name or "").strip().lower()
     if not NAME_RE.match(name):
         raise AccountError("Der Name: 2 bis 32 Zeichen, Kleinbuchstaben, Ziffern, - und _, vorne ein Buchstabe.")
-    if len(password or "") < PW_MIN:
-        raise AccountError(f"Das Passwort braucht mindestens {PW_MIN} Zeichen.")
+    _check_pw(password)
     with _lock:
-        accts = _load()
-        if name in accts or name in _system_names():
+        if _exists(name):
             raise AccountError("Diesen Namen gibt es schon.")
-        used = {a.uid for a in accts.values()}
-        uid = next(u for u in range(UID_MIN, UID_MAX) if u not in used)
-        acct = Account(name=name, fullname=_clean_fullname(fullname, name), uid=uid,
-                       admin=admin or not accts, pw=hash_pw(password), created=int(time.time()),
-                       ssh_pw=crypt_pw(password))
-        home = acct.home
-        if home.exists():
-            shutil.rmtree(home)
-        shutil.copytree(config.SKEL, home, symlinks=True) if config.SKEL.is_dir() else home.mkdir()
-        _chown_tree(home, uid)
+        first = not all()
+        _run("useradd", "--create-home", "--user-group", "--shell", SHELL,
+             "--comment", _clean_fullname(fullname, name), *(["--groups", ADMIN_GROUP] if admin or first else []), name)
+        try:
+            _set_password(name, password)
+        except AccountError:
+            _run("userdel", "--remove", name)
+            raise
+        home = Path(pwd.getpwnam(name).pw_dir)
         os.chmod(home, 0o700)
-        accts[name] = acct
-        _save(accts)
-        sync()
+        extras = _load()
+        extras[name] = {"created": int(time.time())}      # a name used before starts afresh
+        _save(extras)
+        acct = get(name)
+        assert acct
         return acct
 
 
 def update(name: str, *, fullname: str | None = None, password: str | None = None, admin: bool | None = None) -> Account:
     with _lock:
-        accts = _load()
-        acct = accts.get(name)
+        acct = get(name)
         if not acct:
             raise AccountError("Dieses Konto gibt es nicht.")
         if fullname is not None:
-            acct.fullname = _clean_fullname(fullname, acct.name)
+            _run("usermod", "--comment", _clean_fullname(fullname, acct.name), name)
         if password is not None:
-            if len(password) < PW_MIN:
-                raise AccountError(f"Das Passwort braucht mindestens {PW_MIN} Zeichen.")
-            acct.pw = hash_pw(password)
-            acct.ssh_pw = crypt_pw(password)      # shadow follows the account's password
+            _check_pw(password)
+            _set_password(name, password)
         if admin is not None and admin != acct.admin:
-            if not admin and sum(a.admin for a in accts.values()) == 1:
+            if not admin and sum(a.admin for a in all()) == 1:
                 raise AccountError("Mindestens ein Konto muss verwalten dürfen.")
-            acct.admin = admin
-        _save(accts)
-        sync()
+            _run("gpasswd", "--add" if admin else "--delete", name, ADMIN_GROUP)
+        acct = get(name)
+        assert acct
         return acct
 
 
-def set_ssh_password(name: str, allow: bool, password: str | None = None) -> Account:
-    """Allow or forbid passwords over ssh. Allowing renews the shadow hash from the password."""
-    with _lock:
-        accts = _load()
-        acct = accts.get(name)
-        if not acct:
-            raise AccountError("Dieses Konto gibt es nicht.")
-        if password:
-            acct.ssh_pw = crypt_pw(password)
-        acct.ssh_password = allow
-        _save(accts)
-        sync()
-        return acct
+def set_ssh_password(name: str, allow: bool) -> Account:
+    """Allow or forbid the account's password over ssh (sshd_config.d/akari.conf follows, see ssh.py)."""
+    if not get(name):
+        raise AccountError("Dieses Konto gibt es nicht.")
+    _set_extra(name, ssh_password=bool(allow))
+    acct = get(name)
+    assert acct
+    return acct
 
 
 def set_avatar(name: str, version: int) -> Account:
-    with _lock:
-        accts = _load()
-        acct = accts.get(name)
-        if not acct:
-            raise AccountError("Dieses Konto gibt es nicht.")
-        acct.avatar = version
-        _save(accts)
-        return acct
+    if not get(name):
+        raise AccountError("Dieses Konto gibt es nicht.")
+    _set_extra(name, avatar=version)
+    acct = get(name)
+    assert acct
+    return acct
 
 
 def set_lucent(name: str, sub: str | None, email: str | None = None) -> Account:
     """Link an account to a Lucent person (sign-in with Lucent), or unlink it (sub None).
     One Lucent person is linked to one account at most."""
     with _lock:
-        accts = _load()
-        acct = accts.get(name)
-        if not acct:
+        if not get(name):
             raise AccountError("Dieses Konto gibt es nicht.")
         if sub:
-            other = next((a for a in accts.values() if a.lucent_sub == sub and a.name != name), None)
+            other = next((a for a in all() if a.lucent_sub == sub and a.name != name), None)
             if other:
                 raise AccountError(f"Diese Lucent-Person ist schon mit {other.name} verknüpft.")
-        acct.lucent_sub, acct.lucent_email = (sub, email) if sub else (None, None)
-        _save(accts)
+        _set_extra(name, lucent_sub=sub or None, lucent_email=email if sub else None)
+        acct = get(name)
+        assert acct
         return acct
 
 
@@ -336,36 +314,25 @@ def by_lucent(sub: str) -> Account | None:
     return next((a for a in all() if a.lucent_sub and hmac.compare_digest(a.lucent_sub, sub)), None)
 
 
-def ensure_shadow(name: str, password: str) -> None:
-    """After a good sign-in: give an account from before 0.4 its shadow hash (sudo needs it)."""
-    with _lock:
-        accts = _load()
-        acct = accts.get(name)
-        if acct and not acct.ssh_pw:
-            acct.ssh_pw = crypt_pw(password)
-            _save(accts)
-            sync()
-
-
 def ssh_password_users() -> list[str]:
-    return [a.name for a in all() if a.ssh_password and a.ssh_pw]
+    return [a.name for a in all() if a.ssh_password]
 
 
 def delete(name: str) -> None:
+    """The user, its group, its home. Its processes end first (ssh, its user manager)."""
     with _lock:
-        accts = _load()
-        acct = accts.get(name)
+        acct = get(name)
         if not acct:
             raise AccountError("Dieses Konto gibt es nicht.")
-        if acct.admin and sum(a.admin for a in accts.values()) == 1:
+        if acct.admin and sum(a.admin for a in all()) == 1:
             raise AccountError("Das letzte Konto, das verwalten darf, bleibt.")
-        del accts[name]
-        _save(accts)
-        sync()
-        shutil.rmtree(acct.home, ignore_errors=True)
-
-
-def authenticate(name: str, password: str) -> Account | None:
-    acct = get((name or "").strip().lower())
-    ok = check_pw(password or "", acct.pw if acct else _DUMMY)
-    return acct if acct and ok else None
+        subprocess.run(["loginctl", "terminate-user", name], capture_output=True)
+        subprocess.run(["pkill", "-KILL", "-u", name], capture_output=True)
+        for _ in range(20):
+            if subprocess.run(["pgrep", "-u", name], capture_output=True).returncode != 0:
+                break
+            time.sleep(0.25)
+        _run("userdel", "--remove", name)
+        extras = _load()
+        extras.pop(name, None)
+        _save(extras)

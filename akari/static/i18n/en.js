@@ -85,10 +85,10 @@ window.AKARI_EN = {
     'Meine Schlüssel': 'My keys', 'Öffentlichen Schlüssel hinzufügen': 'Add a public key',
     'Der Inhalt von ~/.ssh/id_ed25519.pub auf deinem Rechner. Nie den privaten Schlüssel.': 'The contents of ~/.ssh/id_ed25519.pub on your computer. Never the private key.',
     'Hinzufügen': 'Add', 'Anmeldung mit Passwort erlauben': 'Allow signing in with password',
-    'Mit deinem Akari-Passwort statt eines Schlüssels. Bequemer, aber angreifbar, sobald der Port im Netz steht.':
+    'Mit deinem Passwort statt eines Schlüssels. Bequemer, aber angreifbar, sobald der Port im Netz steht.':
       'With your Akari password instead of a key. Easier, but open to attack once the port is on a network.',
     'SSH ist an.': 'SSH is on.', 'SSH ist aus.': 'SSH is off.', 'Passwort über SSH erlauben': 'Allow password over SSH',
-    'Gib dein Akari-Passwort ein. Daraus entsteht der Eintrag, den sshd prüft.': 'Enter your Akari password. sshd checks the entry made from it.',
+    'Gib zur Bestätigung dein Passwort ein.': 'Enter your password to confirm.',
     'Erlauben': 'Allow', 'Schlüssel entfernen?': 'Remove key?', 'Entfernen': 'Remove',
     'Wer nur diesen Schlüssel hat, kommt danach nicht mehr per SSH herein.': 'Whoever only has this key cannot come in over SSH any more.',
     'Aus. Einschalten gilt für alle Konten.': 'Off. Turning it on applies to all accounts.',
@@ -116,7 +116,7 @@ window.AKARI_EN = {
     'Das erste Konto darf später weitere anlegen. Es ist ein echter Linux-Benutzer mit eigenem Home.': 'The first account can create more later. It is a real Linux user with its own home.',
     'So, wie du heißt': 'Your name', 'Kleinbuchstaben, Ziffern, - und _. So heißt du im Terminal.': 'Lower-case letters, digits, - and _. Your name in the terminal.',
     'Passwort wiederholen': 'Repeat password', 'Einrichten': 'Set up',
-    'Noch gibt es kein Konto. Eingerichtet wird über den Link aus dem Log des Containers:': 'There is no account yet. Set up with the link from the container log:',
+    'Noch gibt es kein Konto. Eingerichtet wird über den Link, den die Konsole des Rechners zeigt:': 'There is no account yet. Set up with the link the computer’s console shows:',
     'Akari OS antwortet nicht.': 'Akari OS does not answer.', 'Die beiden Passwörter sind nicht gleich.': 'The two passwords are not the same.',
     'Lege Konto und Home an …': 'Creating account and home …', 'Das hat nicht geklappt.': 'That did not work.',
     'Die Desktops lassen sich gerade nicht laden. Lade die Seite neu.': 'The desktops cannot be loaded right now. Reload the page.',
@@ -139,17 +139,13 @@ window.AKARI_EN = {
     'Leiste automatisch ausblenden': 'Hide the taskbar automatically', 'Gewechselt wird über den Namen in der Leiste.': 'Switch with the name in the taskbar.',
     'Jeder Desktop hat eigene Fenster, eigene laufende Apps, ein eigenes Firefox-Profil und sein eigenes Aussehen. Gewechselt wird über den Namen in der Leiste.':
       'Every desktop has its own windows, running apps, Firefox profile and look. Switch with the name in the taskbar.',
-    'Verfügbar': 'Available', 'Aus': 'Off', 'Fehlt': 'Missing', 'Dazu installiert': 'Installed on top', 'Terminal öffnen': 'Open terminal',
-    'Konten, die verwalten, installieren Programme mit sudo und apt im Terminal, mit ihrem Akari-Passwort. Akari OS merkt sich, was dazukam, und spielt es nach einem Update des Systems wieder ein.':
-      'Admin accounts install programs with sudo and apt in the terminal, with their Akari password. Akari OS remembers what was added and installs it again after a system update.',
-    'Dieser Container läuft ohne sudo (nur lesbares System). So ist er abgeschlossener; Programme kommen dann nur über das Image.':
-      'This container runs without sudo (read-only system). It is more closed that way; programs then only come with the image.',
-    'Du darfst sudo nutzen, mit deinem Akari-Passwort.': 'You may use sudo, with your Akari password.',
+    'Verfügbar': 'Available', 'Aus': 'Off', 'Fehlt': 'Missing', 'Terminal öffnen': 'Open terminal',
+    'Akari OS ist ein Debian. Konten, die verwalten, installieren Programme mit sudo und apt im Terminal, mit ihrem Passwort.':
+      'Akari OS is a Debian. Admin accounts install programs with sudo and apt in the terminal, with their password.',
+    'sudo ist nicht installiert.': 'sudo is not installed.',
+    'Du darfst sudo nutzen, mit deinem Passwort.': 'You may use sudo, with your password.',
     'Nur Konten, die verwalten, dürfen sudo nutzen.': 'Only admin accounts may use sudo.',
-    'Noch nichts. Was du mit apt installierst, steht hier und kommt nach einem Update wieder.': 'Nothing yet. What you install with apt shows here and comes back after an update.',
-    'Spiele Pakete nach dem Update wieder ein …': 'Reinstalling packages after the update …',
-    'Wiedereinspielen ist gescheitert. Mehr in /data/system/logs/apt-restore.log.': 'Reinstalling failed. More in /data/system/logs/apt-restore.log.',
-    'Nach dem letzten Update wieder eingespielt.': 'Reinstalled after the last update.',
+    '{n} Pakete installiert.': '{n} packages installed.',
     'Das Symbol unter dem Zeiger wächst, seine Nachbarn ein wenig mit.': 'The icon under the pointer grows, its neighbours a little with it.',
     'Stärke': 'Strength', 'Reichweite': 'Reach', 'Stärke der Vergrößerung': 'Magnification strength', 'Reichweite der Vergrößerung': 'Magnification reach',
     'bis': 'up to', 'Symbole zu jeder Seite': 'icons to each side',
@@ -176,7 +172,7 @@ window.AKARI_EN = {
     'Benutzer': 'User', 'PID': 'PID', 'Sofort beenden (KILL)': 'Kill now (KILL)', 'Anhalten': 'Pause', 'Fortsetzen': 'Continue',
     'empfangen': 'received', 'gesendet': 'sent', 'Das Volume, auf dem die Homes liegen.': 'The volume the homes live on.',
     'Last (1/5/15 min)': 'Load (1/5/15 min)',
-    'Die Werte sind die des Rechners unter dem Container, geteilt mit allen darauf.': 'These are the numbers of the computer under the container, shared by everyone on it.',
+    'Die Werte sind die des ganzen Rechners, geteilt mit allen Konten darauf.': 'These are the numbers of the whole computer, shared by every account on it.',
   },
   rules: [
     [/^(.+), seit (.+)\. Akari ist dort als (.+) eingetragen\.$/, '$1, since $2. Akari is registered there as $3.'],

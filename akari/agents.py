@@ -1,35 +1,74 @@
-"""Session agents: one process per signed-in account, running as that Linux
-user (like systemd --user). akarid starts it at sign-in and talks to it over
-a Unix socket in /tmp/akari/<uid>/ (0700, the user's own): only that user
-and root can reach it, so the agent needs no login of its own.
+"""Session agents: one per signed-in account, as that Linux user.
 
-"Abmelden" ends the agent, everything it started, and then every process
-left with that uid. "Benutzer wechseln" only ends the browser's session:
-the agent and its apps keep running."""
+Each is a systemd unit, akari-session@<name>.service (User=<name>,
+PAMName=akari): PAM opens a real logind session for it, with
+/run/user/<uid> and the user's own systemd. The agent listens on
+/run/user/<uid>/akari/agent.sock (0700, the user's own); only that user
+and root can reach it.
+
+"Abmelden" stops the unit (the agent ends its apps), then ends the logind
+session PAM opened for it, and with it anything the desktop left behind (it
+all runs in that session's scope). The user's other logins (ssh, a console)
+are other sessions and are not touched.
+"Benutzer wechseln" only ends the browser's session: the unit keeps running.
+akarid restarting does not end sessions either."""
 
 from __future__ import annotations
 
 import asyncio
 import contextlib
-import os
-import signal
-import sys
+import json
+import pwd
+import time
 from pathlib import Path
 
 from . import config
 from .accounts import Account
 
-AGENTS: dict[int, asyncio.subprocess.Process] = {}
+UNIT = "akari-session@{}.service"
 _starting: dict[int, asyncio.Lock] = {}
-LOGS = config.SYSTEM / "logs"
+_active: tuple[float, set[str]] = (0.0, set())
+
+
+def _name(uid: int) -> str | None:
+    try:
+        return pwd.getpwuid(uid).pw_name
+    except KeyError:
+        return None
+
+
+def _active_units() -> set[str]:
+    """Names with a running session, from one systemctl call, kept for a second."""
+    global _active
+    at, names = _active
+    if time.monotonic() - at < 1.0:
+        return names
+    import subprocess
+    r = subprocess.run(["systemctl", "list-units", "--plain", "--no-legend", "--state=active", "akari-session@*.service"],
+                       capture_output=True, text=True)
+    names = {line.split()[0][len("akari-session@"):-len(".service")] for line in r.stdout.splitlines() if line.strip()}
+    _active = (time.monotonic(), names)
+    return names
+
+
+def _forget() -> None:
+    global _active
+    _active = (0.0, set())
 
 
 def running(uid: int) -> bool:
-    p = AGENTS.get(uid)
-    return bool(p and p.returncode is None)
+    name = _name(uid)
+    return bool(name and name in _active_units())
 
 
-async def _socket_up(sock: Path, timeout: float = 10.0) -> bool:
+async def _systemctl(*args: str) -> tuple[int, str]:
+    p = await asyncio.create_subprocess_exec("systemctl", *args, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT)
+    out, _ = await p.communicate()
+    _forget()
+    return p.returncode or 0, out.decode(errors="replace").strip()
+
+
+async def _socket_up(sock: Path, timeout: float = 15.0) -> bool:
     for _ in range(int(timeout / 0.1)):
         if sock.exists():
             with contextlib.suppress(OSError):
@@ -41,84 +80,52 @@ async def _socket_up(sock: Path, timeout: float = 10.0) -> bool:
 
 
 async def ensure(acct: Account) -> Path:
-    """The account's agent socket, starting the agent if it is not running."""
+    """The account's agent socket, starting its session if it is not running."""
     sock = config.agent_socket(acct.uid)
     lock = _starting.setdefault(acct.uid, asyncio.Lock())
     async with lock:
         if running(acct.uid) and sock.exists():
             return sock
-        run = config.user_run(acct.uid)
-        run.mkdir(parents=True, exist_ok=True)
-        os.chown(run, acct.uid, acct.uid)
-        os.chmod(run, 0o700)
-        with contextlib.suppress(FileNotFoundError):
-            sock.unlink()
-        LOGS.mkdir(parents=True, exist_ok=True)
-        os.chmod(LOGS, 0o700)
-        env = {
-            "HOME": str(acct.home), "USER": acct.name, "LOGNAME": acct.name, "SHELL": "/bin/zsh",
-            "AKARI_FULLNAME": acct.fullname, "AKARI_HOSTNAME": config.HOSTNAME, "AKARI_RUN": str(config.RUN),
-            "LANG": os.environ.get("LANG", "C.UTF-8"), "PATH": "/usr/local/bin:/usr/bin:/bin",
-            "PYTHONPATH": os.environ.get("PYTHONPATH", ""), "PYTHONDONTWRITEBYTECODE": "1", "PYTHONUNBUFFERED": "1",
-            "XDG_RUNTIME_DIR": str(run), "XDG_CURRENT_DESKTOP": "Akari", "XDG_SESSION_TYPE": "x11",
-            # uploads are spooled here, not in the small /tmp
-            "TMPDIR": str(acct.home / ".cache" / "akari" / "tmp"),
-        }
-        with open(LOGS / f"{acct.name}.log", "ab", buffering=0) as log:
-            # setpriv becomes the user before the agent starts: uid, gid, the groups
-            # from /etc/group (akari-admin for sudo), no capabilities left
-            p = await asyncio.create_subprocess_exec(
-                "setpriv", f"--reuid={acct.uid}", f"--regid={acct.uid}", "--init-groups", "--reset-env",
-                "--", "/usr/bin/env", *[f"{k}={v}" for k, v in env.items()], sys.executable, "-m", "akari.agent",
-                env={}, cwd=acct.home,
-                stdin=asyncio.subprocess.DEVNULL, stdout=log, stderr=log, start_new_session=True)
-        AGENTS[acct.uid] = p
-        if not await _socket_up(sock):
+        code, out = await _systemctl("start", UNIT.format(acct.name))
+        if code != 0 or not await _socket_up(sock):
             await stop(acct.uid)
-            raise RuntimeError("Die Sitzung ließ sich nicht starten.")
+            raise RuntimeError(f"Die Sitzung ließ sich nicht starten. Mehr mit: journalctl -u {UNIT.format(acct.name)}")
         return sock
 
 
-def _uid_pids(uid: int) -> list[int]:
-    pids = []
-    for d in os.listdir("/proc"):
-        if not d.isdigit():
-            continue
-        try:
-            with open(f"/proc/{d}/status") as f:
-                for line in f:
-                    if line.startswith("Uid:"):
-                        if int(line.split()[1]) == uid:
-                            pids.append(int(d))
-                        break
-        except OSError:
-            continue
-    return pids
+async def _akari_sessions(uid: int) -> list[str]:
+    """The user's logind sessions opened by PAM service "akari" (not ssh, not a console)."""
+    p = await asyncio.create_subprocess_exec("loginctl", "list-sessions", "--json=short",
+                                             stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL)
+    out, _ = await p.communicate()
+    try:
+        ids = [s["session"] for s in json.loads(out or b"[]") if s.get("uid") == uid and s.get("class") == "user"]
+    except (ValueError, TypeError, KeyError):
+        return []
+    mine = []
+    for sid in ids:
+        q = await asyncio.create_subprocess_exec("loginctl", "show-session", sid, "-p", "Service", "--value",
+                                                 stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL)
+        svc, _ = await q.communicate()
+        if svc.decode().strip() == "akari":
+            mine.append(sid)
+    return mine
 
 
 async def stop(uid: int) -> None:
-    """End a session completely: the agent cleans up after itself, then
-    nothing with this uid is left running."""
-    p = AGENTS.pop(uid, None)
-    if p and p.returncode is None:
-        with contextlib.suppress(ProcessLookupError):
-            p.send_signal(signal.SIGTERM)
-        try:
-            await asyncio.wait_for(p.wait(), 6)
-        except asyncio.TimeoutError:
-            pass
-    for sig in (signal.SIGTERM, signal.SIGKILL):
-        pids = _uid_pids(uid)
-        if not pids:
-            break
-        for pid in pids:
-            with contextlib.suppress(ProcessLookupError, PermissionError):
-                os.kill(pid, sig)
-        await asyncio.sleep(1.0)
-    if p and p.returncode is None:
-        with contextlib.suppress(Exception):
-            await asyncio.wait_for(p.wait(), 2)
+    """End a session completely: the agent cleans up after itself when its
+    unit stops, then logind ends whatever is left in the session."""
+    name = _name(uid)
+    if not name:
+        return
+    await _systemctl("stop", UNIT.format(name))
+    for sid in await _akari_sessions(uid):
+        p = await asyncio.create_subprocess_exec("loginctl", "terminate-session", sid,
+                                                 stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL)
+        await p.wait()
 
 
 async def stop_all() -> None:
-    await asyncio.gather(*(stop(uid) for uid in list(AGENTS)))
+    names = _active_units()
+    if names:
+        await _systemctl("stop", *(UNIT.format(n) for n in names))

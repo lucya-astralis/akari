@@ -32,12 +32,12 @@ def main() -> None:
     if len(sys.argv) > 1 and sys.argv[1] in ("--lucent-join", "--lucent-leave"):
         return _lucent_cli(sys.argv[1:])
     if os.getuid() != 0:
-        sys.exit("akarid braucht root im Container (mit SETUID, SETGID, CHOWN, DAC_OVERRIDE, FOWNER, KILL).")
+        sys.exit("akarid läuft als root, als Dienst: systemctl start akarid")
     os.umask(0o022)
     accounts.init()
     print(f"\n  {config.OS_NAME} {config.VERSION} · akarid auf Port {config.PORT}", file=sys.stderr)
     if accounts.needs_setup():
-        print(f"  Einrichten: http://127.0.0.1:{config.PORT}/?token={auth.SETUP_TOKEN}", file=sys.stderr)
+        print(f"  Einrichten: https://<Adresse>/?token={auth.SETUP_TOKEN} (die Konsole zeigt den ganzen Link)", file=sys.stderr)
     print("", file=sys.stderr, flush=True)
     uvicorn.run("akari.gateway:app", host=config.HOST, port=config.PORT, log_level="warning",
                 ws="websockets", proxy_headers=True, server_header=False)

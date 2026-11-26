@@ -1,7 +1,8 @@
 """python -m akari.agent: one person's session, running as their Linux user.
 
-Serves terminal, files, apps and preferences on a Unix socket only that user
-and root can open (its folder is 0700). akarid checks who is signed in and
+Runs in akari-session@<name>.service. Serves terminal, files, apps and
+preferences on a Unix socket only that user and root can open (its folder,
+/run/user/<uid>/akari, is 0700). akarid checks who is signed in and
 passes requests through; the agent trusts whoever reaches the socket, which
 can only be its own user or root."""
 
@@ -46,9 +47,14 @@ def main() -> None:
         sys.exit("Der Agent läuft nie als root.")
     os.umask(0o077)
     sock = config.agent_socket(os.getuid())
+    sock.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    # what a desktop session sets for its programs; uploads spool in the home, not the small /tmp
+    tmp = config.CACHE / "tmp"
+    tmp.mkdir(parents=True, exist_ok=True)
+    os.environ.update(XDG_CURRENT_DESKTOP="Akari", TMPDIR=str(tmp), SHELL=config.SHELL)
     with contextlib.suppress(FileNotFoundError):
         sock.unlink()
-    # SIGTERM from akarid: let uvicorn shut down cleanly, so lifespan ends the apps
+    # SIGTERM from systemd: let uvicorn shut down cleanly, so lifespan ends the apps
     signal.signal(signal.SIGHUP, signal.SIG_IGN)
     uvicorn.run(app, uds=str(sock), log_level="warning", ws="websockets", server_header=False,
                 timeout_graceful_shutdown=4)

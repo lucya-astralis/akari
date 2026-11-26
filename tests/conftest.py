@@ -9,7 +9,7 @@ import tempfile
 from pathlib import Path
 
 _base = Path(tempfile.mkdtemp(prefix="akari-tests-"))
-os.environ.setdefault("AKARI_DATA", str(_base / "data"))
+os.environ.setdefault("AKARI_STATE", str(_base / "state"))
 os.environ.setdefault("AKARI_RUN", str(_base / "run"))
 os.environ["HOME"] = str(_base / "home")
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))

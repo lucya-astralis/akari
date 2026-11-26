@@ -1,0 +1,17 @@
+# Akari OS: HTTPS in front of akarid, which listens on 127.0.0.1:8130 only.
+# The certificate comes from Caddy's own CA (tls internal), for whatever name
+# or address the browser used: browsers ask once whether to trust it.
+{
+	skip_install_trust
+}
+
+:443 {
+	tls internal {
+		on_demand
+	}
+	reverse_proxy 127.0.0.1:8130
+}
+
+:80 {
+	redir https://{host}{uri} permanent
+}

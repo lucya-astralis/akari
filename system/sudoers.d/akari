@@ -1,0 +1,3 @@
+# Akari OS: accounts that manage are in the group sudo (Debian's own rule
+# in /etc/sudoers lets them use sudo, with their password).
+Defaults lecture=never

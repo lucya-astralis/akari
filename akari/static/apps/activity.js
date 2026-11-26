@@ -115,7 +115,7 @@
           <section class="mon__card"><header><b>System</b></header>
             <dl class="mon__kv"><dt>Last (1/5/15 min)</dt><dd data-v="load">–</dd><dt>Prozesse</dt><dd data-v="procs">–</dd><dt>Läuft seit</dt><dd data-v="up">–</dd></dl></section>
         </div>
-        <p class="mon__note f-dim">Die Werte sind die des Rechners unter dem Container, geteilt mit allen darauf.</p>`;
+        <p class="mon__note f-dim">Die Werte sind die des ganzen Rechners, geteilt mit allen Konten darauf.</p>`;
       const h = { cpu: [], mem: [], rx: [], tx: [] };
       const q = s => win.body.querySelector(s);
       let timer;

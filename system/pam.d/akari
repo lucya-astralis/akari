@@ -1,0 +1,8 @@
+# Akari OS: signing in in the browser (akarid checks the password here) and
+# the desktop session it starts (akari-session@<name>.service, PAMName=akari).
+@include common-auth
+@include common-account
+session required pam_env.so readenv=1
+session required pam_env.so readenv=1 envfile=/etc/default/locale
+@include common-session
+@include common-password
