@@ -1,3 +1,19 @@
+akari (0.15.0) trixie; urgency=medium
+
+  * One owner for everything: the containers lucya-aio makes for Lucent
+    are shown in Docker, not changed there; Akari keeps lucya-aio itself
+    up to date. Paired with the Lucent here: no setup code, no removing it;
+    paired with one elsewhere: no second Lucent.
+  * Caddy's door :8131 answers only this machine and Docker's networks.
+  * Akari OS is no longer a container of Lucent's store.
+  * The console: Akari's mark and the machine's name before login, a
+    welcome with address, load, memory, disk, updates, Docker and Lucent
+    after it. Debian's uname line, motd and issue are diverted.
+  * akari-console-font gives the console font ▀ and ▄, which Debian's
+    fonts lack: the QR code at the console works again.
+
+ -- Akari OS <packages@lucya.systems>  Fri, 27 Nov 2026 15:00:00 +0100
+
 akari (0.14.0) trixie; urgency=medium
 
   * Docker: a new app to manage containers. Containers grouped by Compose
