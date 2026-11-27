@@ -667,10 +667,27 @@
     box.querySelector('.launch__item')?.classList.add('is-first');
   };
   // every app, A to Z, grouped by the first letter; extras only when asked for
-  const showAllApps = on => {
+  // from the pinned apps to all of them and back: the new view slides in from
+  // the side it lies on, its rows follow one after another, and the menu takes
+  // its new height with a spring instead of jumping
+  const swapLaunch = (on, glide) => {
+    const pop = $('.pop--launch'), from = pop?.offsetHeight;
     $('#launch-all').hidden = !on;
     $('#launch-body').hidden = on;
-    if (!on) return;
+    if (!glide || !pop || reduced()) return;
+    const view = on ? $('#launch-all') : $('#launch-body');
+    view.classList.remove('is-in-fwd', 'is-in-back'); void view.offsetWidth;
+    view.classList.add(on ? 'is-in-fwd' : 'is-in-back');
+    setTimeout(() => view.classList.remove('is-in-fwd', 'is-in-back'), 900);
+    const to = pop.offsetHeight;
+    if (from && Math.abs(to - from) > 2) {
+      pop.style.overflow = 'hidden';
+      pop.animate([{ height: `${from}px` }, { height: `${to}px` }], { duration: 380, easing: SPRING }).finished
+        .finally(() => { pop.style.overflow = ''; });
+    }
+  };
+  const showAllApps = (on, glide = false) => {
+    if (!on) return swapLaunch(false, glide);
     const coll = new Intl.Collator(locale());
     const apps = [...APPS.values()].filter(a => a.launch !== false && (!a.extra || P.showAllApps))
       .sort((a, b) => coll.compare(t(a.title), t(b.title)));
@@ -681,11 +698,13 @@
       return `${head}<button class="launch__item" data-app="${a.id}">${artHtml(a)}<span><b>${escHtml(t(a.title))}</b><small>${escHtml(a.comment || (a.id.startsWith('x:') ? t('Linux-Programm') : t('App von Akari')))}</small></span></button>`;
     }).join('');
     $('#launch-all-count').textContent = `${apps.length} ${t('Apps')}`;
+    [...$('#launch-all-list').children].forEach((el, i) => el.style.setProperty('--i', Math.min(i, 14)));
     $('#launch-all-list').scrollTop = 0;
+    swapLaunch(true, glide);
     requestAnimationFrame(() => $('#launch-all-list .launch__item')?.focus());
   };
-  $('#launch-all-open').addEventListener('click', () => showAllApps(true));
-  $('#launch-all-close').addEventListener('click', () => { showAllApps(false); $('#launch-q').focus(); });
+  $('#launch-all-open').addEventListener('click', () => showAllApps(true, true));
+  $('#launch-all-close').addEventListener('click', () => { showAllApps(false, true); $('#launch-q').focus(); });
   on('launchers', () => { if (!$('#launch-all').hidden) showAllApps(true); });
 
   // places: the home and the usual folders in it that exist

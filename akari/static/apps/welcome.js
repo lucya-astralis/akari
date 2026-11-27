@@ -1,9 +1,12 @@
 /* Willkommen: the first thing after signing in, until the account says
    "Nicht mehr anzeigen" (for the account, not the desktop: /api/welcome).
 
-   It opens with a short scene: lucya.systems' eagle gathers from its pieces,
-   the wordmark under it, then the eagle gives way to Akari's mark, whose
-   three rays slide in as Nova's light does, and "Willkommen bei Akari OS".
+   It opens with a short scene. lucya.systems' eagle builds as it did on the
+   old lucya.sh splash: its outline drawn in mirrored pairs from the spine
+   outwards, a signal drop, the pieces filling in with an RGB split, a
+   flicker, and the wordmark locking in. Then the eagle gives way to Akari's
+   mark, whose three rays slide in along their slant. Light or dark, as the
+   desktop is.
    A click or a key skips it; with reduced motion there is no scene at all.
    Then five short pages: what Akari is, finding one's way, the Linux under
    it, lucya.systems, and making it one's own (accent and light right here).
@@ -25,6 +28,73 @@
   ];
   const MARK = [['am-l', 'M40.4 0L51.4 0L11 100L0 100Z'], ['am-b', 'M51.14 14L75.14 14L40.39 100L16.39 100Z'], ['am-d', 'M71.64 36L95.64 36L69.79 100L45.79 100Z']];
   const eagle = cls => `<svg class="${cls}" viewBox="0 0 964 543" aria-hidden="true">${EAGLE.map(([c, d]) => `<path class="${c}" d="${d}"/>`).join('')}</svg>`;
+  // the build, as lucya.sh drew it: in mirrored pairs from the spine outwards, each stroke at about one speed
+  const BUILD = [[['wl-tail'], .66], [['wl-head'], .46], [['wl-l1', 'wl-r1'], .86], [['wl-l2', 'wl-r2'], .46], [['wl-l3', 'wl-r3'], .36]];
+  const glitchEagle = () => `<div class="wl__glitch" data-glitch>${eagle('wl__eagle wl__eagle--main')}
+    <div class="wl__rgb wl__rgb--r" data-rgb>${eagle('wl__eagle')}</div><div class="wl__rgb wl__rgb--b" data-rgb>${eagle('wl__eagle')}</div></div>`;
+
+  /* the scene, step by step; every wait checks whether it was skipped */
+  const play = async (stage, ended) => {
+    const wait = ms => new Promise(r => setTimeout(r, ms));
+    const gone = () => !stage.isConnected || stage.classList.contains('is-leaving');
+    const box = stage.querySelector('[data-glitch]'), main = box.querySelector('.wl__eagle--main');
+    const [rgbR, rgbB] = box.querySelectorAll('[data-rgb]');
+    const word = stage.querySelector('.wl__word'), presents = stage.querySelector('.wl__presents');
+    const split = dx => { rgbR.style.opacity = rgbB.style.opacity = '.45'; rgbR.style.transform = `translate(${-dx}px, ${dx * .3}px)`; rgbB.style.transform = `translate(${dx}px, ${-dx * .3}px)`; };
+    const unsplit = () => { rgbR.style.opacity = rgbB.style.opacity = '0'; rgbR.style.transform = rgbB.style.transform = ''; };
+    const jolt = (el, n, k, skew = 0) => new Promise(res => {
+      let i = 0;
+      const iv = setInterval(() => {
+        el.style.transform = `translate(${(Math.random() - .5) * k}px, ${(Math.random() - .5) * k * .55}px)${skew ? ` skewX(${(Math.random() - .5) * skew}deg)` : ''}`;
+        if (skew) split(3 + Math.random() * 5);
+        if (++i >= n) { clearInterval(iv); el.style.transform = ''; if (skew) unsplit(); res(); }
+      }, skew ? 45 : 35);
+    });
+    const group = ids => ids.map(c => main.querySelector(`.${c}`));
+    BUILD.forEach(([ids, dur]) => group(ids).forEach(el => { el.style.setProperty('--len', el.getTotalLength()); el.style.setProperty('--dur', `${dur}s`); }));
+
+    // 1: the outline, pair by pair, with a jolt after the head and the middle feathers
+    await wait(250);
+    for (let i = 0; i < BUILD.length; i++) {
+      if (gone()) return;
+      group(BUILD[i][0]).forEach(el => el.classList.add('is-drawn'));
+      if (i === 1 || i === 3) await jolt(main, 3, 3);
+      await wait(130);
+    }
+    await wait(380);
+    if (gone()) return;
+    // 2: the signal drops and comes back solid
+    box.style.filter = 'brightness(2.2) contrast(.6)'; split(10);
+    await wait(80); box.style.filter = 'brightness(0) opacity(.2)'; unsplit();
+    await wait(80); box.style.filter = 'brightness(.7)';
+    await wait(100); box.style.filter = '';
+    await jolt(main, 6, 15, 3);
+    for (let i = 0; i < BUILD.length; i++) {
+      if (gone()) return;
+      group(BUILD[i][0]).forEach(el => el.classList.add('is-filled'));
+      if (i % 2 === 0) { split(2 + Math.random() * 3); await wait(22); unsplit(); }
+      await wait(36);
+    }
+    await jolt(main, 3, 12, 3);
+    // 3: a flicker, then the wordmark locks in, overshooting its width before it settles
+    for (let i = 0; i < 3; i++) { box.style.opacity = i % 2 ? '1' : '0'; await wait(42 + Math.random() * 26); }
+    box.style.opacity = '';
+    if (gone()) return;
+    word.style.opacity = '1';
+    for (const [sx, x, skew] of [[1.5, 9, 3], [.88, -6, -2.4], [1.18, 4, 1.6], [.96, -2, -.8], [1, 0, 0]]) {
+      word.style.transform = `translateX(${x}px) scaleX(${sx}) skewX(${skew}deg)`;
+      if (sx !== 1) split(2 + Math.abs(x) * .5); else unsplit();
+      await wait(95 + Math.random() * 40);
+    }
+    presents.classList.add('is-on');
+    box.classList.add('is-settled');
+    await wait(900);
+    if (gone()) return;
+    // 4: Akari
+    stage.classList.add('is-akari');
+    await wait(2100);
+    if (!gone()) ended();
+  };
   const mark = cls => `<svg class="${cls}" viewBox="0 0 95.64 100" aria-hidden="true">${MARK.map(([c, d], i) => `<path class="${c} wl-ray wl-ray--${i}" d="${d}"/>`).join('')}</svg>`;
 
   const TINTS = [['', 277, 'Facet'], ['blau', 250, 'Blau'], ['cyan', 215, 'Cyan'], ['gruen', 150, 'Grün'], ['bernstein', 70, 'Bernstein'], ['rot', 25, 'Rot'], ['pink', 350, 'Pink'],
@@ -99,8 +169,8 @@
       win.body.innerHTML = `
         ${intro ? `<div class="wl__stage" data-stage role="presentation">
           <div class="wl__glow"></div>
-          <div class="wl__act wl__act--lucya">${eagle('wl__eagle')}<span class="wordmark wl__word" role="img" aria-label="lucya.systems"></span><span class="wl__presents">${t('präsentiert')}</span></div>
-          <div class="wl__act wl__act--akari">${mark('wl__mark am')}<span class="wl__sweep"></span>
+          <div class="wl__act wl__act--lucya">${glitchEagle()}<span class="wordmark wl__word" role="img" aria-label="lucya.systems"></span><span class="wl__presents">${t('präsentiert')}</span></div>
+          <div class="wl__act wl__act--akari">${mark('wl__mark am')}
             <b class="wl__name" translate="no">Akari OS</b><span class="wl__hello">${t('Willkommen')}</span></div>
           <button class="f-btn f-btn--sm f-btn--ghost wl__skip" data-skip>${t('Überspringen')}</button>
         </div>` : ''}
@@ -134,13 +204,11 @@
       const finish = () => {
         if (done) return;
         done = true;
-        clearTimeout(endT);
         if (stage) { stage.classList.add('is-leaving'); setTimeout(() => stage.remove(), 520); }
         tour.classList.add('is-on');
         draw();
       };
-      const endT = intro ? setTimeout(finish, 4600) : 0;
-      if (intro) { tour.classList.add('is-waiting'); stage.addEventListener('click', finish); } else finish();
+      if (intro) { tour.classList.add('is-waiting'); stage.addEventListener('click', finish); play(stage, finish); } else finish();
       const key = e => { if (!done && win.el.contains(document.activeElement || win.el)) finish(); else if (e.key === 'ArrowRight') step(1); else if (e.key === 'ArrowLeft') step(-1); };
       win.el.addEventListener('keydown', key);
 
@@ -179,7 +247,7 @@
       });
 
       return {
-        close: () => { remember(); clearTimeout(endT); win.el.removeEventListener('keydown', key); return true; },
+        close: () => { remember(); stage?.classList.add('is-leaving'); win.el.removeEventListener('keydown', key); return true; },
         args(a) { if (a?.page != null) { at = Math.max(0, Math.min(PAGES.length - 1, +a.page || 0)); if (done) draw(); } },
       };
     },
