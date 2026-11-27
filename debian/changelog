@@ -1,3 +1,15 @@
+akari (0.16.0) trixie; urgency=medium
+
+  * The console on the machine runs in kmscon with MesloLGS NF: the
+    prompt's symbols, 256 colours and Akari's mark in colour. The keyboard
+    is the system's; without DRM, agetty takes over. kmscon and libtsm4
+    come from trixie-backports through Akari's archive.
+  * The QR code at the console has the same margin on every side.
+  * /etc/issue stays Debian's (akari-base greets before login); the
+    diversion from 0.15 is undone.
+
+ -- Akari OS <packages@lucya.systems>  Fri, 27 Nov 2026 16:00:00 +0100
+
 akari (0.15.0) trixie; urgency=medium
 
   * One owner for everything: the containers lucya-aio makes for Lucent
