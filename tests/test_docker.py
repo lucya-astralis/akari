@@ -65,3 +65,41 @@ def test_lucya_aio_is_started_as_its_readme_says():
     b = docker.aio_body()
     assert "/var/run/docker.sock:/var/run/docker.sock" in b["HostConfig"]["Binds"]
     assert b["HostConfig"]["RestartPolicy"] == {"Name": "always"} and b["Image"].startswith("ghcr.io/lucya-astralis/lucya-aio:")
+
+
+def test_who_looks_after_a_container():
+    assert docker._owner({"systems.lucya.aio": "lucya-"}) == "lucent"
+    assert docker._owner({"systems.lucya.akari": "aio"}) == "aio"
+    assert docker._owner({"systems.lucya.akari": "app"}) is None
+    assert docker._owner({"com.docker.compose.project": "web"}) is None
+
+
+@pytest.mark.parametrize("url,local", [
+    ("http://127.0.0.1:8060", True), ("http://10.0.2.15:8060", True), ("http://lucya-lucent:8060", True),
+    ("https://lucent.example", False), ("http://192.168.1.9:8060", False), (None, False)])
+def test_a_lucent_here_or_elsewhere(url, local):
+    assert docker._local(url, "10.0.2.15") is local
+
+
+def test_the_stack_is_lucents_to_change(monkeypatch):
+    import asyncio
+
+    async def owned(cid):
+        return "lucent"
+    monkeypatch.setattr(docker, "_owned", owned)
+    with pytest.raises(docker.DockerError, match="Lucent"):
+        asyncio.run(docker.act("abc123", "remove"))
+
+
+def test_no_second_lucent_when_paired_elsewhere(monkeypatch):
+    import asyncio
+    monkeypatch.setattr(docker, "paired", lambda: "elsewhere")
+    with pytest.raises(docker.DockerError, match="zweiter"):
+        asyncio.run(docker.install_lucent())
+
+
+def test_not_removed_while_paired_with_it(monkeypatch):
+    import asyncio
+    monkeypatch.setattr(docker, "paired", lambda: "here")
+    with pytest.raises(docker.DockerError, match="entkoppeln"):
+        asyncio.run(docker.remove_lucent())

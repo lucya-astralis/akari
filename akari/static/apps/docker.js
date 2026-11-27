@@ -125,11 +125,12 @@
           <span class="dk__ports" translate="no">${c.ports.map(p => `<code>${esc(p)}</code>`).join('')}</span>
           <span class="dk__status">${esc(c.status)}</span>
           <span class="dk__rowacts">
-            ${c.state === 'running'
+            ${c.owner ? `<span class="f-badge f-tip" data-tip="${t(c.owner === 'lucent' ? 'Verwaltet von Lucent' : 'Auf der Seite Lucent')}">${c.owner === 'lucent' ? 'Lucent' : 'Akari'}</span>`
+            : c.state === 'running'
               ? `<button class="f-btn f-btn--ghost f-btn--icon f-tip" data-act="stop" data-tip="${t('Anhalten')}" aria-label="${t('Anhalten')}"><svg><use href="#i-pause"/></svg></button>
                  <button class="f-btn f-btn--ghost f-btn--icon f-tip" data-act="restart" data-tip="${t('Neu starten')}" aria-label="${t('Neu starten')}"><svg><use href="#i-refresh"/></svg></button>`
               : `<button class="f-btn f-btn--ghost f-btn--icon f-tip" data-act="start" data-tip="${t('Starten')}" aria-label="${t('Starten')}"><svg><use href="#i-play"/></svg></button>`}
-            <button class="f-btn f-btn--ghost f-btn--icon f-tip" data-more data-tip="${t('Mehr')}" aria-label="${t('Mehr')}"><svg><use href="#i-list"/></svg></button>
+            ${c.owner ? '' : `<button class="f-btn f-btn--ghost f-btn--icon f-tip" data-more data-tip="${t('Mehr')}" aria-label="${t('Mehr')}"><svg><use href="#i-list"/></svg></button>`}
           </span>
         </div>`;
 
@@ -150,7 +151,7 @@
             const g = groups.get(k), on = g.filter(c => c.state === 'running').length;
             return `<div class="dk__group">
               <div class="dk__ghead"><span class="f-label">${esc(k || t('Einzeln'))}</span><span class="f-dim">${on}/${g.length}</span>
-                ${k ? `<span class="dk__gacts"><button class="f-btn f-btn--sm f-btn--ghost" data-group="${esc(k)}" data-gact="start">${t('Alle starten')}</button><button class="f-btn f-btn--sm f-btn--ghost" data-group="${esc(k)}" data-gact="stop">${t('Alle anhalten')}</button></span>` : ''}</div>
+                ${k && g.some(c => !c.owner) ? `<span class="dk__gacts"><button class="f-btn f-btn--sm f-btn--ghost" data-group="${esc(k)}" data-gact="start">${t('Alle starten')}</button><button class="f-btn f-btn--sm f-btn--ghost" data-group="${esc(k)}" data-gact="stop">${t('Alle anhalten')}</button></span>` : ''}</div>
               <div class="grp">${g.map(row).join('')}</div></div>`;
           }).join('') || `<div class="dk__empty dk__empty--small"><p class="f-dim">${t(st.containers_list.length ? 'Nichts passt.' : 'Noch keine Container. Lege einen an oder richte Lucent ein.')}</p></div>`}`;
         if (hadFocus) { const i = main.querySelector('[data-filter]'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
@@ -163,10 +164,16 @@
         const s = d.stats;
         main.innerHTML = `<header class="dk__head"><div class="dk__crumbs"><button class="f-btn f-btn--sm f-btn--ghost" data-back><svg><use href="#i-back"/></svg>${t('Container')}</button>
             <h2 class="f-h2" translate="no">${esc(d.name)}</h2>${badge(d.state)}${d.health ? `<span class="f-badge">${esc(d.health)}</span>` : ''}</div>
-          <div class="dk__acts">${d.state === 'running'
+          <div class="dk__acts">${d.owner === 'lucent'
+            ? (st.lucent?.url ? `<a class="f-btn f-btn--sm" href="${esc(st.lucent.url)}" target="_blank" rel="noopener"><svg><use href="#i-globe"/></svg>${t('In Lucent verwalten')}</a>` : '')
+            : d.owner === 'aio' ? `<button class="f-btn f-btn--sm" data-go-page="lucent"><svg><use href="#i-globe"/></svg>${t('Zur Seite Lucent')}</button>`
+            : `${d.state === 'running'
             ? `<button class="f-btn f-btn--sm" data-act="stop" data-cid="${d.id}"><svg><use href="#i-pause"/></svg>${t('Anhalten')}</button><button class="f-btn f-btn--sm" data-act="restart" data-cid="${d.id}"><svg><use href="#i-refresh"/></svg>${t('Neu starten')}</button>`
             : `<button class="f-btn f-btn--sm f-btn--primary" data-act="start" data-cid="${d.id}"><svg><use href="#i-play"/></svg>${t('Starten')}</button>`}
-            <button class="f-btn f-btn--sm f-btn--danger" data-act="remove" data-cid="${d.id}"><svg><use href="#i-trash"/></svg>${t('Entfernen')}</button></div></header>
+            <button class="f-btn f-btn--sm f-btn--danger" data-act="remove" data-cid="${d.id}"><svg><use href="#i-trash"/></svg>${t('Entfernen')}</button>`}</div></header>
+          ${d.owner ? `<p class="f-dim dk__owner">${t(d.owner === 'lucent'
+            ? 'Diesen Container hat lucya-aio für Lucent angelegt und hält ihn aktuell. Starten, anhalten und entfernen geht in Lucent, damit ihn nur einer verwaltet.'
+            : 'Der Helfer von lucya.systems. Akari hat ihn gestartet und bringt ihn auf der Seite Lucent auf den neuesten Stand.')}</p>` : ''}
           ${s ? `<div class="grp"><dl class="f-metrics f-metrics--grid dk__stats">
             <div class="f-metric"><dt>CPU</dt><dd class="f-metric__value">${s.cpu.toLocaleString(Akari.locale())} %</dd></div>
             <div class="f-metric"><dt>${t('Speicher')}</dt><dd class="f-metric__value f-metric__value--plain">${Akari.fmtBytes(s.mem)}</dd><dd class="f-metric__note">${s.mem_limit ? `${t('Grenze')} ${Akari.fmtBytes(s.mem_limit)}` : ''}</dd></div>
@@ -267,30 +274,38 @@
               <span class="dk__rowacts">${n.builtin ? '' : `<button class="f-btn f-btn--ghost f-btn--icon f-tip" data-rmn="${esc(n.id)}" data-name="${esc(n.name)}" data-tip="${t('Löschen')}" aria-label="${t('Löschen')}"><svg><use href="#i-trash"/></svg></button>`}</span></div>`).join('')}</div>`;
       };
 
-      /* Lucent: its helper lucya-aio makes it; Akari starts the helper and pairs */
+      /* Lucent: its helper lucya-aio makes it; Akari starts the helper, pairs, and keeps the helper up to date.
+         Akari pairs with one Lucent: with one elsewhere there is nothing to set up here. */
       const STEPS = { pull: 'Lädt lucya-aio …', start: 'Startet den Helfer …', lucent: 'Der Helfer legt Lucent an …' };
+      const UPDATE = { pull: 'Sucht eine neue Version von lucya-aio …', start: 'Startet lucya-aio neu …' };
       const renderLucent = async () => {
         const l = st.lucent || {};
         let paired = null;
         try { paired = (await Akari.api('/api/lucent', { quiet: true })).paired; } catch {}
-        const on = l.lucent?.state === 'running';
+        const on = l.lucent?.state === 'running', here = l.paired === 'here', setting = l.job && l.doing === 'setup', updating = l.job && l.doing === 'update';
+        const pairRow = `<div class="grp"><div class="opt"><span class="opt__txt"><b>${t(paired ? 'Gekoppelt' : 'Mit Lucent koppeln')}</b><small translate="no">${esc(paired ? (here ? t('Mit dem Lucent auf diesem Rechner') : paired.issuer) : t('Nach der Einrichtung in Lucent unter Tools einen Code erzeugen, dann hier koppeln. Die Adressen sind schon eingetragen.'))}</small></span>
+                <button class="f-btn f-btn--sm ${paired ? '' : 'f-btn--primary'}" data-lucent-pair>${t(paired ? 'Einstellungen' : 'Koppeln')}</button></div></div>`;
         main.innerHTML = `${head('Lucent', 'Die Verwaltung von lucya.systems: Zustand, Konten, Anmeldung mit einem Konto für alle Tools, ein Store für weitere.')}
-          ${!l.aio && !l.job ? `<div class="grp"><div class="opt opt--stack">
+          ${l.paired === 'elsewhere' && !l.aio ? `<div class="grp"><div class="opt"><span class="opt__txt"><b>${t('Akari hat schon einen Lucent')}</b><small>${t('Akari ist mit einem Lucent auf einem anderen Rechner gekoppelt und wird von dort verwaltet. Ein zweiter hier wäre doppelt.')}</small></span>
+                ${l.issuer ? `<a class="f-btn f-btn--sm" href="${esc(l.issuer)}" target="_blank" rel="noopener">${t('Öffnen')}</a>` : ''}</div></div>
+              <span class="f-label grp__label">${t('Akari koppeln')}</span>${pairRow}`
+          : !l.aio && !setting ? `<div class="grp"><div class="opt opt--stack">
               <span class="opt__txt"><b>${t('Lucent auf diesem Rechner einrichten')}</b><small>${t('Akari startet lucya-aio, den Helfer von lucya.systems. Er legt Lucent an (Port 8060), hält es aktuell, sichert es und installiert auf Wunsch weitere Tools. Danach richtest du Lucent im Browser ein und koppelst Akari.')}</small></span>
               <button class="f-btn f-btn--primary opt__go" data-lucent-install><svg><use href="#i-down"/></svg>${t('Lucent einrichten')}</button></div></div>`
-            : l.job ? `<div class="grp"><div class="opt"><span class="opt__txt"><b>${t(STEPS[l.job] || 'Richtet ein …')}</b><small>${t('Das erste Mal lädt Docker ein paar hundert MB.')}</small></span><span class="dk__spin" aria-hidden="true"></span></div></div>`
-            : `<div class="grp">
+          : setting ? `<div class="grp"><div class="opt"><span class="opt__txt"><b>${t(STEPS[l.job] || 'Richtet ein …')}</b><small>${t('Das erste Mal lädt Docker ein paar hundert MB.')}</small></span><span class="dk__spin" aria-hidden="true"></span></div></div>`
+          : `<div class="grp">
                 <div class="opt"><span class="opt__txt"><b>Lucent</b><small>${esc(l.lucent ? l.lucent.status : t('wird vom Helfer angelegt …'))}</small></span>${l.lucent ? badge(l.lucent.state) : '<span class="dk__spin" aria-hidden="true"></span>'}</div>
-                <div class="opt"><span class="opt__txt"><b>lucya-aio</b><small>${esc(l.aio?.status || '–')}</small></span>${l.aio ? badge(l.aio.state) : ''}</div>
-                ${on && l.url ? `<div class="opt"><span class="opt__txt"><b>${t('Im Browser')}</b><small translate="no">${esc(l.url)}</small></span><a class="f-btn f-btn--sm f-btn--primary" href="${esc(l.url)}/setup" target="_blank" rel="noopener">${t('Öffnen')}</a></div>` : ''}
+                ${on && l.url ? `<div class="opt"><span class="opt__txt"><b>${t('Im Browser')}</b><small translate="no">${esc(l.url)}</small></span><a class="f-btn f-btn--sm f-btn--primary" href="${esc(l.url)}${here ? '' : '/setup'}" target="_blank" rel="noopener">${t('Öffnen')}</a></div>` : ''}
                 ${on && l.code ? `<div class="opt"><span class="opt__txt"><b>${t('Einrichtungscode')}</b><small>${t('Lucent fragt beim ersten Öffnen danach.')}</small></span><code class="dk__code" translate="no">${esc(l.code)}</code></div>` : ''}
               </div>
-              ${on ? `<span class="f-label grp__label">${t('Akari koppeln')}</span>
-              <div class="grp"><div class="opt"><span class="opt__txt"><b>${t(paired ? 'Gekoppelt' : 'Mit Lucent koppeln')}</b><small>${esc(paired ? `${paired.issuer}` : t('Nach der Einrichtung in Lucent unter Tools einen Code erzeugen, dann hier koppeln. Die Adressen sind schon eingetragen.'))}</small></span>
-                <button class="f-btn f-btn--sm ${paired ? '' : 'f-btn--primary'}" data-lucent-pair>${t(paired ? 'Einstellungen' : 'Koppeln')}</button></div></div>` : ''}
-              <span class="f-label grp__label">${t('Entfernen')}</span>
+              <p class="f-dim dk__owner">${t('Lucent und seine Tools verwaltet lucya-aio im Auftrag von Lucent: Updates, Sicherungen, neue Tools. Akari zeigt sie unter Container nur an.')}</p>
+              ${on ? `<span class="f-label grp__label">${t('Akari koppeln')}</span>${pairRow}` : ''}
+              <span class="f-label grp__label">${t('Helfer')}</span>
+              <div class="grp"><div class="opt"><span class="opt__txt"><b>lucya-aio</b><small>${esc(updating ? t(UPDATE[l.job] || 'Wird aktualisiert …') : l.note === 'current' ? t('Ist auf dem neuesten Stand.') : l.note === 'updated' ? t('Aktualisiert.') : t('Akari hat ihn gestartet und hält ihn aktuell; Lucent und die Tools laufen dabei weiter.'))}</small></span>
+                ${updating ? '<span class="dk__spin" aria-hidden="true"></span>' : `${l.aio ? badge(l.aio.state) : ''}<button class="f-btn f-btn--sm" data-helper-update><svg><use href="#i-refresh"/></svg>${t('Aktualisieren')}</button>`}</div></div>
+              ${here ? '' : `<span class="f-label grp__label">${t('Entfernen')}</span>
               <div class="grp"><div class="opt"><span class="opt__txt"><b>${t('Lucent entfernen')}</b><small>${t('Hält den Helfer, Lucent und seine Tools an und entfernt die Container. Die Volumes mit den Daten bleiben.')}</small></span>
-                <button class="f-btn f-btn--sm f-btn--danger" data-lucent-remove>${t('Entfernen')}</button></div></div>`}
+                <button class="f-btn f-btn--sm f-btn--danger" data-lucent-remove>${t('Entfernen')}</button></div></div>`}`}
           ${l.error ? `<p class="f-status f-status--err">${esc(l.error)}</p>` : ''}`;
       };
 
@@ -342,6 +357,11 @@
         if (b.matches('[data-lucent-install]')) {
           b.disabled = true;
           try { await Akari.api('/api/docker/lucent', { method: 'POST' }); } catch { b.disabled = false; }
+          return refresh(true);
+        }
+        if (b.matches('[data-helper-update]')) {
+          b.disabled = true;
+          try { await Akari.api('/api/docker/lucent/helper', { method: 'POST' }); } catch { b.disabled = false; }
           return refresh(true);
         }
         if (b.matches('[data-lucent-remove]')) {

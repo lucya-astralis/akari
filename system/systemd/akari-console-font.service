@@ -1,0 +1,16 @@
+[Unit]
+Description=Akari OS: the half blocks ▀ ▄ in the console font (mark and QR code)
+Documentation=https://lucya.systems
+# after console-setup has loaded Debian's font, before anyone sees a login prompt
+After=console-setup.service systemd-vconsole-setup.service
+Before=getty-pre.target
+Wants=getty-pre.target
+ConditionPathExists=/dev/tty1
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/python3 -I /usr/lib/akari/akari/consolefont.py --apply
+
+[Install]
+WantedBy=multi-user.target

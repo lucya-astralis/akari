@@ -1,5 +1,16 @@
 #!/bin/sh
 set -e
+# Debian's words at the console make way for Akari's: the uname line and the
+# licence text after login (Akari's welcome is update-motd.d/10-akari), the
+# "Debian GNU/Linux 13" line before it (akarid writes /run/issue.d). Diverted,
+# not overwritten: removing akari puts them back.
+if [ "$1" = configure ]; then
+	for f in /etc/update-motd.d/10-uname /etc/motd /etc/issue; do
+		dpkg-divert --package akari --quiet --add --rename --divert "$f.debian" "$f"
+	done
+	[ -e /etc/motd ] || : > /etc/motd
+	[ -e /etc/issue ] || printf '\n' > /etc/issue
+fi
 #DEBHELPER#
 if [ "$1" = configure ] && [ -d /run/systemd/system ]; then
 	# Caddy reads Akari's Caddyfile (caddy.service.d/akari.conf) from now on;

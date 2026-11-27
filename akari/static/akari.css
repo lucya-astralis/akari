@@ -1498,6 +1498,7 @@ body{ touch-action:manipulation; -webkit-tap-highlight-color:transparent }
   background:var(--surface-2); border:var(--hair) solid var(--stroke-2); font:400 var(--fs-100)/var(--lh-100) var(--mono); white-space:pre-wrap; word-break:break-word }
 .dk__log--small{ max-width:560px; width:100%; text-align:left }
 .dk__code{ padding:var(--s-1) var(--s-3); border-radius:var(--r-control); background:var(--acc-soft); color:var(--acc); font:600 var(--fs-400)/var(--lh-400) var(--mono); letter-spacing:.06em }
+.dk__owner{ margin:calc(-1 * var(--s-2)) 0 var(--s-4); font-size:var(--fs-300); max-width:62ch }
 .dk__form{ max-width:640px }
 .dk__empty{ display:grid; justify-items:center; align-content:center; gap:var(--s-4); min-height:100%; padding:var(--s-8) var(--s-6); text-align:center }
 .dk__empty p{ margin:0; max-width:52ch }

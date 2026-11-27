@@ -263,11 +263,14 @@ def updates() -> dict:
     # what apt itself wrote (not systemd about it), in this run only
     since = s.get("started")
     log = _run("journalctl", f"_SYSTEMD_UNIT={UNIT}.service", f"--since=@{int(since)}", "-n", "14", "-o", "cat", "--no-pager").splitlines() if since else []
+    packages = [] if running else upgradable()
+    if not running and s.get("count") != len(packages):
+        _save(count=len(packages))             # for the welcome at the console (motd.py), which asks apt nothing
     return {
         "running": job,
         "checked": s.get("checked"),
         "last": s.get("last"),
-        "packages": [] if running else upgradable(),
+        "packages": packages,
         "log": log[-14:],
     }
 

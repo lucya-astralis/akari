@@ -7,9 +7,10 @@ vor Ort, und der Desktop ist die Seite im Browser, wie heute. Hauptziel sind
 die man das ISO installiert; echte Hardware geht mit demselben ISO. Fertige
 VM-Images kommen erst später.
 
-Der Docker-Container ist zweitrangig: Er bleibt auf dem Stand 0.10 stehen
-(auch im Store von Lucent) und wird nicht weiterentwickelt, bis entschieden
-ist, ob und wie er aus den Paketen der Distro wiederkommt.
+Der Docker-Container liegt auf Eis: Er bleibt auf dem Stand 0.10 stehen und
+wird nicht weiterentwickelt. Lucents Store und lucya-aio bieten ihn seit
+Akari 0.15 nicht mehr an; Akari OS ist das System, auf dem der Stack läuft,
+nicht ein Container darin.
 
 Stand der Planung: 25.11.2026, Akari 0.10. Ziel: Akari OS 1.0.
 
@@ -120,9 +121,8 @@ Image-Update braucht ein echtes System nicht.
 Raspberry Pi); die Akari-Pakete selbst sind architekturunabhängig.
 
 **Container.** Eingefroren auf 0.10: Der Image-Workflow baut `:stable` nur
-noch von einem Zweig `container-0.10`, der Store bietet weiter diesen Stand
-an. Später entscheiden: wiederbeleben (aus den Paketen, mit eigener
-Container-Anpassung) oder aus dem Store nehmen.
+noch von einem Zweig `container-0.10`. Aus Lucents Store und aus lucya-aio
+ist Akari seit 0.15 heraus.
 
 ## Was im Code wegfällt, was neu kommt
 
@@ -295,8 +295,7 @@ betreiben, ohne Konsole.
 - arm64 (UTM auf Apple Silicon, Raspberry Pi 4/5),
 - Ton aus Linux-Apps (PipeWire je Sitzung, in den Browser gestreamt),
 - eigene Texte im Installer statt „Debian“,
-- reproduzierbare Builds,
-- Entscheidung über den Container.
+- reproduzierbare Builds.
 
 ## Repos
 
@@ -317,8 +316,6 @@ betreiben, ohne Konsole.
 - **Selbst signiertes Zertifikat** zeigt im Browser eine Warnung. Klar
   erklären; Let's Encrypt anbieten, wo möglich.
 - **Secure Boot** nur mit Debians Kernel und Bootloader.
-- **Lucent und der Container:** Lucents Store bietet weiter Akari 0.10 im
-  Container an. Bis zur Entscheidung kein neues Store-Image.
 
 ## Nächster Schritt
 

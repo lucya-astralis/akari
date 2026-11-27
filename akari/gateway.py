@@ -632,6 +632,13 @@ async def docker_lucent(request: Request) -> dict:
     return await docker.lucent()
 
 
+@app.post("/api/docker/lucent/helper")
+async def docker_helper_update(request: Request) -> dict:
+    _admin(request)
+    await _dk(docker.update_helper())
+    return await docker.lucent()
+
+
 @app.delete("/api/docker/lucent")
 async def docker_lucent_remove(request: Request) -> dict:
     _admin(request)

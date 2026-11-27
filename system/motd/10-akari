@@ -1,0 +1,6 @@
+#!/bin/sh
+# Akari OS: the welcome after signing in (akari/motd.py). pam_motd runs this
+# at every console and SSH login; Debian's uname line and motd text are
+# diverted away by the package (akari.postinst).
+[ -r /usr/lib/akari/akari/motd.py ] || exit 0
+exec /usr/bin/python3 -I /usr/lib/akari/akari/motd.py

@@ -1,8 +1,9 @@
 # Akari OS
 
 Ein Desktop im Browser mit einem echten Linux darunter, auf Debian trixie,
-gebaut in [Facet 1.8](../facet). Gedacht als Tool für Lucent: Lucent verwaltet
-es (installieren, koppeln, Zustand), Akari OS hat seine eigene Oberfläche.
+gebaut in [Facet 1.8](../facet). Teil von lucya.systems: Akari OS ist das
+System auf dem Rechner, Lucent kann es verwalten (Zustand, Konten, Updates),
+Akari OS hat seine eigene Oberfläche und läuft auch ohne Lucent.
 
 **Stand 0.8:** Musik, ein kleiner Audio-Player: die eigene Musik aus ~/Musik
 (dazu lose Dateien in Downloads und Schreibtisch, Titel, Künstler und Cover aus
@@ -186,35 +187,37 @@ Deutsch ist die Quelle, `akari/static/i18n/en.js` die englische Fassung
 (genaue Texte und Muster für Texte mit Werten). Gewählt wird unter Einstellungen →
 Darstellung → Sprache, sonst gilt die Sprache des Browsers.
 
-## Aus Lucents Store
+## Wer verwaltet was
 
-Akari OS steht im Store von lucya.systems. Lucent installiert es über den
-Helfer lucya-aio aus `ghcr.io/lucya-astralis/akari:stable` (gebaut von
-`.github/workflows/image.yml` bei jedem Push auf main) und fragt nach den
-Rechten:
+Damit nichts doppelt verwaltet wird, hat jedes Ding genau einen Chef:
 
-- **Gesperrt** (Vorgabe): nur lesbares System, `no-new-privileges`. Konten,
-  Desktops, Apps und SSH gehen, sudo und apt nicht.
-- **Mit sudo und apt**: beschreibbares System, setuid erlaubt; was Admins
-  installieren, kommt nach einem Update von selbst wieder.
+| Was | Chef | die anderen |
+|---|---|---|
+| der Rechner: Pakete, Updates, Konten, SSH, die Docker Engine, eigene Container | **Akari OS** | Lucent zeigt Akaris Seiten und löst über den Connector Aktionen aus; die Daten bleiben bei Akari |
+| Lucent und seine Tools (Container mit dem Label `systems.lucya.aio`) | **lucya-aio**, im Auftrag von Lucent | Akaris Docker-App zeigt sie nur an |
+| der Helfer `lucya-aio` selbst | **Akari OS**, das ihn gestartet hat | er aktualisiert sich nicht selbst; Akari bringt ihn unter Docker → Lucent auf den neuesten Stand |
+| Tools, Store, Anmeldung über alle Tools | **Lucent** | Akari ist für Lucent ein Tool unter vielen |
 
-Beide behalten genau die zehn Capabilities aus `compose.yaml` und sonst nichts.
-Das erste Konto legt Lucent an (Akari OS → Konten → Erstes Konto anlegen): Es
-darf verwalten und ist gleich mit der Lucent-Person verknüpft.
+Akari OS ist kein Container des Stacks mehr: Es kommt nicht aus Lucents Store,
+sondern ist das System, auf dem der Stack läuft. Akari koppelt mit genau einem
+Lucent; ist es mit einem auf einem anderen Rechner gekoppelt, bietet die
+Docker-App keinen zweiten an.
 
 ## Lucent
 
 Koppeln: in Lucent unter **Tools** einen Code erzeugen, dann in Akari unter
 **Einstellungen → Lucent** (Konten, die verwalten) Lucents Adresse, den Code und
-Akaris Adresse eintragen. Oder im Container:
+Akaris Adresse eintragen. Oder an der Konsole:
 
 ```bash
-docker compose exec akari /opt/venv/bin/python -m akari --lucent-join https://lucent.example ABCD-EFGH-JKLM --ui-url https://akari.example
+sudo env PYTHONPATH=/usr/lib/akari python3 -m akari --lucent-join https://lucent.example ABCD-EFGH-JKLM --ui-url https://akari.example
 ```
 
-Läuft Lucent auf demselben Rechner außerhalb von Docker, ist es aus dem Container
-`http://host.docker.internal:8060`. Die Kopplung liegt in `/data/system/lucent.json`
-(nur root): das OIDC-Client-Geheimnis und ein Hash des Connector-Geheimnisses.
+Lucent auf demselben Rechner richtet die Docker-App ein (Docker → Lucent) und
+trägt die Adressen fürs Koppeln schon ein. Dieser Lucent erreicht Akari über
+Caddys Tür auf Port 8131: unverschlüsselt, nur Lucents Tool-API und nur aus
+Docker-Netzen. Die Kopplung liegt in `/var/lib/akari/lucent.json` (nur root):
+das OIDC-Client-Geheimnis und ein Hash des Connector-Geheimnisses.
 
 Wer ist wer: Akari-Konten sind Linux-Benutzer, deshalb legt eine Anmeldung über
 Lucent nie ein Konto an. Man verknüpft sein Konto einmal, angemeldet, unter

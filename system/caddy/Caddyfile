@@ -21,7 +21,13 @@
 # is Caddy's own. Only Lucent's tool API, which answers only to the Lucent
 # Akari is paired with (signed requests); everything else is not here.
 :8131 {
-	handle /lucent/v1/* {
+	# only from this machine and its containers (Docker's networks are
+	# 172.16.0.0/12 by default): the LAN does not see the door at all
+	@lucent {
+		path /lucent/v1/*
+		remote_ip 127.0.0.0/8 172.16.0.0/12
+	}
+	handle @lucent {
 		reverse_proxy 127.0.0.1:8130
 	}
 	handle {

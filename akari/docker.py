@@ -10,8 +10,15 @@ helper that makes Lucent and, when Lucent asks, the tools, keeps them up to
 date and backs them up. Akari starts the helper (as `docker run` in its
 README would) and shows where Lucent is and its setup code. Lucent reaches
 Akari back at http://<this machine>:8131, a door that Caddy opens only for
-Lucent's tool API (/lucent/v1): Lucent checks TLS certificates, and Akari's
-own are made by Caddy for the browser."""
+Lucent's tool API (/lucent/v1) and only to Docker's networks: Lucent checks
+TLS certificates, and Akari's own are made by Caddy for the browser.
+
+Who looks after what, so nothing is managed twice: the containers of the
+stack (label systems.lucya.aio) belong to the helper, which acts for Lucent;
+Akari shows them and their logs, and leaves them alone. The helper itself
+is Akari's, since Akari started it: Akari brings it up to date (the helper
+does not update itself) and takes the stack away. Akari pairs with one
+Lucent; when that one is elsewhere, Akari does not offer a second."""
 
 from __future__ import annotations
 
@@ -23,10 +30,11 @@ import re
 import shutil
 import struct
 import time
+import urllib.parse
 
 import httpx
 
-from . import console
+from . import console, lucent as lucent_pairing
 
 SOCKET = os.environ.get("AKARI_DOCKER_SOCKET", "/var/run/docker.sock")
 AIO_IMAGE = os.environ.get("AKARI_AIO_IMAGE", "ghcr.io/lucya-astralis/lucya-aio")
@@ -35,6 +43,8 @@ AIO_NAME = "lucya-aio"
 LUCENT_NAME = "lucya-lucent"
 LUCENT_PORT = 8060
 DOOR_PORT = 8131                       # Caddy: http, only /lucent/v1, for Lucent in its container
+STACK = "systems.lucya.aio"            # the helper's label on Lucent and the tools
+MINE = "systems.lucya.akari"           # Akari's label: "aio" on the helper, "app" on containers from the form
 ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$")
 
 
@@ -83,6 +93,30 @@ async def status() -> dict:
     return out
 
 
+def _owner(labels: dict) -> str | None:
+    """Who looks after a container other than whoever runs it from here: the helper's stack is Lucent's,
+    the helper is looked after on the Lucent page."""
+    if STACK in labels:
+        return "lucent"
+    if labels.get(MINE) == "aio":
+        return "aio"
+    return None
+
+
+async def _owned(cid: str) -> str | None:
+    c = (await _call("GET", f"/containers/{_safe(cid)}/json")).json()
+    return _owner((c.get("Config") or {}).get("Labels") or {})
+
+
+async def _mine_to_touch(cid: str) -> str:
+    who = await _owned(cid)
+    if who == "lucent":
+        raise DockerError("Diesen Container verwaltet Lucent (über lucya-aio). Ändere ihn dort.")
+    if who == "aio":
+        raise DockerError("lucya-aio wird auf der Seite Lucent aktualisiert und entfernt.")
+    return cid
+
+
 async def containers() -> list[dict]:
     rows = (await _call("GET", "/containers/json", params={"all": "1"})).json()
     out = []
@@ -96,7 +130,8 @@ async def containers() -> list[dict]:
             "state": c.get("State", ""), "status": c.get("Status", ""), "created": c.get("Created"),
             "ports": ports, "project": labels.get("com.docker.compose.project")
             # Lucent, its tools and its helper: one stack
-            or ("lucya.systems" if "systems.lucya.aio" in labels or labels.get("systems.lucya.akari") == "aio" else None),
+            or ("lucya.systems" if _owner(labels) else None),
+            "owner": _owner(labels),
         })
     return sorted(out, key=lambda c: (c["state"] != "running", c["name"]))
 
@@ -112,7 +147,7 @@ async def images() -> list[dict]:
 
 
 async def act(cid: str, action: str) -> None:
-    cid = _safe(cid)
+    cid = await _mine_to_touch(_safe(cid))
     if action in ("start", "stop", "restart"):
         await _call("POST", f"/containers/{cid}/{action}", timeout=60)
     elif action == "remove":
@@ -126,6 +161,7 @@ async def remove_image(iid: str) -> None:
 
 
 async def pause(cid: str, on: bool) -> None:
+    await _mine_to_touch(cid)
     await _call("POST", f"/containers/{_safe(cid)}/{'pause' if on else 'unpause'}")
 
 
@@ -150,6 +186,7 @@ async def inspect(cid: str) -> dict:
         "ports": ports,
         "networks": sorted(((c.get("NetworkSettings") or {}).get("Networks") or {}).keys()),
         "labels": {k: v for k, v in (cfg.get("Labels") or {}).items() if k.startswith(("com.docker.compose.project", "org.opencontainers.image.version", "org.opencontainers.image.source"))},
+        "owner": _owner(cfg.get("Labels") or {}),
     }
     if st.get("Running"):
         with contextlib.suppress(DockerError):
@@ -205,12 +242,16 @@ async def remove_network(nid: str) -> None:
 
 
 async def prune() -> dict:
-    """Clear away what nothing uses: stopped containers, dangling images, unused networks. Volumes stay (data)."""
-    a = (await _call("POST", "/containers/prune", timeout=120)).json()
+    """Clear away what nothing uses: stopped containers, dangling images, unused networks. Volumes stay
+    (data), and so does whatever belongs to Lucent's stack: a tool Lucent stopped is Lucent's to remove."""
+    gone = 0
+    for c in (await _call("GET", "/containers/json", params={"all": "1", "filters": json.dumps({"status": ["exited", "created", "dead"]})})).json():
+        if not _owner(c.get("Labels") or {}):
+            await _call("DELETE", f"/containers/{c['Id']}", timeout=60)
+            gone += 1
     b = (await _call("POST", "/images/prune", timeout=120)).json()
-    await _call("POST", "/networks/prune", timeout=60)
-    return {"containers": len(a.get("ContainersDeleted") or []), "images": len(b.get("ImagesDeleted") or []),
-            "space": (a.get("SpaceReclaimed") or 0) + (b.get("SpaceReclaimed") or 0)}
+    await _call("POST", "/networks/prune", params={"filters": json.dumps({"label!": [STACK]})}, timeout=60)
+    return {"containers": gone, "images": len(b.get("ImagesDeleted") or []), "space": b.get("SpaceReclaimed") or 0}
 
 
 # ---------- pulling and running: in the background, the app looks at _pulls ----------
@@ -347,13 +388,33 @@ def _code(text: str) -> str | None:
     return m[-1] if m else None
 
 
+def _local(url: str | None, ip: str | None) -> bool:
+    """Whether a Lucent address is the Lucent on this machine (as the pairing form fills it in)."""
+    host = urllib.parse.urlsplit(url or "")
+    return host.port == LUCENT_PORT and host.hostname in {"127.0.0.1", "0.0.0.0", "localhost", "::1", ip, LUCENT_NAME}
+
+
+def paired() -> str | None:
+    """"here" when Akari is paired with the Lucent on this machine, "elsewhere" with another, else None."""
+    p = lucent_pairing.pairing()
+    if not p:
+        return None
+    ip = console.address()
+    return "here" if _local(p.get("lucent_url"), ip) or _local(p.get("issuer"), ip) else "elsewhere"
+
+
 async def lucent() -> dict:
-    out = {"aio": None, "lucent": None, "job": _job.get("step"), "error": _job.get("error"), "port": LUCENT_PORT, "door": DOOR_PORT}
+    out = {"aio": None, "lucent": None, "job": _job.get("step"), "error": _job.get("error"), "port": LUCENT_PORT, "door": DOOR_PORT,
+           "paired": paired(), "doing": _job.get("doing"), "note": _job.get("note")}
+    if out["paired"] == "elsewhere":
+        out["issuer"] = (lucent_pairing.pairing() or {}).get("issuer")
     with contextlib.suppress(DockerError):
         aio, luc = await _find(AIO_NAME), await _find(LUCENT_NAME)
         if aio:
-            out["aio"] = {"state": aio.get("State"), "status": aio.get("Status"), "id": aio["Id"][:12]}
-            out["code"] = _code(await logs(aio["Id"][:12], 400))
+            out["aio"] = {"state": aio.get("State"), "status": aio.get("Status"), "id": aio["Id"][:12], "image": aio.get("Image")}
+            # the setup code only until Akari is paired with this Lucent: after that it is a key nobody needs
+            if out["paired"] != "here":
+                out["code"] = _code(await logs(aio["Id"][:12], 400))
         if luc:
             out["lucent"] = {"state": luc.get("State"), "status": luc.get("Status"), "id": luc["Id"][:12]}
     ip = console.address()
@@ -428,17 +489,58 @@ _task: asyncio.Task | None = None
 
 async def install_lucent() -> None:
     global _task
+    if paired() == "elsewhere":
+        raise DockerError("Akari ist schon mit einem Lucent auf einem anderen Rechner gekoppelt. Ein zweiter wäre doppelt.")
     st = await status()
     if not st["running"]:
         raise DockerError("Docker läuft nicht.")
     if _task and not _task.done():
         raise DockerError("Lucent wird schon eingerichtet.")
-    _job.update(step="pull", error=None, at=time.time())
+    _job.clear()
+    _job.update(step="pull", error=None, at=time.time(), doing="setup")
     _task = asyncio.create_task(_setup())
+
+
+async def _update_helper() -> None:
+    try:
+        _job.update(step="pull", error=None)
+        old = await _find(AIO_NAME)
+        await _pull(AIO_IMAGE, AIO_TAG)
+        img = (await _call("GET", f"/images/{AIO_IMAGE}:{AIO_TAG}/json")).json()
+        if old and (await _call("GET", f"/containers/{old['Id']}/json")).json().get("Image") == img.get("Id"):
+            _job.clear()
+            _job["note"] = "current"
+            return
+        # the helper only: Lucent and the tools are not its children, they keep running meanwhile
+        _job["step"] = "start"
+        if old:
+            await _call("DELETE", f"/containers/{old['Id']}", params={"force": "1"}, timeout=60)
+        r = await _call("POST", "/containers/create", params={"name": AIO_NAME}, json_body=aio_body())
+        await _call("POST", f"/containers/{r.json()['Id']}/start")
+        _job.clear()
+        _job["note"] = "updated"
+    except DockerError as e:
+        _job.update(step=None, error=str(e))
+    except Exception as e:                      # noqa: BLE001
+        _job.update(step=None, error=repr(e))
+
+
+async def update_helper() -> None:
+    """lucya-aio does not update itself (its README: pull and start again); Akari started it, so Akari does."""
+    global _task
+    if not await _find(AIO_NAME):
+        raise DockerError("lucya-aio läuft hier nicht.")
+    if _task and not _task.done():
+        raise DockerError("Bei lucya-aio läuft schon etwas.")
+    _job.clear()
+    _job.update(step="pull", error=None, at=time.time(), doing="update")
+    _task = asyncio.create_task(_update_helper())
 
 
 async def remove_lucent() -> None:
     """The helper goes, and with it Lucent and the tools it made; their volumes stay."""
+    if paired() == "here":
+        raise DockerError("Akari ist mit diesem Lucent gekoppelt. Erst unter Einstellungen → Lucent entkoppeln.")
     rows = (await _call("GET", "/containers/json", params={"all": "1", "filters": json.dumps({"label": ["systems.lucya.aio"]})})).json()
     for c in rows:
         await _call("DELETE", f"/containers/{c['Id']}", params={"force": "1"}, timeout=60)

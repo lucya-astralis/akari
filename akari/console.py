@@ -19,7 +19,7 @@ import sys
 import time
 from pathlib import Path
 
-from . import accounts, auth, config
+from . import accounts, auth, config, motd
 
 ISSUE = Path(os.environ.get("AKARI_ISSUE", "/run/issue.d/50-akari.issue"))
 
@@ -69,10 +69,19 @@ def text(ip: str | None, waiting: bool = False) -> str:
         else:
             body = ["  Im Browser:", f"  {url}"]
             qr = _qr(url)
-    lines = ["", f"  {config.OS_NAME} {config.VERSION}", "", *body, ""]
+    # Akari's mark beside the name and the address, as in the welcome after login (motd.py);
+    # \n and \l are agetty's: the machine's name and the console, added after escaping ours
+    info = [f"{config.OS_NAME} {config.VERSION}", "\x00", "", *[l.strip() for l in body]]
+    mark = [l.replace("\x01", "").replace("\x02", "") for l in motd.LOGO]
+    lines = [""]
+    for i in range(max(len(mark), len(info))):
+        left = (mark[i] if i < len(mark) else "").ljust(motd.WIDTH)
+        lines.append(f"  {left}  {info[i] if i < len(info) else ''}".rstrip())
+    lines.append("")
     if qr:
         lines += ["  " + l for l in qr.rstrip("\n").splitlines()] + [""]
-    return "\n".join(l.replace("\\", "\\\\") for l in lines) + "\n"
+    out = "\n".join(l.replace("\\", "\\\\") for l in lines) + "\n"
+    return out.replace("\x00", "\\n · \\l")
 
 
 def write(ip: str | None, waiting: bool = False) -> None:
