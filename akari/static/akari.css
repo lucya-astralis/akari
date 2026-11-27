@@ -794,6 +794,16 @@ body.is-leaving .desk{ transition:opacity var(--dur-2) var(--ease), filter var(-
 .widget.f-glass--hi{ background:light-dark(var(--glass-hi), rgba(20, 20, 26, .93)) }
 .w-clock__time{ display:block; font:600 44px/1 var(--sans); letter-spacing:var(--tr-display); font-variant-numeric:tabular-nums; color:var(--text) }
 .w-clock__date{ display:block; margin-top:var(--s-2); color:var(--text-dim); font-size:var(--fs-300) }
+/* the time left, the weather right */
+.widget--clock{ display:flex; align-items:center; justify-content:space-between; gap:var(--s-4) }
+.w-clock__now{ min-width:0 }
+.w-wx{ display:grid; grid-template-columns:auto auto; align-items:center; column-gap:var(--s-2); row-gap:2px; justify-items:end; min-width:0; max-width:120px;
+  padding:var(--s-2); margin:calc(-1 * var(--s-2)); border:0; border-radius:var(--r-inner); background:none; color:var(--text); cursor:pointer; text-align:right }
+.w-wx[hidden]{ display:none }
+.w-wx:hover{ background:var(--hover) }
+.w-wx__icon{ width:30px; height:30px; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; color:var(--acc) }
+.w-wx__temp{ font:600 26px/1 var(--sans); font-variant-numeric:tabular-nums }
+.w-wx__place{ grid-column:1 / -1; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text-dim); font-size:var(--fs-200) }
 .widget--perf{ display:grid; gap:var(--s-2) }
 .w-perf__row{ display:flex; justify-content:space-between; align-items:baseline; gap:var(--s-3); font-size:var(--fs-200); color:var(--text-dim) }
 .w-perf__row b{ color:var(--text); font:600 var(--fs-300)/1 var(--mono); font-variant-numeric:tabular-nums }

@@ -17,7 +17,7 @@ from contextlib import asynccontextmanager
 import uvicorn
 from fastapi import FastAPI
 
-from . import audio, config, desktops, display, files, media, sshkeys, stats, system, term
+from . import audio, config, desktops, display, files, media, sshkeys, stats, system, term, weather
 
 
 @asynccontextmanager
@@ -38,6 +38,7 @@ app.include_router(display.events)
 app.include_router(term.router)
 app.include_router(sshkeys.router)
 app.include_router(stats.router)
+app.include_router(weather.router)
 app.include_router(media.router)
 app.include_router(audio.router)
 

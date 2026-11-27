@@ -133,14 +133,50 @@
   Akari.on('launchers', iconsReady);
 
   /* ---------- widgets ---------- */
+  // the weather's pictures, as line icons in the text colour
+  const SUN = '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/>';
+  const MOON = '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>';
+  const CLOUD = d => `<path d="M7 ${d}h10a4 4 0 0 0 .4-8 6 6 0 0 0-11.5 1.6A3.3 3.3 0 0 0 7 ${d}z"/>`;
+  const WX = {
+    clear: day => day ? SUN : MOON,
+    partly: day => `<g transform="translate(-3 -3) scale(.62)">${day ? SUN : MOON}</g>${CLOUD(20)}`,
+    cloudy: () => CLOUD(18),
+    fog: () => `${CLOUD(14)}<path d="M4 18h16M6 21h12"/>`,
+    rain: () => `${CLOUD(15)}<path d="M8 18l-1 3M12 18l-1 3M16 18l-1 3"/>`,
+    snow: () => `${CLOUD(15)}<path d="M8 19h.01M12 21h.01M16 19h.01"/>`,
+    storm: () => `${CLOUD(14)}<path d="m12 15-2 4h4l-2 4"/>`,
+  };
+  const weather = async el => {
+    const r = await Akari.api(`/api/weather?place=${encodeURIComponent(Akari.prefs.weatherPlace || '')}`, { quiet: true }).catch(() => null);
+    const b = $('[data-wx-place]', el);
+    if (!b) return;
+    b.hidden = !r?.ok;
+    if (!r?.ok) { el.wxAt = Date.now() - 14 * 60e3; return; }     // not reached: again in a minute, not in fifteen
+    $('.w-wx__icon', b).innerHTML = (WX[r.kind] || WX.cloudy)(r.day);
+    $('.w-wx__temp', b).textContent = `${r.temp}°`;
+    $('.w-wx__place', b).textContent = r.place;
+    b.dataset.place = r.place;
+    b.setAttribute('aria-label', `${r.temp}°, ${r.place}. ${t('Ort ändern')}`);
+  };
+  document.addEventListener('click', async e => {
+    const b = e.target.closest('[data-wx-place]');
+    if (!b) return;
+    const place = await Akari.ask({ title: t('Wetter für welchen Ort?'), text: t('Ein Ort, wie auf einer Karte. Gefragt wird Open-Meteo, mit nichts als diesem Namen.'), label: t('Ort'), value: b.dataset.place || '', ok: t('Übernehmen') });
+    if (!place) return;
+    Akari.set('weatherPlace', place.slice(0, 80));
+    const el = b.closest('.widget'); el.wxAt = 0; weather(el);
+  });
   const WIDGETS = {
     clock: {
       title: 'Uhr', size: [270, 0],
-      html: '<time class="w-clock__time"></time><span class="w-clock__date"></span>',
+      // the time on the left, the weather on the right (weather.py, Open-Meteo; a click picks the place)
+      html: `<div class="w-clock__now"><time class="w-clock__time"></time><span class="w-clock__date"></span></div>
+        <button class="w-wx" data-wx-place hidden><svg class="w-wx__icon" viewBox="0 0 24 24" aria-hidden="true"></svg><b class="w-wx__temp"></b><small class="w-wx__place" translate="no"></small></button>`,
       tick(el) {
         const d = new Date();
         $('.w-clock__time', el).textContent = d.toLocaleTimeString(Akari.locale(), { hour: '2-digit', minute: '2-digit' });
-        $('.w-clock__date', el).textContent = d.toLocaleDateString(Akari.locale(), { weekday: 'short', day: 'numeric', month: 'short' });   // short: the date kept the widget wide
+        $('.w-clock__date', el).textContent = d.toLocaleDateString(Akari.locale(), { weekday: 'short', day: 'numeric', month: 'short' });
+        if (!el.wxAt || Date.now() - el.wxAt > 15 * 60e3) { el.wxAt = Date.now(); weather(el); }
       },
     },
     perf: {

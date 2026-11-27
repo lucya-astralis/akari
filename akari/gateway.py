@@ -33,7 +33,7 @@ from . import accounts, agents, auth, avatars, config, console, docker, host, lu
 # style-src allows inline styles: xterm.js writes its theme into a <style> element.
 CSP = ("default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; "
        "font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
-AGENT_PATHS = ("/api/fs", "/api/prefs", "/api/welcome", "/api/system", "/api/display", "/api/term", "/api/desktops", "/api/ssh/keys", "/api/stats", "/api/procs", "/api/wallpaper", "/api/media", "/api/audio")
+AGENT_PATHS = ("/api/fs", "/api/prefs", "/api/welcome", "/api/weather", "/api/system", "/api/display", "/api/term", "/api/desktops", "/api/ssh/keys", "/api/stats", "/api/procs", "/api/wallpaper", "/api/media", "/api/audio")
 DESKTOP_HEADER = "X-Akari-Desktop"
 PASS_HEADERS = ("content-type", "content-length", "content-disposition", "content-security-policy", "x-content-type-options", "cache-control",
                 "accept-ranges", "content-range")   # the music player jumps within a track
