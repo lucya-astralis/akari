@@ -1,3 +1,20 @@
+akari (0.13.0) trixie; urgency=medium
+
+  * Settings for the real system: network, date and time (time zone,
+    network time), the machine (name, processor, disks, restart, power
+    off) and updates with apt, which run in a unit of their own.
+  * The start menu: pinned apps, places, recent files and every app from
+    A to Z; restart and power off for accounts that manage.
+  * Programs from outside Debian (Spotify and others that register with
+    xdg-desktop-menu) show up: akari-desktop brings xdg-utils and the
+    folders it needs.
+  * New app icons in Facet's glass.
+  * Spectrum: one pastel rainbow over the whole desk.
+  * Rounder corners; the taskbar grows with an opening app; larger dock
+    icons; the desktop as an icon; magnification off until switched on.
+
+ -- Akari OS <packages@lucya.systems>  Fri, 27 Nov 2026 20:00:00 +0100
+
 akari (0.12.0) trixie; urgency=medium
 
   * Akari on the phone and as a web app: a home screen with the apps,
