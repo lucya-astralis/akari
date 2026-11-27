@@ -19,7 +19,7 @@ import pwd
 import time
 from pathlib import Path
 
-VERSION = "0.18.0"
+VERSION = "0.19.0"
 OS_NAME = "Akari OS"
 STARTED = time.time()
 
