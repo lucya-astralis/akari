@@ -140,7 +140,7 @@
       tick(el) {
         const d = new Date();
         $('.w-clock__time', el).textContent = d.toLocaleTimeString(Akari.locale(), { hour: '2-digit', minute: '2-digit' });
-        $('.w-clock__date', el).textContent = d.toLocaleDateString(Akari.locale(), { weekday: 'long', day: 'numeric', month: 'long' });
+        $('.w-clock__date', el).textContent = d.toLocaleDateString(Akari.locale(), { weekday: 'short', day: 'numeric', month: 'short' });   // short: the date kept the widget wide
       },
     },
     perf: {
@@ -178,7 +178,7 @@
         <div class="f-meter"><b data-m="disk"></b></div>`,
     },
   };
-  const DEFAULT_ON = ['clock', 'perf', 'note'];
+  const DEFAULT_ON = ['clock', 'perf'];          // the note is one click away (Widgets), not there from the start
   const DEFAULT_POS = { clock: [24, 24], perf: [24, 150], note: [24, 330] };
   const host = $('#widgets');
   const cpuHist = [];

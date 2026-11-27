@@ -41,15 +41,14 @@
 <svg width="0" height="0" class="sprite" aria-hidden="true">
   <symbol id="am" viewBox="0 0 95.64 100"><path class="am-l" d="M40.4 0L51.4 0L11 100L0 100Z"/><path class="am-b" d="M51.14 14L75.14 14L40.39 100L16.39 100Z"/><path class="am-d" d="M71.64 36L95.64 36L69.79 100L45.79 100Z"/></symbol>
   <symbol id="lm" viewBox="0 0 964 543"><path fill="currentColor" d="M112,148L260,217L409.69,379.66L467.26,264.53L400,222.08L400,204.02L0,0L112,148Z"/><path fill="currentColor" d="M964,0L564,204.02L564,222.08L496.74,264.53L554.31,379.66L704,217L852,148L964,0Z"/><path fill="currentColor" d="M172.93,266.68L315.8,308.65L247.36,234.28L59.81,146.84L172.93,266.68Z"/><path fill="currentColor" d="M904.19,146.84L716.64,234.28L648.2,308.65L791.07,266.68L904.19,146.84Z"/><path fill="currentColor" d="M289.78,367.82L400.19,400.35L343.4,338.64L191.3,293.96L289.78,367.82Z"/><path fill="currentColor" d="M772.7,293.96L620.6,338.64L563.81,400.35L674.22,367.82L772.7,293.96Z"/><path fill="currentColor" d="M518,67L415,100L403,120L454,122L421,210.5L482,249L543,210.5L538,85L518,67Z"/><path fill="currentColor" d="M482,282L544.5,407L482,543L419.5,407L482,282Z"/></symbol>
-  <!-- App icons (design/icons/apps.py, do not edit here): a tile in the app's colour with
-       Nova's ray, the motif in two panes of glass. Raw colours are allowed here and only here. -->
+  <!-- App icons (design/icons/apps.py, do not edit here): a tile in the app's colour,
+       the motif in two panes of glass. Raw colours are allowed here and only here. -->
   <defs>
     <!-- the clear glass in front: white, lit from above -->
     <linearGradient id="ag-front" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity=".82"/></linearGradient>
     <filter id="ag-drop" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="1.4" stdDeviation="1.3" flood-color="#000" flood-opacity=".22"/></filter>
-    <!-- sheen from the top, Nova's ray across, a rim bright above and faint below -->
+    <!-- sheen from the top, a rim bright above and faint below -->
     <linearGradient id="ag-sheen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".34"/><stop offset=".48" stop-color="#fff" stop-opacity="0"/></linearGradient>
-    <linearGradient id="ag-ray" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".16"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
     <linearGradient id="ag-rim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".6"/><stop offset=".55" stop-color="#fff" stop-opacity=".12"/><stop offset="1" stop-color="#fff" stop-opacity=".22"/></linearGradient>
     <clipPath id="ag-tile"><rect x="2" y="2" width="60" height="60" rx="15"/></clipPath>
     <linearGradient id="ag-files" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6fb3ff"/><stop offset="1" stop-color="#2450d6"/></linearGradient>
@@ -67,7 +66,6 @@
   </defs>
   <symbol id="app-files" viewBox="0 0 64 64">
     <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-files)"/>
-    <path d="M30 2h13L21 62H8z" fill="url(#ag-ray)" clip-path="url(#ag-tile)"/>
     <path d="M13 22a3.5 3.5 0 0 1 3.5-3.5h9.6l4.2 4.4h17.2a3.5 3.5 0 0 1 3.5 3.5V42H13z" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/>
     <path d="M11 30.5a3.5 3.5 0 0 1 3.5-3.5h35a3.5 3.5 0 0 1 3.5 3.8l-1.5 13.6a3.6 3.6 0 0 1-3.6 3.2H16.1a3.6 3.6 0 0 1-3.6-3.2z" fill="url(#ag-front)" filter="url(#ag-drop)"/>
     <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-sheen)"/>
@@ -75,7 +73,6 @@
   </symbol>
   <symbol id="app-terminal" viewBox="0 0 64 64">
     <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-terminal)"/>
-    <path d="M30 2h13L21 62H8z" fill="url(#ag-ray)" clip-path="url(#ag-tile)"/>
     <rect x="11" y="15" width="42" height="34" rx="6" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/>
     <path d="M19 25.5l7.5 6.5-7.5 6.5" fill="none" stroke="#5ee8a4" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round" filter="url(#ag-drop)"/>
     <rect x="30" y="36" width="14" height="4.4" rx="2.2" fill="url(#ag-front)" filter="url(#ag-drop)"/>
@@ -84,7 +81,6 @@
   </symbol>
   <symbol id="app-music" viewBox="0 0 64 64">
     <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-music)"/>
-    <path d="M30 2h13L21 62H8z" fill="url(#ag-ray)" clip-path="url(#ag-tile)"/>
     <circle cx="32" cy="32" r="20" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/>
     <path d="M27.5 41.5V21l16-3.4v19.8" fill="none" stroke="url(#ag-front)" stroke-linecap="round" stroke-linejoin="round" filter="url(#ag-drop)" stroke-width="3.4"/>
     <circle cx="23" cy="41.8" r="5.4" fill="url(#ag-front)" filter="url(#ag-drop)"/><circle cx="39" cy="37.8" r="5.4" fill="url(#ag-front)" filter="url(#ag-drop)"/>
@@ -93,7 +89,6 @@
   </symbol>
   <symbol id="app-editor" viewBox="0 0 64 64">
     <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-editor)"/>
-    <path d="M30 2h13L21 62H8z" fill="url(#ag-ray)" clip-path="url(#ag-tile)"/>
     <rect x="15" y="11" width="30" height="40" rx="4.5" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8" transform="rotate(-6 30 31)"/>
     <path d="M20.5 21.5h17M20.5 28h17M20.5 34.5h10" fill="none" stroke="url(#ag-front)" stroke-linecap="round" stroke-linejoin="round" filter="url(#ag-drop)" stroke-width="3" transform="rotate(-6 30 31)"/>
     <path d="M47.6 27.2l3.2 3.2-14.6 14.6-5 1.8 1.8-5z" fill="url(#ag-front)" filter="url(#ag-drop)"/>
@@ -102,7 +97,6 @@
   </symbol>
   <symbol id="app-web" viewBox="0 0 64 64">
     <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-web)"/>
-    <path d="M30 2h13L21 62H8z" fill="url(#ag-ray)" clip-path="url(#ag-tile)"/>
     <circle cx="32" cy="32" r="18" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/>
     <g fill="none" stroke="url(#ag-front)" stroke-linecap="round" stroke-linejoin="round" filter="url(#ag-drop)" stroke-width="2.8"><ellipse cx="32" cy="32" rx="7.5" ry="18"/><path d="M15 26h34M15 38h34"/><circle cx="32" cy="32" r="18"/></g>
     <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-sheen)"/>
@@ -110,7 +104,6 @@
   </symbol>
   <symbol id="app-xterm" viewBox="0 0 64 64">
     <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-xterm)"/>
-    <path d="M30 2h13L21 62H8z" fill="url(#ag-ray)" clip-path="url(#ag-tile)"/>
     <rect x="11" y="14" width="42" height="36" rx="6" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/>
     <path d="M11 20a6 6 0 0 1 6-6h30a6 6 0 0 1 6 6v3H11z" fill="url(#ag-front)" filter="url(#ag-drop)"/>
     <path d="M24 31l8 9M32 31l-8 9" stroke="#ffc65a" stroke-width="3.6" stroke-linecap="round" filter="url(#ag-drop)"/>
@@ -120,15 +113,12 @@
   </symbol>
   <symbol id="app-settings" viewBox="0 0 64 64">
     <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-settings)"/>
-    <path d="M30 2h13L21 62H8z" fill="url(#ag-ray)" clip-path="url(#ag-tile)"/>
-    <circle cx="32" cy="32" r="20" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/>
     <path d="M29.6 12h4.8l1 5.1 3.4 1.4 4.3-2.9 3.4 3.4-2.9 4.3 1.4 3.4 5.1 1v4.8l-5.1 1-1.4 3.4 2.9 4.3-3.4 3.4-4.3-2.9-3.4 1.4-1 5.1h-4.8l-1-5.1-3.4-1.4-4.3 2.9-3.4-3.4 2.9-4.3-1.4-3.4-5.1-1v-4.8l5.1-1 1.4-3.4-2.9-4.3 3.4-3.4 4.3 2.9 3.4-1.4zM32 25.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13z" fill-rule="evenodd" fill="url(#ag-front)" filter="url(#ag-drop)"/>
     <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-sheen)"/>
     <rect x="2.6" y="2.6" width="58.8" height="58.8" rx="14.4" fill="none" stroke="url(#ag-rim)" stroke-width="1.2"/>
   </symbol>
   <symbol id="app-tasks" viewBox="0 0 64 64">
     <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-tasks)"/>
-    <path d="M30 2h13L21 62H8z" fill="url(#ag-ray)" clip-path="url(#ag-tile)"/>
     <rect x="13" y="15" width="38" height="9" rx="4.5" fill="url(#ag-front)" filter="url(#ag-drop)"/>
     <rect x="13" y="27.5" width="38" height="9" rx="4.5" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/>
     <rect x="13" y="40" width="38" height="9" rx="4.5" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/>
@@ -138,7 +128,6 @@
   </symbol>
   <symbol id="app-monitor" viewBox="0 0 64 64">
     <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-monitor)"/>
-    <path d="M30 2h13L21 62H8z" fill="url(#ag-ray)" clip-path="url(#ag-tile)"/>
     <rect x="13" y="34" width="8" height="15" rx="2.5" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/><rect x="24" y="28" width="8" height="21" rx="2.5" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/>
     <rect x="35" y="31" width="8" height="18" rx="2.5" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/><rect x="46" y="22" width="5" height="27" rx="2.5" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/>
     <path d="M12 33l9-9 7 5 10-13 7 8 7-6" fill="none" stroke="url(#ag-front)" stroke-linecap="round" stroke-linejoin="round" filter="url(#ag-drop)" stroke-width="4"/>
@@ -147,7 +136,6 @@
   </symbol>
   <symbol id="app-window" viewBox="0 0 64 64">
     <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-window)"/>
-    <path d="M30 2h13L21 62H8z" fill="url(#ag-ray)" clip-path="url(#ag-tile)"/>
     <rect x="12" y="15" width="40" height="34" rx="6" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/>
     <path d="M12 21a6 6 0 0 1 6-6h28a6 6 0 0 1 6 6v4H12z" fill="url(#ag-front)" filter="url(#ag-drop)"/>
     <rect x="18" y="31" width="16" height="4" rx="2" fill="url(#ag-front)" filter="url(#ag-drop)"/><rect x="18" y="39" width="22" height="4" rx="2" fill="#fff" fill-opacity=".55"/>
@@ -156,7 +144,6 @@
   </symbol>
   <symbol id="app-docker" viewBox="0 0 64 64">
     <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-docker)"/>
-    <path d="M30 2h13L21 62H8z" fill="url(#ag-ray)" clip-path="url(#ag-tile)"/>
     <rect x="12" y="34" width="18" height="13" rx="3" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/><rect x="34" y="34" width="18" height="13" rx="3" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/>
     <rect x="23" y="18" width="18" height="13" rx="3" fill="url(#ag-front)" filter="url(#ag-drop)"/>
     <path d="M28.5 22v5M32 22v5M35.5 22v5" stroke="#1550c8" stroke-opacity=".55" stroke-width="1.6" stroke-linecap="round"/>
@@ -165,7 +152,6 @@
   </symbol>
   <symbol id="app-welcome" viewBox="0 0 64 64">
     <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-welcome)"/>
-    <path d="M30 2h13L21 62H8z" fill="url(#ag-ray)" clip-path="url(#ag-tile)"/>
     <g transform="translate(13 14) scale(.37)"><path d="M71.64 36L95.64 36L69.79 100L45.79 100Z" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/>
     <path d="M40.4 0L51.4 0L11 100L0 100Z" fill="url(#ag-front)" filter="url(#ag-drop)"/><path d="M51.14 14L75.14 14L40.39 100L16.39 100Z" fill="url(#ag-front)" filter="url(#ag-drop)"/></g>
     <path d="M48 11.5l1.6 4.4 4.4 1.6-4.4 1.6-1.6 4.4-1.6-4.4-4.4-1.6 4.4-1.6z" fill="url(#ag-front)" filter="url(#ag-drop)"/>

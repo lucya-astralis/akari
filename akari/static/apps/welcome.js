@@ -97,7 +97,7 @@
   const mark = cls => `<svg class="${cls}" viewBox="0 0 95.64 100" aria-hidden="true">${MARK.map(([c, d], i) => `<path class="${c} wl-ray wl-ray--${i}" d="${d}"/>`).join('')}</svg>`;
 
   const TINTS = [['', 277, 'Facet'], ['blau', 250, 'Blau'], ['cyan', 215, 'Cyan'], ['gruen', 150, 'Grün'], ['bernstein', 70, 'Bernstein'], ['rot', 25, 'Rot'], ['pink', 350, 'Pink'],
-    ['rainbow', 0, 'Regenbogen', 'swatch--rainbow']];
+    ['rainbow', 0, 'Regenbogen', 'swatch--rainbow'], ['spectrum', 0, 'Farbverlauf', 'swatch--spectrum']];
 
   // a row with an icon, as the pages list things
   const item = (icon, title, text, act = '') => `
@@ -159,7 +159,7 @@
   ];
 
   Akari.register('welcome', {
-    title: 'Willkommen', icon: 'i-info', art: 'welcome', size: [720, 560], order: 90, dock: false,
+    title: 'Willkommen', icon: 'i-info', art: 'welcome', size: [720, 560], order: 90, dock: false, center: true,
     create(win, args) {
       win.body.classList.add('wl');
       const reduced = Akari.prefs.motion || matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -253,9 +253,11 @@
   });
 
   // once per sign-in (a reload in the same tab does not count again), while the account wants it
-  Akari.on('ready', async () => {
+  const greet = async () => {
     try { if (sessionStorage.getItem('akari-welcomed')) return; sessionStorage.setItem('akari-welcomed', '1'); } catch {}
     const r = await Akari.api('/api/welcome', { quiet: true }).catch(() => null);
     if (r?.show) setTimeout(() => Akari.open('welcome'), 600);
-  });
+  };
+  // akari.js starts while the later scripts still load: the desktop may be ready before this file is
+  if (Akari.ready) greet(); else Akari.on('ready', greet);
 })();

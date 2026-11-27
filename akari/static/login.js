@@ -17,7 +17,7 @@
   try {
     const p = JSON.parse(localStorage.getItem('akari-prefs-last') || '{}');
     if (p.tint) document.documentElement.dataset.tint = p.tint;
-    const side = p.nova || (p.mirror ? 'right' : 'left');
+    const side = p.nova || (p.mirror ? 'right' : 'both');   // a new account: Nova from both sides
     if (side === 'right') document.documentElement.setAttribute('data-mirror', '');
     if (side === 'both') document.documentElement.setAttribute('data-nova', 'both');
     if (p.cursors === false) document.documentElement.setAttribute('data-cursors', 'off');

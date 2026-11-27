@@ -34,6 +34,13 @@
   /* Sliding indicators: segmented controls and tabs */
   const place = (thumb, target, host) => {
     if (!thumb || !target) return;
+    // AKARI: offsets, not client rects: a window that opens scales up, and a rect
+    // measured mid-animation put the thumb off by the scale until the next layout
+    if (target.offsetParent === host) {
+      thumb.style.setProperty('--x', `${target.offsetLeft}px`);
+      thumb.style.setProperty('--w', `${target.offsetWidth}px`);
+      return;
+    }
     const a = host.getBoundingClientRect(), b = target.getBoundingClientRect();
     thumb.style.setProperty('--x', `${b.left - a.left}px`);
     thumb.style.setProperty('--w', `${b.width}px`);

@@ -17,7 +17,7 @@
     const p = JSON.parse(localStorage.getItem('akari-prefs-last') || '{}');
     if (p.tint) root.dataset.tint = p.tint;
     if (p.tint === 'custom' && Number.isFinite(+p.tintH)) root.style.setProperty('--akari-h', +p.tintH);
-    const side = p.nova || (p.mirror ? 'right' : 'left');
+    const side = p.nova || (p.mirror ? 'right' : 'both');   // a new account: Nova from both sides
     if (side === 'right') root.setAttribute('data-mirror', '');
     if (side === 'both') root.setAttribute('data-nova', 'both');
     if (p.cursors === false) root.setAttribute('data-cursors', 'off');

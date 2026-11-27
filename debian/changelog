@@ -1,3 +1,20 @@
+akari (0.18.0) trixie; urgency=medium
+
+  * A new account: light, Nova from both sides with Akari's mark in the
+    middle, the clock and load as widgets (the note is one click away).
+    Nova chosen from the right before 0.6.1 stays right.
+  * Willkommen opens exactly in the middle, also when the desktop is
+    ready before its script; the eagle on the lucya.systems page arrives
+    whole; Farbverlauf is among the accents to pick.
+  * App icons without the ray across; the gear stands alone.
+  * Segmented controls sit right the first time a window opens (Facet
+    measured them mid-animation).
+  * The start menu shows no scroll bar while it glides or closes.
+  * Widgets: solid in the dark, above the Farbverlauf; the clock's date
+    is short.
+
+ -- Akari OS <packages@lucya.systems>  Fri, 27 Nov 2026 18:00:00 +0100
+
 akari (0.17.0) trixie; urgency=medium
 
   * Willkommen: a window after sign-in with a short scene (lucya.systems'

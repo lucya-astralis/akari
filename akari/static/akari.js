@@ -40,7 +40,7 @@
   /* ---------- preferences: in the home folder, cached for a fast first paint ---------- */
   const DEFAULTS = {
     // a new account starts light; Automatisch and Dunkel are one click away (Willkommen, Kontrollzentrum)
-    theme: 'light', tint: '', wallpaper: true, mirror: false, motion: false, lite: false, cursors: true, novaLogo: 'none', tintH: 300,
+    theme: 'light', tint: '', wallpaper: true, mirror: false, motion: false, lite: false, cursors: true, nova: 'both', novaLogo: 'akari', tintH: 300,
     dock: 'm', autohide: false, icons: true, seconds: false, date: true, dnd: false, widgets: true, bar: 'bottom', grid: true, pinned: null,
   };
   let P = { ...DEFAULTS };
@@ -437,6 +437,12 @@
     const [ww, hh] = w.size;
     const W = Math.min(ww, area.width - 32), H = Math.min(hh, area.height - 96);
     w.el.style.width = `${W}px`; w.el.style.height = `${H}px`;
+    // an app that asks for it (Willkommen) sits exactly in the middle, no cascade
+    if (APPS.get(w.app)?.center) {
+      w.el.style.left = `${Math.max(16, (area.width - W) / 2)}px`;
+      w.el.style.top = `${Math.max(10, (area.height - H) / 2)}px`;
+      return;
+    }
     const off = (cascade++ % 6) * 26;
     w.el.style.left = `${Math.max(16, (area.width - W) / 2 + off - 65)}px`;
     w.el.style.top = `${Math.max(10, (area.height - H) / 2 + off - 75)}px`;
@@ -683,8 +689,9 @@
     const to = pop.offsetHeight;
     if (from && Math.abs(to - from) > 2) {
       pop.style.overflow = 'hidden';
+      pop.classList.add('is-gliding');     // no scroll bar while the content is squeezed for a moment
       pop.animate([{ height: `${from}px` }, { height: `${to}px` }], { duration: 380, easing: SPRING }).finished
-        .finally(() => { pop.style.overflow = ''; });
+        .finally(() => { pop.style.overflow = ''; pop.classList.remove('is-gliding'); });
     }
   };
   const showAllApps = (on, glide = false) => {
@@ -1228,6 +1235,8 @@
     // localStorage is only for the login screen's colour)
     const remote = await api('/api/prefs', { quiet: true }).catch(() => null);
     P = { ...DEFAULTS, ...(remote || {}) };
+    // Nova from the right, chosen before there was "nova" (0.6.1: mirror): stays right, not the new default
+    if (remote && !remote.nova && remote.mirror) P.nova = 'right';
     prefsLoaded = true;
     try { localStorage.setItem('akari-prefs-last', JSON.stringify({ tint: P.tint, nova: novaSide(), wallpaper: P.wallpaper !== false && !P.wallpaperV, cursors: P.cursors !== false, tintH: P.tintH })); } catch {}
     Facet.setTheme(P.theme || 'system');

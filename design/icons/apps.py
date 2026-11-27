@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """Akari's app icons in Facet's glass, drawn from one recipe.
 
-Every icon is the same object: a tile in the app's colour with Nova's ray
-across it, and on it the motif in two panes of glass, one frosted behind
+Every icon is the same object: a tile in the app's colour, and on it the motif in two panes of glass, one frosted behind
 (white, see-through, a hairline round it) and one clear in front (white,
 lit from above, a soft shadow under it). Sheen from the top, a rim that is
 bright above and fades below. Only the colour and the motif change.
@@ -68,9 +67,8 @@ MOTIF = {
     <path d="M11 20a6 6 0 0 1 6-6h30a6 6 0 0 1 6 6v3H11z" {FRONT}/>
     <path d="M24 31l8 9M32 31l-8 9" stroke="#ffc65a" stroke-width="3.6" stroke-linecap="round" filter="url(#ag-drop)"/>
     <rect x="36" y="37.5" width="9" height="3.6" rx="1.8" {FRONT}/>''',
-    # a gear: a frosted ring behind, the wheel clear in front
-    "settings": f'''<circle cx="32" cy="32" r="20" {BACK}/>
-    <path d="M29.6 12h4.8l1 5.1 3.4 1.4 4.3-2.9 3.4 3.4-2.9 4.3 1.4 3.4 5.1 1v4.8l-5.1 1-1.4 3.4 2.9 4.3-3.4 3.4-4.3-2.9-3.4 1.4-1 5.1h-4.8l-1-5.1-3.4-1.4-4.3 2.9-3.4-3.4 2.9-4.3-1.4-3.4-5.1-1v-4.8l5.1-1 1.4-3.4-2.9-4.3 3.4-3.4 4.3 2.9 3.4-1.4zM32 25.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13z" fill-rule="evenodd" {FRONT}/>''',
+    # a gear, clear glass, in the middle of the tile
+    "settings": f'''<path d="M29.6 12h4.8l1 5.1 3.4 1.4 4.3-2.9 3.4 3.4-2.9 4.3 1.4 3.4 5.1 1v4.8l-5.1 1-1.4 3.4 2.9 4.3-3.4 3.4-4.3-2.9-3.4 1.4-1 5.1h-4.8l-1-5.1-3.4-1.4-4.3 2.9-3.4-3.4 2.9-4.3-1.4-3.4-5.1-1v-4.8l5.1-1 1.4-3.4-2.9-4.3 3.4-3.4 4.3 2.9 3.4-1.4zM32 25.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13z" fill-rule="evenodd" {FRONT}/>''',
     # rows: two frosted, the first clear, each with its mark
     "tasks": f'''<rect x="13" y="15" width="38" height="9" rx="4.5" {FRONT}/>
     <rect x="13" y="27.5" width="38" height="9" rx="4.5" {BACK}/>
@@ -98,9 +96,8 @@ DEFS = '''<defs>
     <!-- the clear glass in front: white, lit from above -->
     <linearGradient id="ag-front" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity=".82"/></linearGradient>
     <filter id="ag-drop" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="1.4" stdDeviation="1.3" flood-color="#000" flood-opacity=".22"/></filter>
-    <!-- sheen from the top, Nova's ray across, a rim bright above and faint below -->
+    <!-- sheen from the top, a rim bright above and faint below -->
     <linearGradient id="ag-sheen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".34"/><stop offset=".48" stop-color="#fff" stop-opacity="0"/></linearGradient>
-    <linearGradient id="ag-ray" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".16"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
     <linearGradient id="ag-rim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".6"/><stop offset=".55" stop-color="#fff" stop-opacity=".12"/><stop offset="1" stop-color="#fff" stop-opacity=".22"/></linearGradient>
     <clipPath id="ag-tile"><rect {TILE}/></clipPath>
 {grads}
@@ -110,7 +107,6 @@ DEFS = '''<defs>
 def symbol(name: str) -> str:
     return f'''  <symbol id="app-{name}" viewBox="0 0 64 64">
     <rect {TILE} fill="url(#ag-{name})"/>
-    <path d="M30 2h13L21 62H8z" fill="url(#ag-ray)" clip-path="url(#ag-tile)"/>
     {MOTIF[name]}
     <rect {TILE} fill="url(#ag-sheen)"/>
     <rect x="2.6" y="2.6" width="58.8" height="58.8" rx="14.4" fill="none" stroke="url(#ag-rim)" stroke-width="1.2"/>
@@ -120,8 +116,8 @@ def symbol(name: str) -> str:
 def sprite() -> str:
     grads = "\n".join(f'    <linearGradient id="ag-{n}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="{a}"/><stop offset="1" stop-color="{b}"/></linearGradient>'
                       for n, (a, b) in COLOURS.items())
-    head = ("  <!-- App icons (design/icons/apps.py, do not edit here): a tile in the app's colour with\n"
-            "       Nova's ray, the motif in two panes of glass. Raw colours are allowed here and only here. -->\n  ")
+    head = ("  <!-- App icons (design/icons/apps.py, do not edit here): a tile in the app's colour,\n"
+            "       the motif in two panes of glass. Raw colours are allowed here and only here. -->\n  ")
     return head + DEFS.replace("{TILE}", TILE).replace("{grads}", grads) + "\n" + "\n".join(symbol(n) for n in COLOURS)
 
 
