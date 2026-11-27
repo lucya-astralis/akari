@@ -123,7 +123,7 @@
     $('#launch-desk').textContent = me.desktop ? `${me.name} · ${t('Desktop')} „${me.desktop.name}“` : me.name;
     const desk = $('#bar-desk');
     desk.hidden = $('#tb-desk-sep').hidden = !me.desktop;
-    if (me.desktop) $('span', desk).textContent = me.desktop.name;
+    if (me.desktop) { $('span', desk).textContent = me.desktop.name; desk.dataset.tip = `${t('Desktop')} „${me.desktop.name}“ · ${t('wechseln')}`; }
     emit('session', me);
     return me;
   }).catch(() => null);
@@ -264,7 +264,10 @@
     pill.getAnimations().forEach(a => a.cancel());
     change();
     if (reduced()) return;
+    // the width it ends at: what comes in at its full size, what goes already gone
+    pill.classList.add('is-measuring');
     const w1 = pill.getBoundingClientRect().width;
+    pill.classList.remove('is-measuring');
     if (Math.abs(w1 - w0) <= 1) return;
     pill.classList.add('is-gliding');
     const a = pill.animate([{ width: `${w0}px` }, { width: `${w1}px` }], { duration: 420, easing: SPRING });
@@ -319,8 +322,9 @@
     renderDock();
     const grid = $('#launch-apps');
     grid.innerHTML = '';
-    // extras (terminal programs, other desktops' settings, XTerm) only when asked for
-    apps.filter(a => a.launch !== false && (!a.extra || P.showAllApps)).forEach((a, i) => {
+    // the start menu shows what is pinned (as the bar does), every app is one click further
+    const pins = pinned().map(id => APPS.get(id)).filter(a => a && a.launch !== false);
+    (pins.length ? pins : apps.filter(a => a.launch !== false && !a.extra).slice(0, 10)).forEach((a, i) => {
       const b = document.createElement('button');
       b.className = 'launch__app'; b.dataset.app = a.id; b.setAttribute('role', 'menuitem'); b.style.setProperty('--i', i);
       b.innerHTML = `${artHtml(a)}<span></span>`;
@@ -645,7 +649,8 @@
     .map(a => ({ page: a.dataset.page, title: a.textContent.trim(), keys: a.dataset.keys || '' }));
   const search = q => {
     q = q.trim().toLowerCase();
-    $('#launch-body').hidden = !!q;
+    if (q) $('#launch-all').hidden = true;
+    $('#launch-body').hidden = !!q || !$('#launch-all').hidden;
     const box = $('#launch-results');
     box.hidden = !q;
     if (!q) return;
@@ -661,8 +666,45 @@
     box.innerHTML = rows.length ? rows.join('') : `<p class="launch__empty">${t('Nichts gefunden.')}</p>`;
     box.querySelector('.launch__item')?.classList.add('is-first');
   };
+  // every app, A to Z, grouped by the first letter; extras only when asked for
+  const showAllApps = on => {
+    $('#launch-all').hidden = !on;
+    $('#launch-body').hidden = on;
+    if (!on) return;
+    const coll = new Intl.Collator(locale());
+    const apps = [...APPS.values()].filter(a => a.launch !== false && (!a.extra || P.showAllApps))
+      .sort((a, b) => coll.compare(t(a.title), t(b.title)));
+    let letter = '';
+    $('#launch-all-list').innerHTML = apps.map(a => {
+      const l = t(a.title).charAt(0).toLocaleUpperCase(locale());
+      const head = l !== letter ? `<h4 class="launch__letter">${escHtml((letter = l))}</h4>` : '';
+      return `${head}<button class="launch__item" data-app="${a.id}">${artHtml(a)}<span><b>${escHtml(t(a.title))}</b><small>${escHtml(a.comment || (a.id.startsWith('x:') ? t('Linux-Programm') : t('App von Akari')))}</small></span></button>`;
+    }).join('');
+    $('#launch-all-count').textContent = `${apps.length} ${t('Apps')}`;
+    $('#launch-all-list').scrollTop = 0;
+    requestAnimationFrame(() => $('#launch-all-list .launch__item')?.focus());
+  };
+  $('#launch-all-open').addEventListener('click', () => showAllApps(true));
+  $('#launch-all-close').addEventListener('click', () => { showAllApps(false); $('#launch-q').focus(); });
+  on('launchers', () => { if (!$('#launch-all').hidden) showAllApps(true); });
+
+  // places: the home and the usual folders in it that exist
+  const PLACES = [['', 'Home', 'i-home'], ['Schreibtisch', 'Schreibtisch', 'i-window'], ['Dokumente', 'Dokumente', 'i-note'], ['Downloads', 'Downloads', 'i-down'],
+    ['Bilder', 'Bilder', 'i-image'], ['Musik', 'Musik', 'i-music'], ['Videos', 'Videos', 'i-media'],
+    ['Desktop', 'Desktop', 'i-window'], ['Documents', 'Documents', 'i-note'], ['Pictures', 'Pictures', 'i-image'], ['Music', 'Music', 'i-music']];
+  const renderPlaces = async () => {
+    let have = new Set();
+    try { have = new Set((await api('/api/fs?path=', { quiet: true })).entries.filter(e => e.dir).map(e => e.name)); } catch {}
+    $('#launch-places').innerHTML = PLACES.filter(([p]) => !p || have.has(p)).slice(0, 6).map(([p, name, icon]) =>
+      `<button class="launch__place" data-place="${escHtml(p)}"><svg><use href="#${icon}"/></svg><span>${escHtml(t(name))}</span></button>`).join('');
+  };
+  $('#launch-places').addEventListener('click', e => {
+    const b = e.target.closest('[data-place]'); if (!b) return;
+    closePops(); open('files', { path: b.dataset.place }, { fresh: true });
+  });
+
   brand.addEventListener('click', () => togglePop(menu, brand, () => {
-    const q = $('#launch-q'); q.value = ''; search(''); renderRecent(); setTimeout(() => q.focus(), 30);
+    const q = $('#launch-q'); q.value = ''; showAllApps(false); search(''); renderRecent(); renderPlaces(); setTimeout(() => q.focus(), 30);
     emit('launcher');   // e.g. Linux programs installed meanwhile come in
   }));
   $('#launch-q').addEventListener('input', e => search(e.target.value));
@@ -688,8 +730,21 @@
     menuAt({ preventDefault() {}, target: e.currentTarget, clientX: b.left, clientY: b.bottom + 6 }, [
       { label: 'Desktop beenden …', icon: 'i-x', act: () => { closePops(); leave('end-desktop'); } },
       { label: 'Abmelden …', icon: 'i-power', danger: true, act: () => { closePops(); leave('end'); } },
+      ...(ME?.admin ? ['-',
+        { label: 'Neu starten …', icon: 'i-refresh', act: () => { closePops(); power('reboot'); } },
+        { label: 'Ausschalten …', icon: 'i-power', danger: true, act: () => { closePops(); power('poweroff'); } }] : []),
     ]);
   });
+  // the machine, for accounts that manage it: every session of every account ends
+  const power = async action => {
+    const off = action === 'poweroff';
+    const ok = await ask(off
+      ? { title: 'Ausschalten?', text: 'Alle Sitzungen aller Konten enden, nicht Gesichertes geht verloren. Wieder an geht es nur am Gerät.', ok: 'Ausschalten', danger: true }
+      : { title: 'Neu starten?', text: 'Alle Sitzungen aller Konten enden, nicht Gesichertes geht verloren. Danach meldest du dich neu an.', ok: 'Neu starten', danger: true });
+    if (!ok) return;
+    for (const w of [...WINS]) { await close(w); if (WINS.has(w)) return; }
+    try { await api('/api/host/power', { method: 'POST', json: { action } }); notify(t(off ? 'Akari OS schaltet aus.' : 'Akari OS startet neu.')); } catch {}
+  };
 
   // quick settings: a control centre of modules
   const popQuick = $('#pop-quick'), btnQuick = $('#tb-quick');
@@ -945,7 +1000,7 @@
         '-',
         { label: P.bar === 'top' ? 'Leiste nach unten' : 'Leiste nach oben', icon: 'i-dock', act: () => set('bar', P.bar === 'top' ? 'bottom' : 'top') },
         { label: P.autohide ? 'Immer zeigen' : 'Automatisch ausblenden', icon: 'i-eye', act: () => set('autohide', !P.autohide) },
-        { label: P.magnify === false ? 'Vergrößern beim Zeigen' : 'Nicht vergrößern', icon: 'i-max', act: () => set('magnify', P.magnify === false) },
+        { label: P.magnify === true ? 'Nicht vergrößern' : 'Vergrößern beim Zeigen', icon: 'i-max', act: () => set('magnify', P.magnify !== true) },
         '-',
         { label: 'Einstellungen der Leiste …', icon: 'i-gear', act: () => open('settings', { page: 'schreibtisch' }) },
       ]);
@@ -1017,13 +1072,13 @@
   let overDock = false, previewT;
   dockEl.addEventListener('pointermove', e => {
     overDock = true;
-    if (P.magnify === false || reduced() || dockEl.querySelector('.is-dragging')) return;
+    if (P.magnify !== true || reduced() || dockEl.querySelector('.is-dragging')) return;
     magnifyAt(e.clientX);
   });
   dockEl.addEventListener('pointerleave', () => { overDock = false; unmagnify(); });
   // the settings show what a change does: the middle of the dock grows for a moment
   const previewMagnify = () => {
-    if (P.magnify === false || reduced() || overDock) return;
+    if (P.magnify !== true || reduced() || overDock) return;
     const r = dockEl.getBoundingClientRect();
     magnifyAt(r.left + r.width / 2);
     clearTimeout(previewT);

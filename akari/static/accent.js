@@ -71,7 +71,7 @@
     t2 = setTimeout(paint, 900);
     clearInterval(walk); clearInterval(tick);
     root.removeAttribute('data-glass-tick');
-    if (['rainbow', 'spectrum'].includes(root.dataset.tint)) {
+    if (root.dataset.tint === 'rainbow') {
       walk = setInterval(paint, 2000);
       if (webkit && root.dataset.motion !== 'reduced') tick = setInterval(() => root.toggleAttribute('data-glass-tick'), 333);
     }

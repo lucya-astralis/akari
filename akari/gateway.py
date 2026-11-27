@@ -6,6 +6,7 @@ a narrow set of capabilities, on 127.0.0.1 behind Caddy.
   /api/session       who is signed in here
   /api/logout        switch user (keep the apps) or sign out (end everything)
   /api/accounts/*    the own account; all accounts for admins
+  /api/host/*        the machine: name, network, time, updates, power (host.py)
   everything else under /api is the signed-in person's session agent,
   passed through as it is (HTTP and websockets)."""
 
@@ -26,7 +27,7 @@ from starlette.background import BackgroundTask
 from websockets.asyncio.client import unix_connect
 from websockets.exceptions import ConnectionClosed
 
-from . import accounts, agents, auth, avatars, config, console, lucent, software, ssh
+from . import accounts, agents, auth, avatars, config, console, host, lucent, software, ssh
 
 # style-src allows inline styles: xterm.js writes its theme into a <style> element.
 CSP = ("default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; "
@@ -394,6 +395,91 @@ async def ssh_password(body: SshPwIn, request: Request) -> dict:
     acct = await asyncio.to_thread(accounts.set_ssh_password, acct.name, body.allow)
     await ssh.reload()
     return {"password": acct.ssh_password}
+
+
+# ---------- the machine (host.py): everyone reads, admins change ----------
+
+def _host_call(fn, *a, **kw):
+    try:
+        return fn(*a, **kw)
+    except host.HostError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.get("/api/host")
+async def host_info(request: Request) -> dict:
+    acct = _me(request)
+    return {**await asyncio.to_thread(host.info), "admin": acct.admin}
+
+
+class HostnameIn(BaseModel):
+    hostname: str
+
+
+@app.put("/api/host/hostname")
+async def host_name(body: HostnameIn, request: Request) -> dict:
+    _admin(request)
+    name = await asyncio.to_thread(_host_call, host.set_hostname, body.hostname)
+    return {"hostname": name}
+
+
+class PowerIn(BaseModel):
+    action: str
+
+
+@app.post("/api/host/power")
+async def host_power(body: PowerIn, request: Request) -> dict:
+    _admin(request)
+    await asyncio.to_thread(_host_call, host.power, body.action)
+    return {"ok": True}
+
+
+@app.get("/api/host/network")
+async def host_network(request: Request) -> dict:
+    _me(request)
+    return await asyncio.to_thread(host.network)
+
+
+@app.get("/api/host/time")
+async def host_time(request: Request) -> dict:
+    acct = _me(request)
+    return {**await asyncio.to_thread(host.clock), "admin": acct.admin}
+
+
+@app.get("/api/host/timezones")
+async def host_timezones(request: Request) -> dict:
+    _me(request)
+    return {"zones": await asyncio.to_thread(host.timezones)}
+
+
+class TimeIn(BaseModel):
+    timezone: str | None = None
+    ntp: bool | None = None
+
+
+@app.put("/api/host/time")
+async def host_set_time(body: TimeIn, request: Request) -> dict:
+    acct = _admin(request)
+    await asyncio.to_thread(_host_call, host.set_clock, body.timezone, body.ntp)
+    return {**await asyncio.to_thread(host.clock), "admin": acct.admin}
+
+
+@app.get("/api/host/updates")
+async def host_updates(request: Request) -> dict:
+    acct = _me(request)
+    return {**await asyncio.to_thread(host.updates), "admin": acct.admin}
+
+
+class JobIn(BaseModel):
+    job: str
+
+
+@app.post("/api/host/updates")
+async def host_update(body: JobIn, request: Request) -> dict:
+    acct = _admin(request)
+    await asyncio.to_thread(_host_call, host.start, body.job)
+    await asyncio.sleep(.3)
+    return {**await asyncio.to_thread(host.updates), "admin": acct.admin}
 
 
 # ---------- the session agent, passed through ----------

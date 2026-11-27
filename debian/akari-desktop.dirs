@@ -1,0 +1,4 @@
+# programs from outside Debian (Spotify, Chrome …) put their start entry in place with
+# xdg-desktop-menu, which gives up without these two folders; GNOME or KDE would bring them
+usr/share/desktop-directories
+etc/xdg/menus/applications-merged

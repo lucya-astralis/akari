@@ -29,11 +29,13 @@
         $$('.page', el).forEach(p => p.hidden = p.dataset.page !== page);
         el.classList.add('is-page');
         $('[data-main]', el).scrollTop = 0;
-        if (page === 'workspace') Akari.loadSystem();
+        if (page === 'workspace') { Akari.loadSystem(); loadHost(); }
+        if (page === 'netzwerk') loadNet();
+        if (page === 'zeit') loadTime();
         if (page === 'konten') loadAccounts();
         if (page === 'schreibtisch') loadDesks();
         if (page === 'ssh') loadSsh();
-        if (page === 'software') loadSoftware();
+        if (page === 'software') { loadSoftware(); loadUpdates(); }
         if (page === 'konto') fillMe();
         if (page === 'lucent') loadLucent();
         requestAnimationFrame(() => Facet.layout());
@@ -72,8 +74,8 @@
         const wg = $('[data-pref="widgets"]', el); if (wg) wg.checked = P.widgets !== false;
         const cu = $('[data-pref="cursors"]', el); if (cu) cu.checked = P.cursors !== false;
         // magnification: on unless switched off; strength and reach only while on
-        const mg = $('[data-pref="magnify"]', el); if (mg) mg.checked = P.magnify !== false;
-        $$('[data-mag-opt]', el).forEach(o => { o.hidden = P.magnify === false; });
+        const mg = $('[data-pref="magnify"]', el); if (mg) mg.checked = P.magnify === true;
+        $$('[data-mag-opt]', el).forEach(o => { o.hidden = P.magnify !== true; });
         const amount = Math.round((P.magnifyAmount ?? .45) * 100), reach = +(P.magnifyRange || 2.4);
         const ra = $('[data-mag="amount"]', el), rr = $('[data-mag="range"]', el);
         if (ra && document.activeElement !== ra) { ra.value = amount; ra.style.setProperty('--v', `${(amount - 10) / 90 * 100}%`); }
@@ -296,6 +298,117 @@
         $('[data-sw-howto]', el).hidden = !(r.sudo && r.admin);
         $('[data-sw-count]', el).textContent = r.packages ? Akari.t('{n} Pakete installiert.').replace('{n}', r.packages.toLocaleString()) : '';
       };
+
+      /* updates: apt in a unit of its own; while it runs, look again every two seconds */
+      let upTimer = null;
+      const loadUpdates = async () => {
+        clearTimeout(upTimer);
+        let r; try { r = await Akari.api('/api/host/updates', { quiet: true }); } catch { return; }
+        const n = r.packages.length, when = r.checked ? new Date(r.checked * 1000).toLocaleString(Akari.locale(), { dateStyle: 'medium', timeStyle: 'short' }) : null;
+        $('[data-up-title]', el).textContent = r.running === 'install' ? Akari.t('Updates werden installiert …') : r.running === 'check' ? Akari.t('Suche nach Updates …')
+          : n ? Akari.t(n === 1 ? '1 Update' : '{n} Updates').replace('{n}', n) : Akari.t('Alles aktuell');
+        const failed = r.last && !r.last.ok && !r.running;
+        $('[data-up-state]', el).textContent = failed ? Akari.t(r.last.job === 'install' ? 'Das Installieren ist fehlgeschlagen. Das Protokoll steht unten.' : 'Die Suche ist fehlgeschlagen. Das Protokoll steht unten.')
+          : r.running ? Akari.t('apt arbeitet. Du kannst das Fenster schließen, es läuft weiter.')
+          : when ? `${Akari.t('Zuletzt gesucht')}: ${when}` : Akari.t('Noch nicht gesucht.');
+        $('[data-up-admin]', el).hidden = !r.admin;
+        $$('[data-up-job]', el).forEach(b => { b.disabled = !!r.running; });
+        $('[data-up-job="install"]', el).hidden = !n;
+        const list = $('[data-up-list]', el);
+        list.hidden = !n || !!r.running;
+        list.innerHTML = r.packages.slice(0, 200).map(p => `<div class="up__pkg"><b>${esc(p.name)}</b><small>${esc(p.from)} → ${esc(p.to)}</small></div>`).join('');
+        const log = $('[data-up-log]', el);
+        log.hidden = !(r.running || failed) || !r.log.length;
+        log.textContent = r.log.join('\n');
+        if (r.running && el.isConnected && !$('.page[data-page="software"]', el).hidden) upTimer = setTimeout(loadUpdates, 2000);
+      };
+      el.addEventListener('click', async e => {
+        const b = e.target.closest('[data-up-job]'); if (!b) return;
+        if (b.dataset.upJob === 'install') {
+          const ok = await Akari.ask({ title: 'Updates installieren?', text: 'apt bringt alle Pakete auf den neuen Stand. Wird Akari selbst aktualisiert, startet es neu, und du meldest dich danach wieder an.', ok: 'Installieren' });
+          if (!ok) return;
+        }
+        try { await Akari.api('/api/host/updates', { method: 'POST', json: { job: b.dataset.upJob } }); } catch {}
+        loadUpdates();
+      });
+
+      /* the machine: name, processor, disks, power */
+      const loadHost = async () => {
+        let h; try { h = await Akari.api('/api/host', { quiet: true }); } catch { return; }
+        $('[data-host="name"]', el).textContent = h.hostname;
+        $('[data-host="cpu"]', el).textContent = `${h.cpu.model} · ${h.cpu.cores} ${Akari.t(h.cpu.cores === 1 ? 'Kern' : 'Kerne')} · ${h.cpu.arch}`;
+        $('[data-host="virt"]', el).textContent = h.virt ? `${Akari.t('Virtuelle Maschine')} (${h.virt})` : Akari.t('Eigener Rechner');
+        $$('[data-host-admin]', el).forEach(x => { x.hidden = !h.admin; });
+        $('[data-host-disks]', el).innerHTML = h.disks.map(d => `
+          <div class="opt opt--stack"><span class="opt__txt"><b>${esc(d.mount)}</b><small>${esc(d.device)} · ${esc(d.fs)} · ${esc(Akari.fmtBytes(d.free))} ${esc(Akari.t('frei von'))} ${esc(Akari.fmtBytes(d.total))}</small></span>
+            <div class="f-meter disk__meter"><b style="--v:${Math.max(1, Math.round(d.used / d.total * 100))}%"></b></div></div>`).join('');
+      };
+      el.addEventListener('click', async e => {
+        if (e.target.closest('[data-host-rename]')) {
+          const name = await Akari.ask({ title: 'Gerätename', text: 'So heißt der Rechner im Netz und im Terminal. Kleinbuchstaben, Ziffern und -.', label: 'Name', value: $('[data-host="name"]', el).textContent, ok: 'Ändern' });
+          if (!name) return;
+          try { await Akari.api('/api/host/hostname', { method: 'PUT', json: { hostname: name } }); Akari.notify(Akari.t('Der Gerätename ist geändert. Neue Terminals zeigen ihn.')); } catch {}
+          return loadHost();
+        }
+        const p = e.target.closest('[data-power]'); if (!p) return;
+        const off = p.dataset.power === 'poweroff';
+        const ok = await Akari.ask(off
+          ? { title: 'Ausschalten?', text: 'Alle Sitzungen aller Konten enden, nicht Gesichertes geht verloren. Wieder an geht es nur am Gerät.', ok: 'Ausschalten', danger: true }
+          : { title: 'Neu starten?', text: 'Alle Sitzungen aller Konten enden, nicht Gesichertes geht verloren. Danach meldest du dich neu an.', ok: 'Neu starten', danger: true });
+        if (!ok) return;
+        try { await Akari.api('/api/host/power', { method: 'POST', json: { action: p.dataset.power } }); Akari.notify(Akari.t(off ? 'Akari OS schaltet aus.' : 'Akari OS startet neu.')); } catch {}
+      });
+
+      /* network: what Debian has set up */
+      const loadNet = async () => {
+        let n; try { n = await Akari.api('/api/host/network', { quiet: true }); } catch { return; }
+        const up = n.interfaces.some(i => i.up && i.addresses.length);
+        $('[data-net-url]', el).textContent = n.url || Akari.t('Keine Adresse');
+        const b = $('[data-net-badge]', el); b.className = `f-badge ${up ? 'f-badge--ok' : ''}`; b.textContent = Akari.t(up ? 'verbunden' : 'getrennt');
+        $('[data-net-gw]', el).textContent = n.gateway || Akari.t('Keiner');
+        $('[data-net-dns]', el).textContent = n.dns.join(', ') || Akari.t('Keiner');
+        $('[data-net-ifs]', el).innerHTML = n.interfaces.map(i => `
+          <div class="opt"><span class="opt__txt"><b>${esc(i.name)}</b><small>${esc(i.addresses.join(' · ') || Akari.t('Keine Adresse'))}${i.mac ? ` · ${esc(i.mac)}` : ''}</small></span>
+            <span class="f-badge ${i.up ? 'f-badge--ok' : ''}">${esc(Akari.t(i.up ? 'an' : 'aus'))}</span></div>`).join('') || `<div class="opt"><span class="opt__txt"><small>${esc(Akari.t('Keine Anschlüsse'))}</small></span></div>`;
+      };
+
+      /* date and time: the system's clock, its zone, network time */
+      let zones = null, tzTick = null, tz = null;
+      const showClock = () => {
+        if (!tz) return;
+        const now = new Date(), o = { timeZone: tz.timezone };
+        $('[data-tz-now]', el).textContent = now.toLocaleTimeString(Akari.locale(), o);
+        $('[data-tz-date]', el).textContent = now.toLocaleDateString(Akari.locale(), { ...o, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      };
+      const loadTime = async () => {
+        let t; try { t = await Akari.api('/api/host/time', { quiet: true }); } catch { return; }
+        tz = t;
+        $('[data-tz-name]', el).textContent = t.timezone;
+        const ntp = $('[data-ntp]', el); ntp.checked = t.ntp; ntp.disabled = !t.admin || !t.can_ntp;
+        $('[data-ntp-state]', el).textContent = Akari.t(!t.can_ntp ? 'Auf diesem System nicht verfügbar.' : !t.ntp ? 'Aus: die Uhr läuft für sich.' : t.synced ? 'An und abgeglichen.' : 'An, gleicht gerade ab.');
+        $('[data-ntp-admin]', el).hidden = !t.can_ntp;
+        $('[data-tz-nonadmin]', el).hidden = t.admin;
+        const pick = $('[data-tz-pick]', el);
+        pick.hidden = !t.admin;
+        if (t.admin && !zones) {
+          try { zones = (await Akari.api('/api/host/timezones', { quiet: true })).zones; } catch { zones = []; }
+          pick.innerHTML = zones.map(z => `<option>${esc(z)}</option>`).join('');
+        }
+        pick.value = t.timezone;
+        showClock();
+        clearInterval(tzTick);
+        tzTick = setInterval(() => { if (!el.isConnected) return clearInterval(tzTick); showClock(); }, 1000);
+      };
+      el.addEventListener('change', async e => {
+        if (e.target.matches('[data-tz-pick]')) {
+          try { await Akari.api('/api/host/time', { method: 'PUT', json: { timezone: e.target.value } }); } catch {}
+          loadTime();
+        }
+        if (e.target.matches('[data-ntp]')) {
+          try { await Akari.api('/api/host/time', { method: 'PUT', json: { ntp: e.target.checked } }); } catch {}
+          loadTime();
+        }
+      });
 
       /* lucent: pairing (admins) and linking the own account */
       const luForm = $('[data-form="lucent"]', el);

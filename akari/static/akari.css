@@ -1,6 +1,11 @@
 /* AKARI — a desktop shell on Facet 1.8. Frontend only, no backend.
    Everything here is layout on top of facet.css; every colour is a Facet token. */
 
+/* Akari's corners: Facet's roles, one step rounder. A console is read in dense
+   rows; a desktop is glass that floats over Nova, and rounder edges carry that.
+   The roles and inner = outer − inset stay as Facet has them. */
+:root{ --r-small:3px; --r-control:6px; --r-inner:8px; --r-card:12px; --r-overlay:18px }
+
 :root{
   --bar-h: 36px;
   --dock-icon: 44px;
@@ -557,9 +562,9 @@ body.is-leaving .desk{ transition:opacity var(--dur-2) var(--ease), filter var(-
    status right. No bar at the top any more; windows use the whole height
    above the pills.
    ===================================================================== */
-:root{ --bar-h:0px; --dock-icon:36px; --tb-h:54px; --tb-gap:var(--s-3); --tb-space:calc(var(--tb-h) + 2 * var(--tb-gap)) }
-:root[data-dock="s"]{ --dock-icon:30px; --tb-h:46px }
-:root[data-dock="l"]{ --dock-icon:44px; --tb-h:64px }
+:root{ --bar-h:0px; --dock-icon:40px; --tb-h:56px; --tb-gap:var(--s-3); --tb-space:calc(var(--tb-h) + 2 * var(--tb-gap)) }
+:root[data-dock="s"]{ --dock-icon:34px; --tb-h:50px }
+:root[data-dock="l"]{ --dock-icon:50px; --tb-h:66px }
 :root[data-autohide]{ --tb-space:0px }
 
 .windows{ inset:0 0 var(--tb-space) 0 }
@@ -637,7 +642,10 @@ body.is-leaving .desk{ transition:opacity var(--dur-2) var(--ease), filter var(-
   background:none; color:var(--text-dim); font-weight:500; cursor:pointer; white-space:nowrap }
 .tb__desk:hover{ background:var(--surface-2); color:var(--text) }
 .tb__desk[hidden]{ display:none }
-.tb__desk svg{ width:16px; height:16px }
+/* the desktop is a symbol only; its name is in the tooltip (and on the phone, where there is room) */
+.tb__desk{ width:calc(var(--tb-h) - 2 * var(--s-3)); padding:0; justify-content:center }
+.tb__desk span{ display:none }
+.tb__desk svg{ width:20px; height:20px }
 .tb__state{ display:flex; align-items:center; gap:var(--s-3); padding:0 var(--s-2); color:var(--text) }
 .tb__state svg{ width:19px; height:19px }
 #tb-net.is-off{ color:var(--err) }
@@ -1035,20 +1043,36 @@ img.app-art, img.win__icon{ object-fit:contain; border-radius:22% }
 .range--hue{ width:100%; background:linear-gradient(90deg, oklch(.62 .17 0), oklch(.62 .17 60), oklch(.62 .17 120), oklch(.62 .17 180),
   oklch(.62 .17 240), oklch(.62 .17 300), oklch(.62 .17 359)) !important; --v:0% }
 
-/* Farbverlauf: the rainbow's second mode. Not one hue after the other but several
-   at once: Nova's ground, shards, lines and glow each a quarter turn apart, and
-   all of them walking slowly on (the accent is the first of them). */
-:root[data-tint="spectrum"]{ animation:akari-rainbow 120s steps(720) infinite;
-  --nova-a:     light-dark(oklch(.86 .08 var(--tint-h)), oklch(.42 .19 var(--tint-h)));
-  --nova-b:     light-dark(oklch(.93 .045 calc(var(--tint-h) + 70)), oklch(.27 .12 calc(var(--tint-h) + 70)));
-  --nova-c:     light-dark(oklch(.96 .016 calc(var(--tint-h) + 140)), oklch(.14 .05 calc(var(--tint-h) + 140)));
-  --nova-shard: light-dark(oklch(.64 .17 calc(var(--tint-h) + 90) / .30), oklch(.60 .18 calc(var(--tint-h) + 90) / .58));
-  --nova-shard-2: light-dark(oklch(.50 .20 calc(var(--tint-h) + 180) / .16), oklch(.45 .19 calc(var(--tint-h) + 180) / .40));
-  --nova-line:  light-dark(oklch(.60 .21 calc(var(--tint-h) + 210) / .60), oklch(.74 .16 calc(var(--tint-h) + 210) / .92));
-  --nova-halo:  light-dark(oklch(.64 .17 calc(var(--tint-h) + 260) / .18), oklch(.72 .16 calc(var(--tint-h) + 260) / .26));
-  --nova-glow:  light-dark(oklch(.82 .11 calc(var(--tint-h) + 300) / .55), oklch(.55 .22 calc(var(--tint-h) + 300) / .46)) }
-:root[data-tint="spectrum"][data-motion="reduced"]{ animation:none; --tint-h:300 }
-.swatch--spectrum{ background:linear-gradient(135deg, oklch(.66 .17 300) 0 25%, oklch(.70 .15 200) 25% 50%, oklch(.74 .15 120) 50% 75%, oklch(.70 .17 30) 75%) }
+/* Farbverlauf: one pastel rainbow laid over the whole desk, not a colour per
+   thing. A layer between the desk and the windows takes Nova, icons and widgets
+   and gives each point the hue of the rainbow at that place (mix-blend-mode:
+   color keeps every lightness, so contrast stays as it was). Glass picks it up
+   from behind, so the bar, the windows' frames and the menus carry the same
+   rainbow, each where it sits on the screen. It stands still: nothing behind
+   the glass changes, so WebKit has nothing to miss. The accent is one quiet hue. */
+:root[data-tint="spectrum"]{ --tint-h:300;
+  /* Nova in grey light (lightness only): the rainbow above gives every point its hue */
+  --nova-a:     light-dark(oklch(.86 .02 300), oklch(.56 .05 300));
+  --nova-b:     light-dark(oklch(.93 .01 300), oklch(.36 .04 300));
+  --nova-c:     light-dark(oklch(.97 .005 300), oklch(.17 .02 300));
+  --nova-shard: light-dark(oklch(.70 .03 300 / .30), oklch(.72 .06 300 / .50));
+  --nova-shard-2: light-dark(oklch(.55 .03 300 / .14), oklch(.60 .05 300 / .35));
+  --nova-line:  light-dark(oklch(.62 .04 300 / .55), oklch(.90 .05 300 / .90));
+  --nova-glow:  light-dark(oklch(.86 .03 300 / .50), oklch(.70 .08 300 / .45));
+  --nova-halo:  light-dark(oklch(.70 .03 300 / .16), oklch(.85 .06 300 / .25));
+  --spectrum: linear-gradient(115deg, oklch(.82 .12 20), oklch(.86 .12 70) 18%, oklch(.90 .12 115) 34%, oklch(.86 .12 165) 50%,
+    oklch(.82 .11 230) 66%, oklch(.80 .12 290) 82%, oklch(.82 .12 345)) }
+/* two passes over everything below the windows: the hue (color), then a little
+   light (screen) that turns it pastel. The box itself stacks nothing (no z-index),
+   so both passes blend with the desk; the windows come after it at z-index 1. */
+.desk__spectrum{ display:none }
+:root[data-tint="spectrum"] .desk__spectrum{ display:block; position:absolute; inset:0; z-index:auto; pointer-events:none }
+.desk__spectrum::before, .desk__spectrum::after{ content:""; position:absolute; inset:0; z-index:1; background:var(--spectrum) }
+.desk__spectrum::before{ mix-blend-mode:color }
+.desk__spectrum::after{ mix-blend-mode:screen; opacity:.28 }
+/* the app icons keep their own colours, as they do in the bar */
+:root[data-tint="spectrum"] .icons{ z-index:2 }
+.swatch--spectrum{ background:linear-gradient(115deg, oklch(.80 .12 20), oklch(.86 .12 90), oklch(.84 .11 165), oklch(.80 .10 230), oklch(.78 .12 300)) }
 
 /* ---------- the bar's alignment: left, centre (default), right, split ---------- */
 :root[data-bar-align="left"] .taskbar{ justify-content:flex-start }
@@ -1271,6 +1295,8 @@ img.app-art, img.win__icon{ object-fit:contain; border-radius:22% }
    the sheen has the same corners. On a touch screen nothing keeps its hover
    look after a tap (iPad). */
 .tb.is-gliding{ overflow-x:clip; overflow-y:visible }
+.tb.is-measuring .is-entering{ animation:none !important }
+.tb.is-measuring .is-leaving{ display:none !important }
 .tb.f-glass{ border-color:transparent;
   box-shadow:inset 0 0 0 var(--hair) var(--glass-line), 0 0 0 var(--hair) var(--glass-edge), var(--shadow-8) }
 .tb.f-glass::before{ inset:calc(var(--hair) * -1) }
@@ -1383,3 +1409,43 @@ body{ touch-action:manipulation; -webkit-tap-highlight-color:transparent }
 :root[data-glass-tick] .f-glass{ -webkit-backdrop-filter:var(--blur-2) hue-rotate(.01deg); backdrop-filter:var(--blur-2) hue-rotate(.01deg) }
 :root[data-glass-tick] .f-glass--thin{ -webkit-backdrop-filter:var(--blur-1) hue-rotate(.01deg); backdrop-filter:var(--blur-1) hue-rotate(.01deg) }
 :root[data-glass-tick] .f-glass--deep{ -webkit-backdrop-filter:var(--blur-3) hue-rotate(.01deg); backdrop-filter:var(--blur-3) hue-rotate(.01deg) }
+
+/* ---------- Einstellungen for the real system: updates, disks, time zone ---------- */
+.opt__acts{ display:flex; gap:var(--s-2); flex:none }
+.opt__acts[hidden]{ display:none }
+.up__list{ display:grid; max-height:240px; overflow:auto; border-top:var(--hair) solid var(--divider) }
+.up__list[hidden], .up__log[hidden]{ display:none }
+.up__pkg{ display:flex; justify-content:space-between; gap:var(--s-4); padding:var(--s-2) var(--s-5); font-size:var(--fs-200); line-height:var(--lh-200) }
+.up__pkg b{ font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.up__pkg small{ color:var(--text-dim); font-family:var(--mono); white-space:nowrap }
+.up__log{ margin:0; padding:var(--s-3) var(--s-5); max-height:200px; overflow:auto; border-top:var(--hair) solid var(--divider);
+  font:var(--fs-100)/var(--lh-100) var(--mono); color:var(--text-dim); white-space:pre-wrap; word-break:break-word }
+.disk__meter{ max-width:none }
+.tz__pick{ width:auto; max-width:260px; flex:none }
+.tz__pick[hidden]{ display:none }
+:root[data-phone] .tb--status .tb__desk{ width:auto }
+
+/* ---------- the start menu, wider: pinned, places, recent; every app one click further ---------- */
+:root:not([data-phone]) .pop--launch{ width:min(520px, calc(100vw - 2 * var(--s-4))) }
+.launch__hrow{ display:flex; align-items:center; justify-content:space-between; gap:var(--s-3); margin-bottom:var(--s-2) }
+.launch__hrow .launch__h{ margin-bottom:0 }
+.launch__more{ display:inline-flex; align-items:center; gap:var(--s-1); height:28px; padding:0 var(--s-2) 0 var(--s-3); border:0; border-radius:var(--r-control);
+  background:var(--surface-2); color:var(--text); font-size:var(--fs-200); cursor:pointer }
+.launch__more:hover{ background:var(--surface-3) }
+.launch__more svg{ width:14px; height:14px }
+.launch__more--back{ padding:0 var(--s-3) 0 var(--s-2) }
+.launch__count{ color:var(--text-dim); font:500 var(--fs-chrome-xs)/1 var(--mono); letter-spacing:var(--tr-chrome-xs); text-transform:uppercase }
+.launch__places{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:var(--s-1) }
+.launch__place{ display:flex; align-items:center; gap:var(--s-2); min-width:0; height:36px; padding:0 var(--s-3); border:0; border-radius:var(--r-control);
+  background:none; color:var(--text); font-size:var(--fs-200); cursor:pointer; text-align:left }
+.launch__place:hover, .launch__place:focus-visible{ background:var(--surface-2); outline:none }
+.launch__place svg{ width:17px; height:17px; flex:none; color:var(--acc) }
+.launch__place span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.launch__all{ min-height:0; display:grid; grid-template-rows:auto minmax(0, 1fr); padding-bottom:var(--s-2) }
+.launch__all[hidden]{ display:none }
+.launch__all .launch__list{ overflow:auto; align-content:start; max-height:min(460px, 60vh) }
+.launch__letter{ margin:var(--s-3) var(--s-3) var(--s-1); font:600 var(--fs-200)/1 var(--mono); color:var(--text-dim) }
+.launch__letter:first-child{ margin-top:var(--s-1) }
+:root[data-phone] .launch__places{ grid-template-columns:repeat(2, minmax(0, 1fr)) }
+.launch__item > .app-art{ width:28px; height:28px; flex:none }
+.pop--launch{ grid-template-columns:minmax(0, 1fr) }

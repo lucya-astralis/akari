@@ -11,6 +11,7 @@
 #   tools/devvm.sh archive   a signed test archive from them and akari-distro, into .devvm/apt
 #   tools/devvm.sh fromarchive  Akari from that archive, as a user installs it (keyring, source, apt)
 #   tools/devvm.sh deploy    this checkout over the installed package (/opt/akari/src), akarid restarts
+#   tools/devvm.sh sync      only the files (static changes need no restart; after deploy)
 #   tools/devvm.sh undeploy  back to the installed package
 #   tools/devvm.sh stop      shut it down
 #   tools/devvm.sh reset     back to a fresh Debian (the working disk goes)
@@ -158,6 +159,8 @@ cmd_deploy() {
   say "deployed (akarid restarted; open sessions keep their code until they end)"
 }
 
+cmd_sync() { _sync; say "synced (no restart)"; }
+
 cmd_undeploy() {
   ssh_vm 'sudo rm -f /etc/systemd/system/akarid.service.d/dev.conf /etc/systemd/system/akari-session@.service.d/dev.conf
           sudo systemctl daemon-reload && sudo systemctl restart akarid'
@@ -257,6 +260,6 @@ cmd_status() {
 }
 
 case "${1:-}" in
-  init|start|wait|ssh|deploy|undeploy|build|archive|fromarchive|install|stop|reset|status) c="$1"; shift; "cmd_$c" "$@" ;;
+  init|start|wait|ssh|deploy|sync|undeploy|build|archive|fromarchive|install|stop|reset|status) c="$1"; shift; "cmd_$c" "$@" ;;
   *) sed -n '2,25p' "$0"; exit 1 ;;
 esac

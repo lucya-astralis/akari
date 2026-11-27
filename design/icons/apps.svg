@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="416" height="176" viewBox="0 0 416 176">
+<rect width="416" height="176" fill="#16161a"/>
+  <!-- App icons (design/icons/apps.py, do not edit here): a tile in the app's colour with
+       Nova's ray, the motif in two panes of glass. Raw colours are allowed here and only here. -->
+  <defs>
+    <!-- the clear glass in front: white, lit from above -->
+    <linearGradient id="ag-front" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity=".82"/></linearGradient>
+    <filter id="ag-drop" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="1.4" stdDeviation="1.3" flood-color="#000" flood-opacity=".22"/></filter>
+    <!-- sheen from the top, Nova's ray across, a rim bright above and faint below -->
+    <linearGradient id="ag-sheen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".34"/><stop offset=".48" stop-color="#fff" stop-opacity="0"/></linearGradient>
+    <linearGradient id="ag-ray" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".16"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+    <linearGradient id="ag-rim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".6"/><stop offset=".55" stop-color="#fff" stop-opacity=".12"/><stop offset="1" stop-color="#fff" stop-opacity=".22"/></linearGradient>
+    <clipPath id="ag-tile"><rect x="2" y="2" width="60" height="60" rx="15"/></clipPath>
+    <linearGradient id="ag-files" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6fb3ff"/><stop offset="1" stop-color="#2450d6"/></linearGradient>
+    <linearGradient id="ag-terminal" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4c4c5c"/><stop offset="1" stop-color="#121218"/></linearGradient>
+    <linearGradient id="ag-music" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff7a98"/><stop offset="1" stop-color="#8236ec"/></linearGradient>
+    <linearGradient id="ag-editor" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd666"/><stop offset="1" stop-color="#ee7c0e"/></linearGradient>
+    <linearGradient id="ag-web" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffa44f"/><stop offset="1" stop-color="#6f4cf6"/></linearGradient>
+    <linearGradient id="ag-xterm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7d7d90"/><stop offset="1" stop-color="#30303d"/></linearGradient>
+    <linearGradient id="ag-settings" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a3a9bf"/><stop offset="1" stop-color="#4b5166"/></linearGradient>
+    <linearGradient id="ag-tasks" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a796ff"/><stop offset="1" stop-color="#4f38d8"/></linearGradient>
+    <linearGradient id="ag-monitor" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#55e3a6"/><stop offset="1" stop-color="#0c8a5e"/></linearGradient>
+    <linearGradient id="ag-window" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#48e2c8"/><stop offset="1" stop-color="#0a7f7b"/></linearGradient>
+  </defs>
+  <symbol id="app-files" viewBox="0 0 64 64">
+    <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-files)"/>
+    <path d="M30 2h13L21 62H8z" fill="url(#ag-ray)" clip-path="url(#ag-tile)"/>
+    <path d="M13 22a3.5 3.5 0 0 1 3.5-3.5h9.6l4.2 4.4h17.2a3.5 3.5 0 0 1 3.5 3.5V42H13z" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/>
+    <path d="M11 30.5a3.5 3.5 0 0 1 3.5-3.5h35a3.5 3.5 0 0 1 3.5 3.8l-1.5 13.6a3.6 3.6 0 0 1-3.6 3.2H16.1a3.6 3.6 0 0 1-3.6-3.2z" fill="url(#ag-front)" filter="url(#ag-drop)"/>
+    <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-sheen)"/>
+    <rect x="2.6" y="2.6" width="58.8" height="58.8" rx="14.4" fill="none" stroke="url(#ag-rim)" stroke-width="1.2"/>
+  </symbol>
+  <symbol id="app-terminal" viewBox="0 0 64 64">
+    <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-terminal)"/>
+    <path d="M30 2h13L21 62H8z" fill="url(#ag-ray)" clip-path="url(#ag-tile)"/>
+    <rect x="11" y="15" width="42" height="34" rx="6" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/>
+    <path d="M19 25.5l7.5 6.5-7.5 6.5" fill="none" stroke="#5ee8a4" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round" filter="url(#ag-drop)"/>
+    <rect x="30" y="36" width="14" height="4.4" rx="2.2" fill="url(#ag-front)" filter="url(#ag-drop)"/>
+    <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-sheen)"/>
+    <rect x="2.6" y="2.6" width="58.8" height="58.8" rx="14.4" fill="none" stroke="url(#ag-rim)" stroke-width="1.2"/>
+  </symbol>
+  <symbol id="app-music" viewBox="0 0 64 64">
+    <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-music)"/>
+    <path d="M30 2h13L21 62H8z" fill="url(#ag-ray)" clip-path="url(#ag-tile)"/>
+    <circle cx="32" cy="32" r="20" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/>
+    <path d="M27.5 41.5V21l16-3.4v19.8" fill="none" stroke="url(#ag-front)" stroke-linecap="round" stroke-linejoin="round" filter="url(#ag-drop)" stroke-width="3.4"/>
+    <circle cx="23" cy="41.8" r="5.4" fill="url(#ag-front)" filter="url(#ag-drop)"/><circle cx="39" cy="37.8" r="5.4" fill="url(#ag-front)" filter="url(#ag-drop)"/>
+    <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-sheen)"/>
+    <rect x="2.6" y="2.6" width="58.8" height="58.8" rx="14.4" fill="none" stroke="url(#ag-rim)" stroke-width="1.2"/>
+  </symbol>
+  <symbol id="app-editor" viewBox="0 0 64 64">
+    <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-editor)"/>
+    <path d="M30 2h13L21 62H8z" fill="url(#ag-ray)" clip-path="url(#ag-tile)"/>
+    <rect x="15" y="11" width="30" height="40" rx="4.5" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8" transform="rotate(-6 30 31)"/>
+    <path d="M20.5 21.5h17M20.5 28h17M20.5 34.5h10" fill="none" stroke="url(#ag-front)" stroke-linecap="round" stroke-linejoin="round" filter="url(#ag-drop)" stroke-width="3" transform="rotate(-6 30 31)"/>
+    <path d="M47.6 27.2l3.2 3.2-14.6 14.6-5 1.8 1.8-5z" fill="url(#ag-front)" filter="url(#ag-drop)"/>
+    <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-sheen)"/>
+    <rect x="2.6" y="2.6" width="58.8" height="58.8" rx="14.4" fill="none" stroke="url(#ag-rim)" stroke-width="1.2"/>
+  </symbol>
+  <symbol id="app-web" viewBox="0 0 64 64">
+    <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-web)"/>
+    <path d="M30 2h13L21 62H8z" fill="url(#ag-ray)" clip-path="url(#ag-tile)"/>
+    <circle cx="32" cy="32" r="18" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/>
+    <g fill="none" stroke="url(#ag-front)" stroke-linecap="round" stroke-linejoin="round" filter="url(#ag-drop)" stroke-width="2.8"><ellipse cx="32" cy="32" rx="7.5" ry="18"/><path d="M15 26h34M15 38h34"/><circle cx="32" cy="32" r="18"/></g>
+    <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-sheen)"/>
+    <rect x="2.6" y="2.6" width="58.8" height="58.8" rx="14.4" fill="none" stroke="url(#ag-rim)" stroke-width="1.2"/>
+  </symbol>
+  <symbol id="app-xterm" viewBox="0 0 64 64">
+    <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-xterm)"/>
+    <path d="M30 2h13L21 62H8z" fill="url(#ag-ray)" clip-path="url(#ag-tile)"/>
+    <rect x="11" y="14" width="42" height="36" rx="6" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/>
+    <path d="M11 20a6 6 0 0 1 6-6h30a6 6 0 0 1 6 6v3H11z" fill="url(#ag-front)" filter="url(#ag-drop)"/>
+    <path d="M24 31l8 9M32 31l-8 9" stroke="#ffc65a" stroke-width="3.6" stroke-linecap="round" filter="url(#ag-drop)"/>
+    <rect x="36" y="37.5" width="9" height="3.6" rx="1.8" fill="url(#ag-front)" filter="url(#ag-drop)"/>
+    <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-sheen)"/>
+    <rect x="2.6" y="2.6" width="58.8" height="58.8" rx="14.4" fill="none" stroke="url(#ag-rim)" stroke-width="1.2"/>
+  </symbol>
+  <symbol id="app-settings" viewBox="0 0 64 64">
+    <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-settings)"/>
+    <path d="M30 2h13L21 62H8z" fill="url(#ag-ray)" clip-path="url(#ag-tile)"/>
+    <circle cx="32" cy="32" r="20" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/>
+    <path d="M29.6 12h4.8l1 5.1 3.4 1.4 4.3-2.9 3.4 3.4-2.9 4.3 1.4 3.4 5.1 1v4.8l-5.1 1-1.4 3.4 2.9 4.3-3.4 3.4-4.3-2.9-3.4 1.4-1 5.1h-4.8l-1-5.1-3.4-1.4-4.3 2.9-3.4-3.4 2.9-4.3-1.4-3.4-5.1-1v-4.8l5.1-1 1.4-3.4-2.9-4.3 3.4-3.4 4.3 2.9 3.4-1.4zM32 25.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13z" fill-rule="evenodd" fill="url(#ag-front)" filter="url(#ag-drop)"/>
+    <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-sheen)"/>
+    <rect x="2.6" y="2.6" width="58.8" height="58.8" rx="14.4" fill="none" stroke="url(#ag-rim)" stroke-width="1.2"/>
+  </symbol>
+  <symbol id="app-tasks" viewBox="0 0 64 64">
+    <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-tasks)"/>
+    <path d="M30 2h13L21 62H8z" fill="url(#ag-ray)" clip-path="url(#ag-tile)"/>
+    <rect x="13" y="15" width="38" height="9" rx="4.5" fill="url(#ag-front)" filter="url(#ag-drop)"/>
+    <rect x="13" y="27.5" width="38" height="9" rx="4.5" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/>
+    <rect x="13" y="40" width="38" height="9" rx="4.5" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/>
+    <circle cx="45.5" cy="19.5" r="2.2" fill="#4f38d8"/>
+    <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-sheen)"/>
+    <rect x="2.6" y="2.6" width="58.8" height="58.8" rx="14.4" fill="none" stroke="url(#ag-rim)" stroke-width="1.2"/>
+  </symbol>
+  <symbol id="app-monitor" viewBox="0 0 64 64">
+    <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-monitor)"/>
+    <path d="M30 2h13L21 62H8z" fill="url(#ag-ray)" clip-path="url(#ag-tile)"/>
+    <rect x="13" y="34" width="8" height="15" rx="2.5" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/><rect x="24" y="28" width="8" height="21" rx="2.5" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/>
+    <rect x="35" y="31" width="8" height="18" rx="2.5" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/><rect x="46" y="22" width="5" height="27" rx="2.5" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/>
+    <path d="M12 33l9-9 7 5 10-13 7 8 7-6" fill="none" stroke="url(#ag-front)" stroke-linecap="round" stroke-linejoin="round" filter="url(#ag-drop)" stroke-width="4"/>
+    <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-sheen)"/>
+    <rect x="2.6" y="2.6" width="58.8" height="58.8" rx="14.4" fill="none" stroke="url(#ag-rim)" stroke-width="1.2"/>
+  </symbol>
+  <symbol id="app-window" viewBox="0 0 64 64">
+    <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-window)"/>
+    <path d="M30 2h13L21 62H8z" fill="url(#ag-ray)" clip-path="url(#ag-tile)"/>
+    <rect x="12" y="15" width="40" height="34" rx="6" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/>
+    <path d="M12 21a6 6 0 0 1 6-6h28a6 6 0 0 1 6 6v4H12z" fill="url(#ag-front)" filter="url(#ag-drop)"/>
+    <rect x="18" y="31" width="16" height="4" rx="2" fill="url(#ag-front)" filter="url(#ag-drop)"/><rect x="18" y="39" width="22" height="4" rx="2" fill="#fff" fill-opacity=".55"/>
+    <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-sheen)"/>
+    <rect x="2.6" y="2.6" width="58.8" height="58.8" rx="14.4" fill="none" stroke="url(#ag-rim)" stroke-width="1.2"/>
+  </symbol>
+<use href="#app-files" x="16" y="16" width="64" height="64"/><use href="#app-terminal" x="96" y="16" width="64" height="64"/><use href="#app-music" x="176" y="16" width="64" height="64"/><use href="#app-editor" x="256" y="16" width="64" height="64"/><use href="#app-web" x="336" y="16" width="64" height="64"/><use href="#app-xterm" x="16" y="96" width="64" height="64"/><use href="#app-settings" x="96" y="96" width="64" height="64"/><use href="#app-tasks" x="176" y="96" width="64" height="64"/><use href="#app-monitor" x="256" y="96" width="64" height="64"/><use href="#app-window" x="336" y="96" width="64" height="64"/>
+</svg>

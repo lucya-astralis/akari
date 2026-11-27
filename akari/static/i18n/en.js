@@ -1,6 +1,34 @@
 /* AKARI: English. Keys are the German texts as they appear; rules cover texts with values in them. */
 window.AKARI_EN = {
   exact: {
+    // 0.13: the real system (Netzwerk, Datum & Uhrzeit, System, Updates), the start menu
+    'Netzwerk': 'Network', 'Datum & Uhrzeit': 'Date & time', 'Updates': 'Updates', 'Suchen': 'Check', 'Installieren': 'Install',
+    'Wie Akari OS im Netz steht. Eingerichtet wird das Netz von Debian (DHCP aus dem Installer); hier steht, was es gerade hat.': 'How Akari OS sits on the network. Debian sets the network up (DHCP from the installer); this shows what it has right now.',
+    'Im Browser': 'In the browser', 'Router': 'Router', 'DNS': 'DNS', 'Anschlüsse': 'Interfaces',
+    'Die Uhr des Systems: für Dateien, Protokolle und alle Konten gleich.': 'The system clock: the same for files, logs and every account.',
+    'Zeitzone': 'Time zone', 'Zeit aus dem Netz': 'Network time', 'Zeitzone und Zeit ändert ein Konto, das verwalten darf.': 'An account that manages changes the time zone and time.',
+    'Gerät': 'Device', 'Gerätename': 'Device name', 'Ändern': 'Change', 'Prozessor': 'Processor', 'Läuft auf': 'Runs on', 'Ein/Aus': 'Power',
+    'Neu starten': 'Restart', 'Alle Sitzungen enden; Akari OS ist nach etwa einer Minute wieder da.': 'Every session ends; Akari OS is back after about a minute.',
+    'Ausschalten': 'Shut down', 'Wieder an geht es nur am Gerät oder in der VM-Verwaltung.': 'It only comes back on at the machine or in the VM manager.',
+    'Angeheftet': 'Pinned', 'Alle Apps': 'All apps', 'Orte': 'Places',
+    'Updates werden installiert …': 'Installing updates …', 'Suche nach Updates …': 'Checking for updates …', '1 Update': '1 update', '{n} Updates': '{n} updates', 'Alles aktuell': 'Up to date',
+    'Das Installieren ist fehlgeschlagen. Das Protokoll steht unten.': 'Installing failed. The log is below.', 'Die Suche ist fehlgeschlagen. Das Protokoll steht unten.': 'The check failed. The log is below.',
+    'apt arbeitet. Du kannst das Fenster schließen, es läuft weiter.': 'apt is working. You can close the window, it carries on.',
+    'Zuletzt gesucht': 'Last checked', 'Noch nicht gesucht.': 'Not checked yet.', 'Updates installieren?': 'Install updates?',
+    'apt bringt alle Pakete auf den neuen Stand. Wird Akari selbst aktualisiert, startet es neu, und du meldest dich danach wieder an.': 'apt brings every package up to date. If Akari itself is updated, it restarts and you sign in again afterwards.',
+    'Kern': 'core', 'Kerne': 'cores', 'Virtuelle Maschine': 'Virtual machine', 'Eigener Rechner': 'Physical machine', 'frei von': 'free of',
+    'So heißt der Rechner im Netz und im Terminal. Kleinbuchstaben, Ziffern und -.': 'What the machine is called on the network and in the terminal. Lowercase letters, digits and -.',
+    'Der Gerätename ist geändert. Neue Terminals zeigen ihn.': 'The device name is changed. New terminals show it.',
+    'Ausschalten?': 'Shut down?', 'Neu starten?': 'Restart?',
+    'Alle Sitzungen aller Konten enden, nicht Gesichertes geht verloren. Wieder an geht es nur am Gerät.': 'Every session of every account ends, anything unsaved is lost. It only comes back on at the machine.',
+    'Alle Sitzungen aller Konten enden, nicht Gesichertes geht verloren. Danach meldest du dich neu an.': 'Every session of every account ends, anything unsaved is lost. Afterwards you sign in again.',
+    'Akari OS schaltet aus.': 'Akari OS is shutting down.', 'Akari OS startet neu.': 'Akari OS is restarting.',
+    'Keine Adresse': 'No address', 'getrennt': 'disconnected', 'Keiner': 'None', 'an': 'on', 'aus': 'off', 'Keine Anschlüsse': 'No interfaces',
+    'Auf diesem System nicht verfügbar.': 'Not available on this system.', 'Aus: die Uhr läuft für sich.': 'Off: the clock runs on its own.',
+    'An und abgeglichen.': 'On and in sync.', 'An, gleicht gerade ab.': 'On, syncing.',
+    'Linux-Programm': 'Linux program', 'App von Akari': 'Akari app', 'Apps': 'Apps',
+    'Schreibtisch': 'Desktop', 'Dokumente': 'Documents', 'Bilder': 'Pictures', 'Videos': 'Videos',
+    'Neu starten …': 'Restart …', 'Ausschalten …': 'Shut down …', 'wechseln': 'switch',
     // Lucent
     'Lucent verwaltet Akari OS von außen: Zustand, Konten, SSH und Wartung auf seinen Seiten, Anmelden mit einem Lucent-Konto. Akari behält seine eigene Oberfläche und läuft auch ohne Lucent weiter.':
       'Lucent manages Akari OS from outside: state, accounts, SSH and maintenance on its pages, signing in with a Lucent account. Akari keeps its own interface and keeps working without Lucent.',
