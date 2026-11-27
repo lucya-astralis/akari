@@ -7,7 +7,14 @@ instead, token and all: whoever sits at the console owns the machine anyway.
 
 agetty shows every file in /run/issue.d before its prompt; akarid writes
 50-akari.issue there at start and again when the address changes, and
-asks agetty to draw the prompt again (agetty --reload)."""
+asks agetty to draw the prompt again (agetty --reload).
+
+kmscon (the console since 0.16, akari-shell) reads the files only when it
+starts, and at boot it starts before akarid has an address to write: on a
+machine that waits for DHCP the code came only after the first logout. So
+when the text changes and nobody is signed in on tty1, akarid starts that
+console again; someone signed in there (a logind session on VT 1) is never
+interrupted."""
 
 from __future__ import annotations
 
@@ -104,14 +111,41 @@ def text(ip: str | None, waiting: bool = False) -> str:
     return out.replace("\x00", "\\n")
 
 
+def _run(*cmd: str) -> str:
+    with contextlib.suppress(OSError, subprocess.SubprocessError):
+        return subprocess.run(cmd, capture_output=True, text=True, timeout=5).stdout
+    return ""
+
+
+def signed_in_on_tty1() -> bool:
+    """Whether someone is signed in at the machine's first console (a user session on VT 1)."""
+    for line in _run("loginctl", "list-sessions", "--no-legend").splitlines():
+        sid = line.split()[0] if line.split() else ""
+        props = dict(l.split("=", 1) for l in _run("loginctl", "show-session", sid, "-p", "VTNr", "-p", "Class").splitlines() if "=" in l)
+        if props.get("VTNr") == "1" and props.get("Class") == "user":
+            return True
+    return False
+
+
+def redraw() -> None:
+    """Show the new text: agetty draws its prompt again; kmscon, which cannot, starts again
+    on tty1 while nobody is signed in there."""
+    _run("agetty", "--reload")
+    if _run("systemctl", "is-active", "kmsconvt@tty1.service").strip() == "active" and not signed_in_on_tty1():
+        _run("systemctl", "restart", "kmsconvt@tty1.service")
+
+
 def write(ip: str | None, waiting: bool = False) -> None:
+    new = text(ip, waiting)
+    with contextlib.suppress(OSError):
+        if ISSUE.read_text(encoding="utf-8") == new:
+            return                     # akarid started again (an update): the console already says this
     ISSUE.parent.mkdir(parents=True, exist_ok=True)
     tmp = ISSUE.with_suffix(".tmp")
-    tmp.write_text(text(ip, waiting), encoding="utf-8")
+    tmp.write_text(new, encoding="utf-8")
     os.chmod(tmp, 0o644 if not accounts.needs_setup() else 0o600)
     os.replace(tmp, ISSUE)
-    with contextlib.suppress(OSError, subprocess.SubprocessError):
-        subprocess.run(["agetty", "--reload"], capture_output=True, timeout=3)
+    redraw()
 
 
 async def watch() -> None:

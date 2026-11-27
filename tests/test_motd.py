@@ -27,3 +27,38 @@ def test_the_qr_code_has_the_same_margin_on_every_side(monkeypatch):
     assert rows[0] == "█" * n                                   # two light rows above: one full character
     assert rows[1][console.QUIET:console.QUIET + 3] == "▄█▄"    # dark corners on top, light below
     assert all(r[:console.QUIET] == r[-console.QUIET:] for r in rows[1:])  # left margin = right margin
+
+
+def test_kmscon_starts_again_only_when_nobody_is_signed_in_on_tty1(monkeypatch):
+    from akari import console
+    ran = []
+    sessions = {"5": "VTNr=1\nClass=user\n", "7": "VTNr=0\nClass=user\n"}
+
+    def run(*cmd):
+        ran.append(cmd)
+        if cmd[:2] == ("loginctl", "list-sessions"):
+            return "".join(f"{s} 1002 x seat0 1 user pts/0 no -\n" for s in sessions)
+        if cmd[:2] == ("loginctl", "show-session"):
+            return sessions[cmd[2]]
+        if cmd[:2] == ("systemctl", "is-active"):
+            return "active\n"
+        return ""
+    monkeypatch.setattr(console, "_run", run)
+    console.redraw()
+    assert ("systemctl", "restart", "kmsconvt@tty1.service") not in ran      # someone at the console
+    sessions.pop("5"); ran.clear()
+    console.redraw()
+    assert ("systemctl", "restart", "kmsconvt@tty1.service") in ran
+
+
+def test_the_same_text_is_not_written_again(monkeypatch, tmp_path):
+    from akari import accounts, console
+    monkeypatch.setattr(console, "ISSUE", tmp_path / "50-akari.issue")
+    monkeypatch.setattr(console, "_matrix", lambda text: [])
+    monkeypatch.setattr(accounts, "needs_setup", lambda: False)
+    drawn = []
+    monkeypatch.setattr(console, "redraw", lambda: drawn.append(1))
+    console.write("10.0.2.15"); console.write("10.0.2.15")
+    assert drawn == [1]
+    console.write("10.0.2.16")
+    assert drawn == [1, 1]
