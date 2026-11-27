@@ -51,6 +51,8 @@ override_dh_auto_install:
 	echo 'source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh' \
 	  > $(S)/usr/share/oh-my-zsh/custom/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.plugin.zsh
 	install -D -m 755 vendor/gitstatusd/gitstatusd-linux-$(GITSTATUS_ARCH) $(S)/usr/libexec/akari-shell/gitstatusd-linux-$(GITSTATUS_ARCH)
+	install -D -m 755 system/console/akari-console $(S)/usr/libexec/akari-shell/akari-console
+	install -D -m 644 system/console/kmsconvt-akari.conf $(S)/usr/lib/systemd/system/kmsconvt@.service.d/akari.conf
 	install -d $(S)/usr/share/fonts/truetype/meslo-nf $(S)/usr/share/fonts/truetype/akari
 	install -m 644 vendor/meslo/*.ttf $(S)/usr/share/fonts/truetype/meslo-nf/
 	install -m 644 image/rootfs/usr/share/fonts/truetype/akari/*.ttf $(S)/usr/share/fonts/truetype/akari/

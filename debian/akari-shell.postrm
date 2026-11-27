@@ -1,0 +1,8 @@
+#!/bin/sh
+set -e
+# kmscon's links go with akari-shell: agetty again on the console
+if [ "$1" = remove ] || [ "$1" = purge ]; then
+	deb-systemd-helper purge kmsconvt@tty1.service >/dev/null || true
+fi
+#DEBHELPER#
+exit 0

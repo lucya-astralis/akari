@@ -1,0 +1,13 @@
+#!/bin/sh
+set -e
+# The console on the machine runs in kmscon from now on (kmsconvt@.service with
+# akari-shell's drop-in), on tty1 and on every VT logind opens (autovt@). Only
+# when akari-shell comes for the first time or from before 0.16: whoever turned
+# it off afterwards keeps it off.
+if [ "$1" = configure ]; then
+	if [ -z "$2" ] || dpkg --compare-versions "$2" lt 0.16~; then
+		deb-systemd-helper enable kmsconvt@tty1.service || true
+	fi
+fi
+#DEBHELPER#
+exit 0

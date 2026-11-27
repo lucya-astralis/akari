@@ -1,0 +1,18 @@
+#!/bin/sh
+# Akari OS: the console on the machine itself, as kmscon draws it. kmscon
+# renders with real fonts, so the console has MesloLGS NF, the Nerd Font the
+# shell's prompt (powerlevel10k) is made for: its symbols, ▀ ▄ for Akari's mark
+# and the QR code, and 256 colours. The keyboard is the system's
+# (/etc/default/keyboard, as the installer set it). Started by
+# kmsconvt@.service (akari-shell's drop-in) on each VT; if kmscon cannot run
+# (no DRM, as on a serial console), systemd falls back to agetty.
+set -eu
+XKBMODEL="" XKBLAYOUT="" XKBVARIANT="" XKBOPTIONS=""
+[ -r /etc/default/keyboard ] && . /etc/default/keyboard
+set -- "$@" --font-name "MesloLGS NF" --term xterm-256color \
+	--issue-path /etc/issue.d:/run/issue.d
+[ -n "$XKBMODEL" ] && set -- "$@" --xkb-model "$XKBMODEL"
+[ -n "$XKBLAYOUT" ] && set -- "$@" --xkb-layout "$XKBLAYOUT"
+[ -n "$XKBVARIANT" ] && set -- "$@" --xkb-variant "$XKBVARIANT"
+[ -n "$XKBOPTIONS" ] && set -- "$@" --xkb-options "$XKBOPTIONS"
+exec /usr/bin/kmscon "$@"

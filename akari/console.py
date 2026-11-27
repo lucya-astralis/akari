@@ -47,12 +47,32 @@ def address() -> str | None:
     return None
 
 
-def _qr(text: str) -> str:
+QUIET = 2          # light modules round the code: enough for a phone, small enough for 25 rows
+
+
+def _matrix(text: str) -> list[list[bool]]:
+    """The code's modules, True for dark, without a margin (qrencode's ASCII: "##" dark, "  " light)."""
     with contextlib.suppress(OSError, subprocess.SubprocessError):
-        r = subprocess.run(["qrencode", "-t", "UTF8", "-m", "1", text], capture_output=True, text=True, timeout=5)
+        r = subprocess.run(["qrencode", "-t", "ASCII", "-m", "0", text], capture_output=True, text=True, timeout=5)
         if r.returncode == 0:
-            return r.stdout
-    return ""
+            return [[line[i:i + 2] == "##" for i in range(0, len(line) - 1, 2)] for line in r.stdout.splitlines() if line]
+    return []
+
+
+def _qr(text: str) -> str:
+    """The code in half blocks, two modules a character: light modules lit, dark ones the console's
+    black, so it reads as a printed code. The quiet zone is the same on every side; with an odd
+    number of rows the last half row is light too (part of the margin below)."""
+    m = _matrix(text)
+    if not m:
+        return ""
+    n = len(m) + 2 * QUIET
+    light = [[True] * n for _ in range(QUIET)] + [[True] * QUIET + [not d for d in row] + [True] * QUIET for row in m] \
+        + [[True] * n for _ in range(QUIET)]
+    if len(light) % 2:
+        light.append([True] * n)
+    glyph = {(True, True): "█", (True, False): "▀", (False, True): "▄", (False, False): " "}
+    return "\n".join("".join(glyph[(a, b)] for a, b in zip(light[i], light[i + 1])) for i in range(0, len(light), 2)) + "\n"
 
 
 def text(ip: str | None, waiting: bool = False) -> str:
@@ -70,7 +90,7 @@ def text(ip: str | None, waiting: bool = False) -> str:
             body = ["  Im Browser:", f"  {url}"]
             qr = _qr(url)
     # Akari's mark beside the name and the address, as in the welcome after login (motd.py);
-    # \n and \l are agetty's: the machine's name and the console, added after escaping ours
+    # \n is the machine's name (agetty and kmscon both know it), added after escaping ours
     info = [f"{config.OS_NAME} {config.VERSION}", "\x00", "", *[l.strip() for l in body]]
     mark = [l.replace("\x01", "").replace("\x02", "") for l in motd.LOGO]
     lines = [""]
@@ -81,7 +101,7 @@ def text(ip: str | None, waiting: bool = False) -> str:
     if qr:
         lines += ["  " + l for l in qr.rstrip("\n").splitlines()] + [""]
     out = "\n".join(l.replace("\\", "\\\\") for l in lines) + "\n"
-    return out.replace("\x00", "\\n · \\l")
+    return out.replace("\x00", "\\n")
 
 
 def write(ip: str | None, waiting: bool = False) -> None:

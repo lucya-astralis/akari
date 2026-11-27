@@ -104,7 +104,8 @@ Depends: ${misc:Depends},
          zsh-autosuggestions,
          zsh-syntax-highlighting,
          fastfetch,
-         fontconfig
+         fontconfig,
+         kmscon
 Description: zsh as Akari OS sets it up: oh-my-zsh, powerlevel10k, fastfetch
  The shell of Akari OS, for the terminal in the browser and for ssh:
  oh-my-zsh and powerlevel10k on fixed versions, read-only in /usr/share,
@@ -113,3 +114,7 @@ Description: zsh as Akari OS sets it up: oh-my-zsh, powerlevel10k, fastfetch
  Akari logo in the account's accent colour.
  .
  New accounts get a ~/.zshrc that loads it (/etc/skel/.zshrc).
+ .
+ The console on the machine itself runs in kmscon with the same font, so
+ the prompt's symbols, 256 colours and Akari's mark show there too; the
+ keyboard is the system's. Where kmscon cannot run, agetty takes over.

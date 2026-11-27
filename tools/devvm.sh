@@ -16,6 +16,8 @@
 #   tools/devvm.sh stop      shut it down
 #   tools/devvm.sh reset     back to a fresh Debian (the working disk goes)
 #   tools/devvm.sh status
+#   tools/devvm.sh screen [png] what its screen shows (QEMU screendump)
+#   tools/devvm.sh keys WORD… type at its console ("ret" for Enter)
 #
 # Ports on this machine (127.0.0.1 only):
 #   2223 → 22 (SSH)   8443 → 443 (Caddy)   8131 → 8130 (akarid)
@@ -116,9 +118,36 @@ cmd_start() {
     -drive file="$SEED",media=cdrom,readonly=on \
     -nic user,model=virtio-net-pci,hostfwd=tcp:127.0.0.1:$SSH_PORT-:22,hostfwd=tcp:127.0.0.1:8443-:443,hostfwd=tcp:127.0.0.1:8131-:8130 \
     -device virtio-rng-pci \
-    -display none -serial file:"$LOG" -monitor none \
+    -vga std -display none -serial file:"$LOG" -monitor unix:"$DIR/monitor.sock",server,nowait \
     -daemonize -pidfile "$PID"
   say "started (pid $(cat "$PID")); console: $LOG"
+}
+
+monitor() { printf '%s\n' "$@" | nc -U "$DIR/monitor.sock" >/dev/null; }
+
+cmd_screen() {
+  # what the VM's screen shows now (QEMU's screendump), as a PNG
+  local out="${1:-$DIR/screen.png}"
+  rm -f "$DIR/screen.ppm"; monitor "screendump $DIR/screen.ppm"
+  for _ in $(seq 1 20); do [[ -s "$DIR/screen.ppm" ]] && break; sleep 0.2; done
+  sips -s format png "$DIR/screen.ppm" --out "$out" >/dev/null 2>&1 || python3 -c "import sys; sys.exit('no sips')"
+  say "screen: $out"
+}
+
+cmd_keys() {
+  # type into the VM's console: letters, digits, space; "ret" alone is Enter
+  local cmds=() ch
+  for word in "$@"; do
+    if [[ "$word" == ret ]]; then cmds+=("sendkey ret"); continue; fi
+    for ((i = 0; i < ${#word}; i++)); do
+      ch="${word:i:1}"
+      case "$ch" in
+        [a-z0-9]) cmds+=("sendkey $ch") ;; [A-Z]) cmds+=("sendkey shift-$(tr A-Z a-z <<<"$ch")") ;;
+        -) cmds+=("sendkey minus") ;; .) cmds+=("sendkey dot") ;; /) cmds+=("sendkey slash") ;; ' ') cmds+=("sendkey spc") ;;
+      esac
+    done
+  done
+  monitor "${cmds[@]}"
 }
 
 cmd_wait() {
@@ -260,6 +289,6 @@ cmd_status() {
 }
 
 case "${1:-}" in
-  init|start|wait|ssh|deploy|sync|undeploy|build|archive|fromarchive|install|stop|reset|status) c="$1"; shift; "cmd_$c" "$@" ;;
+  init|start|wait|ssh|deploy|sync|undeploy|build|archive|fromarchive|install|stop|reset|status|screen|keys) c="$1"; shift; "cmd_$c" "$@" ;;
   *) sed -n '2,25p' "$0"; exit 1 ;;
 esac

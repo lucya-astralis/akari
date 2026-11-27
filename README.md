@@ -159,6 +159,10 @@ root darf nicht. Die Host-Schlüssel liegen in `/data/system/ssh/`.
   Das Web-Terminal nutzt MesloLGS NF, die Schrift, für die p10k gemacht ist.
 - fastfetch begrüßt jedes neue Terminal mit dem Adler (`/etc/xdg/fastfetch/config.jsonc`).
   `AKARI_QUIET=1` in `~/.zshrc` schaltet das ab.
+- Die Konsole am Rechner selbst läuft in kmscon (aus trixie-backports, über Akaris
+  Paketquelle) mit MesloLGS NF: p10k-Symbole, 256 Farben, Akaris Zeichen und der
+  QR-Code vor der Anmeldung, danach die Begrüßung (`update-motd.d/10-akari`).
+  Ohne DRM (serielle Konsole) übernimmt agetty mit akari-bases Begrüßung.
 
 ## Grenzen gegenüber lucya-aio
 

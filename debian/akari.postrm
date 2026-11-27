@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 if [ "$1" = remove ] || [ "$1" = purge ] || [ "$1" = abort-install ]; then
-	for f in /etc/update-motd.d/10-uname /etc/motd /etc/issue; do
+	for f in /etc/update-motd.d/10-uname /etc/motd /etc/issue; do  # /etc/issue: from 0.15
 		if dpkg-divert --listpackage "$f" | grep -qx akari; then
 			rm -f "$f"
 			dpkg-divert --package akari --quiet --remove --rename --divert "$f.debian" "$f"

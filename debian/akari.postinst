@@ -1,15 +1,18 @@
 #!/bin/sh
 set -e
-# Debian's words at the console make way for Akari's: the uname line and the
-# licence text after login (Akari's welcome is update-motd.d/10-akari), the
-# "Debian GNU/Linux 13" line before it (akarid writes /run/issue.d). Diverted,
-# not overwritten: removing akari puts them back.
+# Debian's words after login make way for Akari's welcome (update-motd.d/10-akari):
+# the uname line and the licence text. Diverted, not overwritten: removing akari
+# puts them back. The line before login is akari-base's (its getty drop-in), so
+# /etc/issue stays Debian's; 0.15 diverted it too, that is undone here.
 if [ "$1" = configure ]; then
-	for f in /etc/update-motd.d/10-uname /etc/motd /etc/issue; do
+	for f in /etc/update-motd.d/10-uname /etc/motd; do
 		dpkg-divert --package akari --quiet --add --rename --divert "$f.debian" "$f"
 	done
 	[ -e /etc/motd ] || : > /etc/motd
-	[ -e /etc/issue ] || printf '\n' > /etc/issue
+	if dpkg-divert --listpackage /etc/issue | grep -qx akari; then
+		rm -f /etc/issue
+		dpkg-divert --package akari --quiet --remove --rename --divert /etc/issue.debian /etc/issue
+	fi
 fi
 #DEBHELPER#
 if [ "$1" = configure ] && [ -d /run/systemd/system ]; then
