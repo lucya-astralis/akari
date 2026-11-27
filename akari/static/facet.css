@@ -568,10 +568,14 @@ select.f-input, .f-select{ appearance:none; -webkit-appearance:none; padding-rig
 .f-nav{ display:grid; gap:var(--s-0) }
 .f-nav__item{ position:relative; display:flex; align-items:center; gap:var(--s-4); padding:9px var(--s-4); border-radius:var(--r-md);
   color:var(--text-dim); font:500 var(--fs-text-sm)/1.2 var(--sans); cursor:pointer;
-  transition:color var(--dur-1) var(--ease), background-color var(--dur-1) var(--ease), transform var(--dur-2) var(--spring) }
+  transition:color var(--dur-1) var(--ease), background-color var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease), transform var(--dur-2) var(--spring) }
 .f-nav__item svg{ width:18px; height:18px; flex:none }
-.f-nav__item:hover{ color:var(--text); background:var(--surface-2) }
-.f-nav__item.is-on{ color:var(--text); background:var(--surface-3) }
+button.f-nav__item{ width:100%; border:0; background:none; text-align:left }   /* a button looks like a link here */
+/* 1.9: the chosen entry is a card one step above the bar (light: the brightest
+   surface, dark: the next lighter one), with the smallest shadow; hover is half
+   that step. Grey on grey hardly showed in the light. */
+.f-nav__item:hover{ color:var(--text); background:light-dark(color-mix(in oklch, var(--surface) 70%, transparent), color-mix(in oklch, var(--surface-3) 55%, transparent)) }
+.f-nav__item.is-on{ color:var(--text); background:light-dark(var(--surface), var(--surface-3)); box-shadow:var(--shadow-4) }
 .f-nav__item.is-on svg{ color:var(--acc) }
 .f-nav__item .f-count{ margin-left:auto }
 .f-nav__group{ padding:var(--s-5) var(--s-4) var(--s-2) }

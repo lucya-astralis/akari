@@ -44,8 +44,8 @@
       win.body.innerHTML = `
         <aside class="mu__side" aria-label="Bereiche">
           <div class="mu__brand"><svg><use href="#app-music"/></svg><b>Musik</b></div>
-          <nav class="mu__nav">${NAV.map(([id, ic, label]) =>
-            `<button data-go="${id}" class="f-tip" data-tip="${label}"><svg><use href="#${ic}"/></svg><span>${label}</span></button>`).join('')}</nav>
+          <nav class="f-nav mu__nav">${NAV.map(([id, ic, label]) =>
+            `<button data-go="${id}" class="f-nav__item f-tip" data-tip="${label}"><svg><use href="#${ic}"/></svg><span>${label}</span></button>`).join('')}</nav>
           <div class="mu__source">
             <span class="mu__label">Quelle</span>
             <div class="mu__seg" role="tablist" aria-label="Quelle">

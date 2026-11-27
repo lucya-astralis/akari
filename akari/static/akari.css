@@ -1121,13 +1121,7 @@ img.app-art, img.win__icon{ object-fit:contain; border-radius:22% }
   border-right:var(--hair) solid var(--stroke-1) }
 .mu__brand{ display:flex; align-items:center; gap:var(--s-2); padding:0 var(--s-2) }
 .mu__brand svg{ width:26px; height:26px } .mu__brand b{ font-size:var(--fs-400); font-weight:600 }
-.mu__nav{ display:grid; gap:var(--s-0) }
-.mu__nav button{ display:flex; align-items:center; gap:var(--s-3); padding:var(--s-3) var(--s-3); border:0; border-radius:var(--r-control); background:none;
-  color:var(--text-dim); font:500 var(--fs-300) var(--sans); text-align:left; cursor:pointer; transition:background-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease) }
-.mu__nav button:hover{ background:var(--surface); color:var(--text) }
-.mu__nav button.is-on{ background:var(--surface); color:var(--text); box-shadow:var(--shadow-1) }
-.mu__nav button.is-on svg{ color:var(--acc) }
-.mu__nav svg{ width:18px; height:18px; flex:none }
+/* the list itself is Facet's .f-nav (1.9), as in every sidebar */
 .mu__nav .f-tip[data-tip]::after{ display:none }
 .mu__source{ margin-top:auto; display:grid; gap:var(--s-2); padding:var(--s-3) var(--s-2) 0; border-top:var(--hair) solid var(--stroke-1) }
 .mu__label{ font:600 var(--fs-100)/1 var(--mono); letter-spacing:.1em; text-transform:uppercase; color:var(--text-ghost) }
@@ -1302,7 +1296,7 @@ img.app-art, img.win__icon{ object-fit:contain; border-radius:22% }
 .mu.is-narrow{ grid-template-columns:minmax(0, 1fr); grid-template-rows:auto minmax(0, 1fr) auto; grid-template-areas:"side" "main" "bar" }
 .mu.is-narrow .mu__side{ flex-direction:row; align-items:center; gap:var(--s-2); padding:var(--s-2) var(--s-3); border-right:0; border-bottom:var(--hair) solid var(--stroke-1); overflow-x:auto }
 .mu.is-narrow .mu__brand b, .mu.is-narrow .mu__nav span, .mu.is-narrow .mu__label, .mu.is-narrow .mu__srv{ display:none }
-.mu.is-narrow .mu__nav{ display:flex; gap:var(--s-0) } .mu.is-narrow .mu__nav button{ padding:var(--s-3) }
+.mu.is-narrow .mu__nav{ display:flex; gap:var(--s-0) } .mu.is-narrow .mu__nav button{ width:auto; padding:var(--s-3) }
 .mu.is-narrow .mu__nav .f-tip[data-tip]::after{ display:block }
 .mu.is-narrow .mu__source{ margin:0 0 0 auto; padding:0; border:0 }
 .mu.is-narrow .mu__main{ padding:var(--s-4) }
