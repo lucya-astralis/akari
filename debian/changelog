@@ -1,3 +1,19 @@
+akari (0.14.0) trixie; urgency=medium
+
+  * Docker: a new app to manage containers. Containers grouped by Compose
+    project with start, stop, restart, pause and remove; details with
+    load, environment (secrets hidden) and a live log; new containers
+    from a form, with system folders and Docker's socket kept out;
+    images, volumes, networks and clean-up. Docker installs from Debian
+    with one click. Only for accounts that manage.
+  * Lucent with one click: Akari starts lucya-aio, shows Lucent's address
+    and setup code, and fills in the pairing. Caddy opens :8131 for
+    Lucent's tool API only, without TLS, for a Lucent on the same machine.
+  * Lucent's status page for Akari works again, and shows and installs
+    updates.
+
+ -- Akari OS <packages@lucya.systems>  Fri, 27 Nov 2026 23:00:00 +0100
+
 akari (0.13.0) trixie; urgency=medium
 
   * Settings for the real system: network, date and time (time zone,
