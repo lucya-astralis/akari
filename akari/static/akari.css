@@ -1515,3 +1515,103 @@ body{ touch-action:manipulation; -webkit-tap-highlight-color:transparent }
   .dk__row--plain{ grid-template-columns:minmax(0, 1fr) auto }
   .dk__head{ flex-direction:column }
 }
+
+/* ---------- Willkommen (apps/welcome.js): a short scene, then five pages ----------
+   The scene is dark whatever the theme: lucya.systems' eagle gathers from its
+   pieces, gives way to Akari's mark, whose rays slide in along their slant. */
+.wl{ position:relative; display:flex; overflow:hidden; padding:0 }
+.wl__stage{ position:absolute; inset:0; z-index:2; display:grid; place-items:center; overflow:hidden; cursor:pointer; color:#fff;
+  background:radial-gradient(120% 95% at 28% 18%, oklch(.3 .11 calc(var(--akari-h, 277) * 1deg)) 0%, oklch(.15 .035 285) 58%, #09080f 100%);
+  transition:opacity .5s var(--ease-out), transform .5s var(--ease-out), filter .5s var(--ease-out) }
+.wl__stage.is-leaving{ opacity:0; transform:scale(1.04); filter:blur(6px); pointer-events:none }
+.wl__glow{ position:absolute; width:120%; aspect-ratio:1; left:-10%; top:-30%; border-radius:50%; opacity:.55; filter:blur(70px); pointer-events:none;
+  background:conic-gradient(from 200deg, transparent, color-mix(in oklch, var(--acc) 70%, #fff) 25%, transparent 45%, oklch(.6 .2 350 / .6) 70%, transparent);
+  animation:wl-drift 7s ease-in-out infinite alternate }
+.wl__act{ grid-area:1 / 1; position:relative; display:flex; flex-direction:column; align-items:center; gap:var(--s-4); text-align:center }
+.wl__act--lucya{ animation:wl-out .6s var(--ease-io) 2.35s both }
+
+.wl__eagle{ width:min(280px, 56vw); height:auto; overflow:visible; fill:#fff }
+.wl__eagle path, .wl__heroeagle path{ transform-box:fill-box; transform-origin:center }
+.wl__eagle .wl-l1, .wl__eagle .wl-l2, .wl__eagle .wl-l3{ animation:wl-from-left .95s var(--spring) both }
+.wl__eagle .wl-r1, .wl__eagle .wl-r2, .wl__eagle .wl-r3{ animation:wl-from-right .95s var(--spring) both }
+.wl__eagle .wl-l1, .wl__eagle .wl-r1{ animation-delay:.1s }
+.wl__eagle .wl-l2, .wl__eagle .wl-r2{ animation-delay:.24s }
+.wl__eagle .wl-l3, .wl__eagle .wl-r3{ animation-delay:.38s }
+.wl__eagle .wl-head{ animation:wl-from-top .8s var(--spring) .55s both }
+.wl__eagle .wl-tail{ animation:wl-from-below .8s var(--spring) .7s both }
+.wl__word{ height:13px; color:rgba(255,255,255,.92); animation:wl-rise .7s var(--ease-out) 1.1s both }
+.wl__presents{ font:500 11px/1 var(--sans); letter-spacing:.32em; text-transform:uppercase; color:rgba(255,255,255,.5); animation:wl-rise .6s var(--ease-out) 1.45s both }
+
+.wl__mark{ width:104px; height:auto; overflow:visible }
+.wl-ray{ transform-box:fill-box; animation:wl-ray .85s var(--spring) both }
+.wl__mark .wl-ray--0{ animation-delay:2.7s } .wl__mark .wl-ray--1{ animation-delay:2.82s } .wl__mark .wl-ray--2{ animation-delay:2.94s }
+.wl__stage .am-l{ fill:color-mix(in oklch, var(--acc) 72%, #fff) }
+.wl__stage .am-b{ fill:#fff }
+.wl__stage .am-d{ fill:rgba(255,255,255,.38) }
+.wl__sweep{ position:absolute; inset:-30% -60%; pointer-events:none; mix-blend-mode:screen;
+  background:linear-gradient(105deg, transparent 42%, rgba(255,255,255,.22) 50%, transparent 58%); animation:wl-sweep 1.3s var(--ease-io) 3.15s both }
+.wl__name{ font:600 30px/1.1 var(--sans); letter-spacing:-.01em; animation:wl-rise .7s var(--ease-out) 3.15s both }
+.wl__hello{ font-size:var(--fs-text-md); color:rgba(255,255,255,.62); margin-top:calc(-1 * var(--s-2)); animation:wl-rise .6s var(--ease-out) 3.4s both }
+.wl__skip{ position:absolute; right:var(--s-4); bottom:var(--s-4); color:rgba(255,255,255,.62); animation:wl-rise .5s var(--ease-out) .8s both }
+.wl__skip:hover{ color:#fff; background:rgba(255,255,255,.08) }
+
+@keyframes wl-from-left{ from{ opacity:0; transform:translate(-140px, 40px) rotate(-14deg) scale(.9) } }
+@keyframes wl-from-right{ from{ opacity:0; transform:translate(140px, 40px) rotate(14deg) scale(.9) } }
+@keyframes wl-from-top{ from{ opacity:0; transform:translateY(-70px) scale(.6) } }
+@keyframes wl-from-below{ from{ opacity:0; transform:translateY(70px) scale(.4) } }
+@keyframes wl-rise{ from{ opacity:0; transform:translateY(10px) } }
+@keyframes wl-out{ to{ opacity:0; transform:translateY(-16px) scale(.86); filter:blur(8px); visibility:hidden } }
+@keyframes wl-ray{ from{ opacity:0; transform:translate(-38px, 95px) } }
+@keyframes wl-sweep{ 0%{ transform:translateX(-60%); opacity:0 } 20%{ opacity:1 } 100%{ transform:translateX(60%); opacity:0 } }
+@keyframes wl-drift{ to{ transform:translate(12%, 18%) rotate(40deg) } }
+
+/* the pages */
+.wl__tour{ flex:1; display:flex; flex-direction:column; min-width:0; min-height:0; transition:opacity .4s var(--ease-out) }
+.wl__tour.is-waiting:not(.is-on){ opacity:0 }
+.wl__page{ flex:1; min-height:0; overflow:auto; padding:var(--s-7) var(--s-7) var(--s-5) }
+.wl__page.is-in{ animation:wl-page .45s var(--spring) both }
+.wl__page.is-back{ animation:wl-page-back .45s var(--spring) both }
+@keyframes wl-page{ from{ opacity:0; transform:translateX(28px) } }
+@keyframes wl-page-back{ from{ opacity:0; transform:translateX(-28px) } }
+.wl__title{ margin:0 0 var(--s-4) }
+.wl__lead{ margin:0 0 var(--s-5); max-width:58ch; color:var(--text-dim); font-size:var(--fs-text-md) }
+.wl__hero{ display:flex; align-items:center; gap:var(--s-4); margin-bottom:var(--s-5) }
+.wl__heromark{ width:56px; height:auto; overflow:visible }
+.wl__hero .wl-ray--0{ animation-delay:.05s } .wl__hero .wl-ray--1{ animation-delay:.14s } .wl__hero .wl-ray--2{ animation-delay:.23s }
+.wl__heroeagle{ width:120px; height:auto; overflow:visible; fill:var(--text) }
+.wl__heroeagle path{ animation:wl-rise .6s var(--spring) both }
+.wl__heroeagle .wl-head, .wl__heroeagle .wl-tail{ animation-delay:.12s }
+.wl__hero--lucya .wordmark{ height:11px; color:var(--text-dim) }
+
+.wl__facts{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:var(--s-3); margin:0 }
+.wl__facts div{ padding:var(--s-3) var(--s-4); border-radius:var(--r-inner); background:var(--card); border:var(--hair) solid var(--line) }
+.wl__facts dt{ font-size:var(--fs-text-sm); color:var(--text-dim) }
+.wl__facts dd{ margin:2px 0 0; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.wl__list{ list-style:none; margin:0; padding:0; display:grid; gap:var(--s-2) }
+.wl__item{ display:flex; align-items:center; gap:var(--s-4); padding:var(--s-3) var(--s-4); border-radius:var(--r-inner); background:var(--card); border:var(--hair) solid var(--line);
+  animation:wl-rise .45s var(--ease-out) both }
+.wl__item:nth-child(2){ animation-delay:.05s } .wl__item:nth-child(3){ animation-delay:.1s } .wl__item:nth-child(4){ animation-delay:.15s }
+.wl__icon{ flex:none; display:grid; place-items:center; width:36px; height:36px; border-radius:var(--r-control); background:var(--acc-soft); color:var(--acc) }
+.wl__icon svg{ width:18px; height:18px }
+.wl__txt{ flex:1; min-width:0; display:grid; gap:2px }
+.wl__txt small{ color:var(--text-dim); font-size:var(--fs-text-sm) }
+.wl__pick{ display:grid; gap:var(--s-2); margin-bottom:var(--s-5) }
+.wl__tints{ display:flex; flex-wrap:wrap; gap:var(--s-2) }
+.wl__tints button{ display:grid; place-items:center; width:36px; height:36px; padding:0; border:0; border-radius:50%; background:none; cursor:pointer;
+  box-shadow:inset 0 0 0 2px transparent; transition:box-shadow var(--dur-2, .2s) var(--ease-out) }
+.wl__tints button[aria-checked="true"]{ box-shadow:inset 0 0 0 2px var(--acc) }
+.wl__tints .f-swatch{ width:24px; height:24px }
+.wl__more{ display:flex; flex-wrap:wrap; align-items:center; gap:var(--s-3); font-size:var(--fs-text-sm) }
+
+.wl__foot{ display:flex; align-items:center; gap:var(--s-4); padding:var(--s-4) var(--s-7); border-top:var(--hair) solid var(--line) }
+.wl__foot .f-check{ flex:1 }
+.wl__dots{ display:flex; gap:6px }
+.wl__dot{ width:7px; height:7px; padding:0; border:0; border-radius:var(--r-pill); background:var(--line-strong); cursor:pointer; transition:width .3s var(--spring), background .2s }
+.wl__dot[aria-selected="true"]{ width:20px; background:var(--acc) }
+.wl__nav{ flex:1; display:flex; justify-content:flex-end; gap:var(--s-2) }
+
+:root[data-phone] .wl__page{ padding:var(--s-5) var(--s-4) var(--s-4) }
+:root[data-phone] .wl__foot{ flex-wrap:wrap; padding:var(--s-3) var(--s-4); gap:var(--s-3) }
+:root[data-phone] .wl__foot .f-check{ flex-basis:100%; order:3 }
+:root[data-phone] .wl__facts{ grid-template-columns:minmax(0, 1fr) }
+:root[data-motion] .wl *, .wl.is-calm *{ animation:none !important }

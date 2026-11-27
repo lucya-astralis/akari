@@ -37,6 +37,7 @@ COLOURS = {
     "monitor":  ("#55e3a6", "#0c8a5e"),
     "window":   ("#48e2c8", "#0a7f7b"),
     "docker":   ("#4fb8ff", "#1550c8"),
+    "welcome":  ("#c3a2ff", "#e0468f"),
 }
 
 BACK = 'fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"'
@@ -83,6 +84,10 @@ MOTIF = {
     "docker": f'''<rect x="12" y="34" width="18" height="13" rx="3" {BACK}/><rect x="34" y="34" width="18" height="13" rx="3" {BACK}/>
     <rect x="23" y="18" width="18" height="13" rx="3" {FRONT}/>
     <path d="M28.5 22v5M32 22v5M35.5 22v5" stroke="#1550c8" stroke-opacity=".55" stroke-width="1.6" stroke-linecap="round"/>''',
+    # Akari's mark: the dark ray frosted behind, the two in front clear; a spark above
+    "welcome": f'''<g transform="translate(13 14) scale(.37)"><path d="M71.64 36L95.64 36L69.79 100L45.79 100Z" {BACK}/>
+    <path d="M40.4 0L51.4 0L11 100L0 100Z" {FRONT}/><path d="M51.14 14L75.14 14L40.39 100L16.39 100Z" {FRONT}/></g>
+    <path d="M48 11.5l1.6 4.4 4.4 1.6-4.4 1.6-1.6 4.4-1.6-4.4-4.4-1.6 4.4-1.6z" {FRONT}/>''',
     # any other program: a window
     "window": f'''<rect x="12" y="15" width="40" height="34" rx="6" {BACK}/>
     <path d="M12 21a6 6 0 0 1 6-6h28a6 6 0 0 1 6 6v4H12z" {FRONT}/>
@@ -122,14 +127,15 @@ def sprite() -> str:
 
 def sheet() -> str:
     uses = "".join(f'<use href="#app-{n}" x="{16 + i % 5 * 80}" y="{16 + i // 5 * 80}" width="64" height="64"/>' for i, n in enumerate(COLOURS))
-    return (f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="416" height="176" viewBox="0 0 416 176">\n'
-            f'<rect width="416" height="176" fill="#16161a"/>\n{sprite()}\n{uses}\n</svg>\n')
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="416" height="256" viewBox="0 0 416 256">\n'
+            f'<rect width="416" height="256" fill="#16161a"/>\n{sprite()}\n{uses}\n</svg>\n')
 
 
 def patch() -> None:
     s = INDEX.read_text(encoding="utf-8")
     start = s.index("  <!-- App icons")
-    end = s.index("</symbol>", s.index('<symbol id="app-window"')) + len("</symbol>")
+    # up to the last app symbol, whichever it is (they follow each other in the sprite)
+    end = s.index("</symbol>", s.rindex('<symbol id="app-')) + len("</symbol>")
     INDEX.write_text(s[:start] + sprite() + s[end:], encoding="utf-8")
 
 

@@ -63,6 +63,33 @@ async def put_prefs(request: Request) -> dict:
     return {"ok": True}
 
 
+# ---------- the welcome window: shown at sign-in until the account says "nicht mehr anzeigen" ----------
+# for the account, not the desktop (prefs are per desktop): a new desktop is no new person
+
+def _welcome_seen():
+    return config.CONFIG / "welcome-seen"
+
+
+@router.get("/welcome")
+def get_welcome() -> dict:
+    return {"show": not _welcome_seen().exists()}
+
+
+@router.put("/welcome")
+async def put_welcome(request: Request) -> dict:
+    try:
+        show = bool((await request.json()).get("show", True))
+    except (ValueError, AttributeError):
+        raise HTTPException(400, "Erwartet {show: true|false}.")
+    f = _welcome_seen()
+    if show:
+        f.unlink(missing_ok=True)
+    else:
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text(f"{int(time.time())}\n", encoding="utf-8")
+    return {"show": show}
+
+
 def _du(path) -> int:
     total = 0
     for root, dirs, files in os.walk(path, onerror=lambda e: None):
