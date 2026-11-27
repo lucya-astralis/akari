@@ -40,7 +40,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 
-from . import accounts, agents, auth, config, software, ssh
+from . import accounts, agents, auth, config, host, ssh
 
 CONTRACT = 1
 FILE = config.SYSTEM / "lucent.json"
@@ -212,8 +212,8 @@ def manifest(request: Request) -> dict:
         "actions": [
             {"id": "logout-all", "label": "Alle abmelden", "danger": True,
              "description": "Beendet die Sitzungen und Programme aller Konten. Dateien bleiben."},
-            {"id": "software-restore", "label": "Software wieder einspielen", "danger": False,
-             "description": "Installiert die mit apt installierten Pakete, die nach einem Image-Update fehlen."},
+            {"id": "updates", "label": "Updates installieren", "danger": False,
+             "description": "Bringt alle Pakete mit apt auf den neuen Stand. Wird Akari selbst aktualisiert, startet es neu."},
         ],
         "pages": [
             {"id": "uebersicht", "label": "Übersicht", "icon": "chart", "after": "start"},
@@ -232,7 +232,8 @@ async def status(request: Request) -> dict:
     mem_pct = 100 * f["mem"]["used"] / max(1, f["mem"]["total"])
     disk_pct = 100 * f["disk"].used / max(1, f["disk"].total)
     warn = disk_pct > 90 or mem_pct > 92
-    sshd = ssh.info()
+    sshd = await ssh.info()
+    upgradable = await asyncio.to_thread(host.upgradable)
     linked = sum(1 for a in accts if a.lucent_sub)
     return {
         "state": "warn" if warn else "ok",
@@ -254,7 +255,7 @@ async def status(request: Request) -> dict:
             {"label": "Kernel", "value": os.uname().release},
             {"label": "Läuft seit", "value": _uptime()},
             {"label": "SSH", "value": f"an, Port {sshd['port']}" if sshd["enabled"] else "aus"},
-            {"label": "sudo und apt", "value": "möglich" if software.sudo_ready()["writable"] else "gesperrt (nur lesen)"},
+            {"label": "Updates", "value": f"{len(upgradable)} verfügbar" if upgradable else "aktuell"},
             {"label": "Mit Lucent verknüpft", "value": f"{linked} von {len(accts)} Konten"},
         ],
     }
@@ -275,15 +276,15 @@ async def action(aid: str, body: ActionIn, request: Request) -> dict:
             auth.end_all(a.name)
             await agents.stop(a.uid)
         return {"ok": True, "message": f"{n} Konten abgemeldet." if n else "Es war niemand angemeldet."}
-    if aid == "software-restore":
-        want = software.wanted()
-        missing = [x for x in want if x not in await software._installed(want)]
-        if not missing:
-            return {"ok": True, "message": "Es fehlt nichts."}
-        if not software.sudo_ready()["writable"]:
-            return {"ok": False, "message": "Das System ist schreibgeschützt (compose.locked.yaml)."}
-        asyncio.create_task(software._restore(missing))
-        return {"ok": True, "message": f"Spiele {len(missing)} Pakete wieder ein: {', '.join(missing)}."}
+    if aid == "updates":
+        n = len(await asyncio.to_thread(host.upgradable))
+        if not n:
+            return {"ok": True, "message": "Alles ist aktuell."}
+        try:
+            await asyncio.to_thread(host.start, "install")
+        except host.HostError as e:
+            return {"ok": False, "message": str(e)}
+        return {"ok": True, "message": f"apt installiert {n} Updates."}
     raise HTTPException(404, "Diese Aktion gibt es nicht.")
 
 
@@ -374,8 +375,8 @@ def _page_accounts() -> dict:
 
 
 async def _page_system() -> dict:
-    sshd = ssh.info()
-    sw = await software.info()
+    sshd = await ssh.info()
+    up = await asyncio.to_thread(host.updates)
     p = pairing() or {}
     return {
         "title": "System",
@@ -394,11 +395,11 @@ async def _page_system() -> dict:
                       + [{"label": "Schlüssel des Rechners", "value": fp} for fp in sshd["fingerprints"]],
              "actions": [{"id": "ssh", "label": "SSH ausschalten" if sshd["enabled"] else "SSH einschalten",
                           "icon": "server", "danger": bool(sshd["enabled"]), "values": {"on": "0" if sshd["enabled"] else "1"}}]},
-            {"id": "software", "title": "Software", "kind": "rows",
-             "lead": "Was mit apt dazukam. Nach einem Image-Update spielt Akari es von selbst wieder ein.",
-             "empty": "Noch nichts dazu installiert.",
-             "meta": {"idle": "", "restoring": "wird eingespielt …", "done": "eingespielt", "failed": "Einspielen schlug fehl"}.get(sw["restore"]["state"], ""),
-             "items": [{"title": x["name"], "meta": "installiert" if x["installed"] else "fehlt"} for x in sw["packages"]]},
+            {"id": "updates", "title": "Updates", "kind": "rows",
+             "lead": "Was apt auf den neuen Stand bringen würde. Installieren: Aktion „Updates installieren“.",
+             "empty": "Alles ist aktuell.",
+             "meta": {"install": "wird installiert …", "check": "sucht …"}.get(up["running"] or "", ""),
+             "items": [{"title": x["name"], "meta": f"{x['from']} → {x['to']}"} for x in up["packages"]]},
         ],
     }
 

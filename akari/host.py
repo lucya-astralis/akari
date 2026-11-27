@@ -212,6 +212,8 @@ JOBS = {
     "check": ["apt-get", "update"],
     "install": ["apt-get", "-y", "-o", "Dpkg::Options::=--force-confdef", "-o", "Dpkg::Options::=--force-confold",
                 "upgrade", "--with-new-pkgs"],
+    # Docker from Debian, for the Docker app (docker.py): the engine and compose
+    "docker": ["apt-get", "-y", "install", "docker.io", "docker-compose"],
 }
 
 

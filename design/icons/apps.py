@@ -36,6 +36,7 @@ COLOURS = {
     "tasks":    ("#a796ff", "#4f38d8"),
     "monitor":  ("#55e3a6", "#0c8a5e"),
     "window":   ("#48e2c8", "#0a7f7b"),
+    "docker":   ("#4fb8ff", "#1550c8"),
 }
 
 BACK = 'fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"'
@@ -78,6 +79,10 @@ MOTIF = {
     "monitor": f'''<rect x="13" y="34" width="8" height="15" rx="2.5" {BACK}/><rect x="24" y="28" width="8" height="21" rx="2.5" {BACK}/>
     <rect x="35" y="31" width="8" height="18" rx="2.5" {BACK}/><rect x="46" y="22" width="5" height="27" rx="2.5" {BACK}/>
     <path d="M12 33l9-9 7 5 10-13 7 8 7-6" {LINE} stroke-width="4"/>''',
+    # containers: three boxes stacked, the top one clear
+    "docker": f'''<rect x="12" y="34" width="18" height="13" rx="3" {BACK}/><rect x="34" y="34" width="18" height="13" rx="3" {BACK}/>
+    <rect x="23" y="18" width="18" height="13" rx="3" {FRONT}/>
+    <path d="M28.5 22v5M32 22v5M35.5 22v5" stroke="#1550c8" stroke-opacity=".55" stroke-width="1.6" stroke-linecap="round"/>''',
     # any other program: a window
     "window": f'''<rect x="12" y="15" width="40" height="34" rx="6" {BACK}/>
     <path d="M12 21a6 6 0 0 1 6-6h28a6 6 0 0 1 6 6v4H12z" {FRONT}/>

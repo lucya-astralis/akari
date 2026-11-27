@@ -538,7 +538,17 @@
       sync();
       if (!narrow.matches || args.page) go(args.page || 'darstellung');
 
-      return { args(a) { if (a?.page) go(a.page); } };
+      // from Docker → Lucent: Lucent runs on this machine, the addresses are known
+      const prefillLucent = v => {
+        if (!v) return;
+        const f = luForm.elements;
+        if (v.lucent_url) f.lucent_url.value = v.lucent_url;
+        if (v.base_url) f.base_url.value = v.base_url;
+        if (!f.ui_url.value) f.ui_url.value = location.origin;
+        requestAnimationFrame(() => f.code.focus());
+      };
+      prefillLucent(args.lucent);
+      return { args(a) { if (a?.page) go(a.page); prefillLucent(a?.lucent); } };
     },
   });
 })();

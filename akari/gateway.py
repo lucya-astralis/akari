@@ -7,6 +7,7 @@ a narrow set of capabilities, on 127.0.0.1 behind Caddy.
   /api/logout        switch user (keep the apps) or sign out (end everything)
   /api/accounts/*    the own account; all accounts for admins
   /api/host/*        the machine: name, network, time, updates, power (host.py)
+  /api/docker/*      Docker and Lucent on it, for admins (docker.py)
   everything else under /api is the signed-in person's session agent,
   passed through as it is (HTTP and websockets)."""
 
@@ -27,7 +28,7 @@ from starlette.background import BackgroundTask
 from websockets.asyncio.client import unix_connect
 from websockets.exceptions import ConnectionClosed
 
-from . import accounts, agents, auth, avatars, config, console, host, lucent, software, ssh
+from . import accounts, agents, auth, avatars, config, console, docker, host, lucent, software, ssh
 
 # style-src allows inline styles: xterm.js writes its theme into a <style> element.
 CSP = ("default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; "
@@ -480,6 +481,162 @@ async def host_update(body: JobIn, request: Request) -> dict:
     await asyncio.to_thread(_host_call, host.start, body.job)
     await asyncio.sleep(.3)
     return {**await asyncio.to_thread(host.updates), "admin": acct.admin}
+
+
+# ---------- Docker (docker.py): the socket is root, so admins only ----------
+
+async def _dk(coro):
+    try:
+        return await coro
+    except docker.DockerError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.get("/api/docker")
+async def docker_status(request: Request) -> dict:
+    acct = _me(request)
+    if not acct.admin:
+        return {"admin": False}
+    st = await docker.status()
+    out = {**st, "admin": True, "lucent": await docker.lucent() if st["running"] else None}
+    if st["running"]:
+        out["containers_list"] = await _dk(docker.containers())
+    return out
+
+
+@app.get("/api/docker/images")
+async def docker_images(request: Request) -> dict:
+    _admin(request)
+    return {"images": await _dk(docker.images())}
+
+
+@app.post("/api/docker/install")
+async def docker_install(request: Request) -> dict:
+    _admin(request)
+    await asyncio.to_thread(_host_call, host.start, "docker")
+    return {"ok": True}
+
+
+class DockerActIn(BaseModel):
+    action: str
+
+
+@app.post("/api/docker/containers/{cid}")
+async def docker_act(cid: str, body: DockerActIn, request: Request) -> dict:
+    _admin(request)
+    await _dk(docker.act(cid, body.action))
+    return {"ok": True}
+
+
+@app.get("/api/docker/containers/{cid}/logs")
+async def docker_logs(cid: str, request: Request, tail: int = 300) -> dict:
+    _admin(request)
+    return {"text": await _dk(docker.logs(cid, tail))}
+
+
+@app.delete("/api/docker/images/{iid}")
+async def docker_rmi(iid: str, request: Request) -> dict:
+    _admin(request)
+    await _dk(docker.remove_image(iid))
+    return {"ok": True}
+
+
+@app.get("/api/docker/containers/{cid}")
+async def docker_inspect(cid: str, request: Request) -> dict:
+    _admin(request)
+    return await _dk(docker.inspect(cid))
+
+
+class PauseIn(BaseModel):
+    paused: bool
+
+
+@app.post("/api/docker/containers/{cid}/pause")
+async def docker_pause(cid: str, body: PauseIn, request: Request) -> dict:
+    _admin(request)
+    await _dk(docker.pause(cid, body.paused))
+    return {"ok": True}
+
+
+class RunIn(BaseModel):
+    image: str
+    name: str = ""
+    ports: list[str] = []
+    env: list[str] = []
+    volumes: list[str] = []
+    restart: str = "unless-stopped"
+
+
+@app.post("/api/docker/run")
+async def docker_run(body: RunIn, request: Request) -> dict:
+    _admin(request)
+    return {"id": await _dk(docker.run(body.model_dump()))}
+
+
+class PullIn(BaseModel):
+    image: str
+
+
+@app.post("/api/docker/pull")
+async def docker_pull(body: PullIn, request: Request) -> dict:
+    _admin(request)
+    try:
+        docker.pull(body.image)
+    except docker.DockerError as e:
+        raise HTTPException(400, str(e))
+    return {"pulls": docker.pulls()}
+
+
+@app.get("/api/docker/pulls")
+async def docker_pulls(request: Request) -> dict:
+    _admin(request)
+    return {"pulls": docker.pulls()}
+
+
+@app.get("/api/docker/volumes")
+async def docker_volumes(request: Request) -> dict:
+    _admin(request)
+    return {"volumes": await _dk(docker.volumes())}
+
+
+@app.delete("/api/docker/volumes/{name}")
+async def docker_rmv(name: str, request: Request) -> dict:
+    _admin(request)
+    await _dk(docker.remove_volume(name))
+    return {"ok": True}
+
+
+@app.get("/api/docker/networks")
+async def docker_networks(request: Request) -> dict:
+    _admin(request)
+    return {"networks": await _dk(docker.networks())}
+
+
+@app.delete("/api/docker/networks/{nid}")
+async def docker_rmn(nid: str, request: Request) -> dict:
+    _admin(request)
+    await _dk(docker.remove_network(nid))
+    return {"ok": True}
+
+
+@app.post("/api/docker/prune")
+async def docker_prune(request: Request) -> dict:
+    _admin(request)
+    return await _dk(docker.prune())
+
+
+@app.post("/api/docker/lucent")
+async def docker_lucent(request: Request) -> dict:
+    _admin(request)
+    await _dk(docker.install_lucent())
+    return await docker.lucent()
+
+
+@app.delete("/api/docker/lucent")
+async def docker_lucent_remove(request: Request) -> dict:
+    _admin(request)
+    await _dk(docker.remove_lucent())
+    return {"ok": True}
 
 
 # ---------- the session agent, passed through ----------

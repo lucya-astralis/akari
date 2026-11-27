@@ -15,3 +15,16 @@
 :80 {
 	redir https://{host}{uri} permanent
 }
+
+# Lucent in a container on this machine (Docker → Lucent, docker.py) calls
+# Akari here: plain http, because Lucent checks certificates and the one above
+# is Caddy's own. Only Lucent's tool API, which answers only to the Lucent
+# Akari is paired with (signed requests); everything else is not here.
+:8131 {
+	handle /lucent/v1/* {
+		reverse_proxy 127.0.0.1:8130
+	}
+	handle {
+		respond 404
+	}
+}
