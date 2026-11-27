@@ -39,7 +39,7 @@
     const gone = () => !stage.isConnected || stage.classList.contains('is-leaving');
     const box = stage.querySelector('[data-glitch]'), main = box.querySelector('.wl__eagle--main');
     const [rgbR, rgbB] = box.querySelectorAll('[data-rgb]');
-    const word = stage.querySelector('.wl__word'), presents = stage.querySelector('.wl__presents');
+    const word = stage.querySelector('.wl__word');
     const split = dx => { rgbR.style.opacity = rgbB.style.opacity = '.45'; rgbR.style.transform = `translate(${-dx}px, ${dx * .3}px)`; rgbB.style.transform = `translate(${dx}px, ${-dx * .3}px)`; };
     const unsplit = () => { rgbR.style.opacity = rgbB.style.opacity = '0'; rgbR.style.transform = rgbB.style.transform = ''; };
     const jolt = (el, n, k, skew = 0) => new Promise(res => {
@@ -86,7 +86,6 @@
       if (sx !== 1) split(2 + Math.abs(x) * .5); else unsplit();
       await wait(95 + Math.random() * 40);
     }
-    presents.classList.add('is-on');
     box.classList.add('is-settled');
     await wait(900);
     if (gone()) return;
@@ -169,7 +168,7 @@
       win.body.innerHTML = `
         ${intro ? `<div class="wl__stage" data-stage role="presentation">
           <div class="wl__glow"></div>
-          <div class="wl__act wl__act--lucya">${glitchEagle()}<span class="wordmark wl__word" role="img" aria-label="lucya.systems"></span><span class="wl__presents">${t('präsentiert')}</span></div>
+          <div class="wl__act wl__act--lucya">${glitchEagle()}<span class="wordmark wl__word" role="img" aria-label="lucya.systems"></span></div>
           <div class="wl__act wl__act--akari">${mark('wl__mark am')}
             <b class="wl__name" translate="no">Akari OS</b><span class="wl__hello">${t('Willkommen')}</span></div>
           <button class="f-btn f-btn--sm f-btn--ghost wl__skip" data-skip>${t('Überspringen')}</button>

@@ -39,7 +39,8 @@
 
   /* ---------- preferences: in the home folder, cached for a fast first paint ---------- */
   const DEFAULTS = {
-    theme: 'system', tint: '', wallpaper: true, mirror: false, motion: false, lite: false, cursors: true, novaLogo: 'none', tintH: 300,
+    // a new account starts light; Automatisch and Dunkel are one click away (Willkommen, Kontrollzentrum)
+    theme: 'light', tint: '', wallpaper: true, mirror: false, motion: false, lite: false, cursors: true, novaLogo: 'none', tintH: 300,
     dock: 'm', autohide: false, icons: true, seconds: false, date: true, dnd: false, widgets: true, bar: 'bottom', grid: true, pinned: null,
   };
   let P = { ...DEFAULTS };

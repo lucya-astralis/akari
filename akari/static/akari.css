@@ -881,6 +881,13 @@ body.is-leaving .desk{ transition:opacity var(--dur-2) var(--ease), filter var(-
   grid-template-rows:auto minmax(0,1fr) auto; max-height:min(620px, calc(100dvh - var(--tb-space) - 2 * var(--s-4))); overflow:hidden }
 .launch__body, .launch__results{ min-height:0; overflow:auto; display:grid; gap:var(--s-4); align-content:start; padding-bottom:var(--s-2) }
 .launch__body[hidden], .launch__results[hidden]{ display:none }
+/* the menu's scrolling parts draw their own thin bar: a browser's classic one
+   (Windows, "always show scroll bars") took 15px out of the grid and pushed the
+   pinned apps sideways */
+.launch__body, .launch__results, .launch__all .launch__list{ overflow-x:hidden; scrollbar-width:thin; scrollbar-color:var(--stroke-1) transparent }
+:is(.launch__body, .launch__results, .launch__all .launch__list)::-webkit-scrollbar{ width:6px; height:0 }
+:is(.launch__body, .launch__results, .launch__all .launch__list)::-webkit-scrollbar-track{ background:transparent }
+:is(.launch__body, .launch__results, .launch__all .launch__list)::-webkit-scrollbar-thumb{ background:var(--stroke-1); border-radius:var(--r-pill) }
 .launch__h{ margin:0 0 var(--s-2) var(--s-2); font:500 var(--fs-chrome-xs)/1 var(--mono); letter-spacing:var(--tr-chrome-xs); text-transform:uppercase; color:var(--text-dim) }
 .launch__apps{ grid-template-columns:repeat(5, 1fr) }
 .launch__app{ animation:launch-in var(--dur-3) var(--spring) backwards; animation-delay:calc(var(--i, 0) * 18ms) }
@@ -1566,9 +1573,6 @@ body{ touch-action:manipulation; -webkit-tap-highlight-color:transparent }
 :root[data-theme="dark"] .wl__glow{ opacity:.55 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .wl__rgb{ mix-blend-mode:screen } :root:not([data-theme="light"]) .wl__glow{ opacity:.55 } }
 .wl__word{ height:13px; opacity:0; color:var(--wl-ink); transform-origin:center }
-.wl__presents{ font:500 11px/1 var(--sans); letter-spacing:.32em; text-transform:uppercase; color:color-mix(in oklch, var(--wl-ink) 50%, transparent);
-  opacity:0; transition:opacity .5s var(--ease-out), transform .5s var(--ease-out); transform:translateY(6px) }
-.wl__presents.is-on{ opacity:1; transform:none }
 
 /* Akari, once the eagle has stood a moment */
 .wl__act--akari{ visibility:hidden }

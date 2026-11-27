@@ -11,7 +11,9 @@
   root.classList.add('is-booting');
   try {
     const theme = localStorage.getItem('facet-theme');
+    // nothing chosen in this browser yet: light, as a new account starts (akari.js DEFAULTS)
     if (theme === 'light' || theme === 'dark') root.dataset.theme = theme;
+    else if (!theme) root.dataset.theme = 'light';
     const p = JSON.parse(localStorage.getItem('akari-prefs-last') || '{}');
     if (p.tint) root.dataset.tint = p.tint;
     if (p.tint === 'custom' && Number.isFinite(+p.tintH)) root.style.setProperty('--akari-h', +p.tintH);

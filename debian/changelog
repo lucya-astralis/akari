@@ -1,3 +1,20 @@
+akari (0.17.0) trixie; urgency=medium
+
+  * Willkommen: a window after sign-in with a short scene (lucya.systems'
+    eagle builds as on the old lucya.sh splash, then Akari's mark), light
+    or dark as the desktop is, and five pages: what Akari is, finding one's
+    way, the Linux underneath, lucya.systems, accent and light. "Nicht mehr
+    anzeigen" holds for the account; the start menu keeps the app.
+  * A new account starts light.
+  * The start menu glides between pinned and all apps and springs to its
+    new height; its scrolling parts draw a thin bar of their own instead of
+    the browser's, which pushed the grid sideways.
+  * Farbverlauf: windows stay above the desktop icons.
+  * New glass icon for Willkommen; design/icons/apps.py patches up to the
+    last app symbol.
+
+ -- Akari OS <packages@lucya.systems>  Fri, 27 Nov 2026 17:00:00 +0100
+
 akari (0.16.0) trixie; urgency=medium
 
   * The console on the machine runs in kmscon with MesloLGS NF: the
