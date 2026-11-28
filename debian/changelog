@@ -1,3 +1,19 @@
+akari (0.21.0) trixie; urgency=medium
+
+  * akari-server, brought by akari-desktop: btop, ncdu, tmux, rsync, jq,
+    lsof, iotop, sysstat, smartmontools, lm-sensors, ethtool; fail2ban for
+    SSH; swap in zram; TCP with BBR and fq; a journal that survives restarts
+    (1 GB, a month); no suspend or hibernation, lid closed or not.
+  * Dienste: systemd's services for accounts that manage, failed first;
+    start, stop, restart, autostart; a service's log as it grows, and the
+    system's journal from a level up. akarid, Caddy, D-Bus and systemd stay
+    out of reach. The console's welcome says whether all services run.
+  * Widgets: a gallery, and Server, Container and Dienste widgets.
+  * Desktop and start menu hold any app; one menu for an app everywhere.
+  * Astralis as an isometric drawing.
+
+ -- Akari OS <packages@lucya.systems>  Sat, 28 Nov 2026 15:00:00 +0100
+
 akari (0.20.1) trixie; urgency=medium
 
   * Backgrounds in vector, sharp at any size, what matters inside what a 4:3
