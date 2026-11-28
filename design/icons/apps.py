@@ -38,6 +38,7 @@ COLOURS = {
     "docker":   ("#4fb8ff", "#1550c8"),
     "welcome":  ("#c3a2ff", "#e0468f"),
     "services": ("#8be8c8", "#1d7f8f"),
+    "roles":    ("#b6c3ff", "#3445b8"),
 }
 
 BACK = 'fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"'
@@ -92,6 +93,10 @@ MOTIF = {
     <rect x="13" y="27" width="38" height="11" rx="3.5" {BACK}/><rect x="13" y="41" width="38" height="11" rx="3.5" {BACK}/>
     <circle cx="20" cy="18.5" r="2.1" fill="#1d7f8f"/><path d="M27 18.5h17" stroke="#1d7f8f" stroke-opacity=".45" stroke-width="2" stroke-linecap="round"/>
     <circle cx="20" cy="32.5" r="2.1" fill="#fff"/><circle cx="20" cy="46.5" r="2.1" fill="#fff"/>''',
+    # roles: four tiles, three frosted, one clear (a role added)
+    "roles": f'''<rect x="13" y="13" width="17" height="17" rx="4.5" {FRONT}/><rect x="34" y="13" width="17" height="17" rx="4.5" {BACK}/>
+    <rect x="13" y="34" width="17" height="17" rx="4.5" {BACK}/><rect x="34" y="34" width="17" height="17" rx="4.5" {BACK}/>
+    <path d="M42.5 37.5v10M37.5 42.5h10" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>''',
     # any other program: a window
     "window": f'''<rect x="12" y="15" width="40" height="34" rx="6" {BACK}/>
     <path d="M12 21a6 6 0 0 1 6-6h28a6 6 0 0 1 6 6v4H12z" {FRONT}/>

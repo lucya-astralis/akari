@@ -23,6 +23,7 @@
     <linearGradient id="ag-docker" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4fb8ff"/><stop offset="1" stop-color="#1550c8"/></linearGradient>
     <linearGradient id="ag-welcome" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c3a2ff"/><stop offset="1" stop-color="#e0468f"/></linearGradient>
     <linearGradient id="ag-services" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8be8c8"/><stop offset="1" stop-color="#1d7f8f"/></linearGradient>
+    <linearGradient id="ag-roles" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b6c3ff"/><stop offset="1" stop-color="#3445b8"/></linearGradient>
   </defs>
   <symbol id="app-files" viewBox="0 0 64 64">
     <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-files)"/>
@@ -127,5 +128,13 @@
     <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-sheen)"/>
     <rect x="2.6" y="2.6" width="58.8" height="58.8" rx="14.4" fill="none" stroke="url(#ag-rim)" stroke-width="1.2"/>
   </symbol>
-<use href="#app-files" x="16" y="16" width="64" height="64"/><use href="#app-terminal" x="96" y="16" width="64" height="64"/><use href="#app-music" x="176" y="16" width="64" height="64"/><use href="#app-editor" x="256" y="16" width="64" height="64"/><use href="#app-web" x="336" y="16" width="64" height="64"/><use href="#app-xterm" x="16" y="96" width="64" height="64"/><use href="#app-settings" x="96" y="96" width="64" height="64"/><use href="#app-tasks" x="176" y="96" width="64" height="64"/><use href="#app-monitor" x="256" y="96" width="64" height="64"/><use href="#app-window" x="336" y="96" width="64" height="64"/><use href="#app-docker" x="16" y="176" width="64" height="64"/><use href="#app-welcome" x="96" y="176" width="64" height="64"/><use href="#app-services" x="176" y="176" width="64" height="64"/>
+  <symbol id="app-roles" viewBox="0 0 64 64">
+    <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-roles)"/>
+    <rect x="13" y="13" width="17" height="17" rx="4.5" fill="url(#ag-front)" filter="url(#ag-drop)"/><rect x="34" y="13" width="17" height="17" rx="4.5" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/>
+    <rect x="13" y="34" width="17" height="17" rx="4.5" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/><rect x="34" y="34" width="17" height="17" rx="4.5" fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/>
+    <path d="M42.5 37.5v10M37.5 42.5h10" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+    <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#ag-sheen)"/>
+    <rect x="2.6" y="2.6" width="58.8" height="58.8" rx="14.4" fill="none" stroke="url(#ag-rim)" stroke-width="1.2"/>
+  </symbol>
+<use href="#app-files" x="16" y="16" width="64" height="64"/><use href="#app-terminal" x="96" y="16" width="64" height="64"/><use href="#app-music" x="176" y="16" width="64" height="64"/><use href="#app-editor" x="256" y="16" width="64" height="64"/><use href="#app-web" x="336" y="16" width="64" height="64"/><use href="#app-xterm" x="16" y="96" width="64" height="64"/><use href="#app-settings" x="96" y="96" width="64" height="64"/><use href="#app-tasks" x="176" y="96" width="64" height="64"/><use href="#app-monitor" x="256" y="96" width="64" height="64"/><use href="#app-window" x="336" y="96" width="64" height="64"/><use href="#app-docker" x="16" y="176" width="64" height="64"/><use href="#app-welcome" x="96" y="176" width="64" height="64"/><use href="#app-services" x="176" y="176" width="64" height="64"/><use href="#app-roles" x="256" y="176" width="64" height="64"/>
 </svg>

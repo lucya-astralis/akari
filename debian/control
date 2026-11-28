@@ -97,6 +97,27 @@ Description: Akari OS desktop: akari with its apps, fonts and cursors
  It also has the Akari cursor theme for X, made from the same pictures the
  browser shows, and makes it the default.
 
+Package: akari-role-container
+Architecture: all
+Depends: ${misc:Depends},
+         docker.io,
+         docker-compose
+Description: Akari OS server role: Container-Host (Docker and Compose)
+ A server role, added and taken away in Akari's Server-Manager: Docker from
+ Debian with Compose, managed in Akari's Docker app. Taking the role away
+ stops Docker; images, volumes and containers stay in /var/lib/docker.
+
+Package: akari-role-files
+Architecture: all
+Depends: ${misc:Depends},
+         samba,
+         wsdd2
+Description: Akari OS server role: Dateiserver (Samba)
+ A server role, added and taken away in Akari's Server-Manager: Samba to
+ share folders with Windows, macOS and Linux, and wsdd2 so that Windows finds
+ the machine in its network. Taking the role away keeps the folders and
+ /etc/samba.
+
 Package: akari-server
 Architecture: all
 Depends: ${misc:Depends},

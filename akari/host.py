@@ -213,7 +213,7 @@ JOBS = {
     "install": ["apt-get", "-y", "-o", "Dpkg::Options::=--force-confdef", "-o", "Dpkg::Options::=--force-confold",
                 "upgrade", "--with-new-pkgs"],
     # Docker from Debian, for the Docker app (docker.py): the engine and compose
-    "docker": ["apt-get", "-y", "install", "docker.io", "docker-compose"],
+    "docker": ["apt-get", "-y", "install", "akari-role-container"],          # the Container-Host role (roles.py)
     # automatic updates, where the installer left them out
     "auto": ["apt-get", "-y", "install", "unattended-upgrades"],
 }
@@ -277,15 +277,16 @@ def updates() -> dict:
     }
 
 
-def start(job: str) -> None:
-    if job not in JOBS:
+def start(job: str, cmd: list[str] | None = None) -> None:
+    """One of JOBS by name, or a command another module built and checked (roles.py: "role:<id>:<add|remove>")."""
+    if cmd is None and job not in JOBS:
         raise HostError("Unbekannte Aufgabe.")
     if _unit().get("ActiveState") in ("active", "activating"):
         raise HostError("apt arbeitet schon.")
     _run("systemctl", "reset-failed", UNIT)
     # no --collect: a failed run stays (Result=exit-code) until the next one, so it can be told
     _check("systemd-run", f"--unit={UNIT}", "--quiet", "--service-type=exec",
-           "--property=Nice=10", *ENV, *JOBS[job])
+           "--property=Nice=10", *ENV, *(cmd or JOBS[job]))
     _save(job=job, started=time.time() - 1)
 
 

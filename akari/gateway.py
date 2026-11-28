@@ -28,7 +28,7 @@ from starlette.background import BackgroundTask
 from websockets.asyncio.client import unix_connect
 from websockets.exceptions import ConnectionClosed
 
-from . import accounts, agents, auth, avatars, config, console, docker, host, lucent, services, software, ssh
+from . import accounts, agents, auth, avatars, config, console, docker, host, lucent, roles, services, software, ssh
 
 # style-src allows inline styles: xterm.js writes its theme into a <style> element.
 CSP = ("default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; "
@@ -523,6 +523,29 @@ class KeyboardIn(BaseModel):
 async def host_set_keyboard(body: KeyboardIn, request: Request) -> dict:
     acct = _admin(request)
     return {**await asyncio.to_thread(_host_call, host.set_keyboard, body.layout), "admin": acct.admin}
+
+
+# ---------- server roles (roles.py): what the machine is for; everyone sees, admins change ----------
+
+@app.get("/api/roles")
+async def roles_list(request: Request) -> dict:
+    acct = _me(request)
+    return {"roles": await asyncio.to_thread(roles.roles), "admin": acct.admin, "apt": await asyncio.to_thread(host.updates)}
+
+
+class RoleIn(BaseModel):
+    action: str
+
+
+@app.post("/api/roles/{rid}")
+async def roles_change(rid: str, body: RoleIn, request: Request) -> dict:
+    _admin(request)
+    try:
+        await asyncio.to_thread(roles.change, rid, body.action)
+    except (roles.RoleError, host.HostError) as e:
+        raise HTTPException(400, str(e))
+    await asyncio.sleep(.3)
+    return {"roles": await asyncio.to_thread(roles.roles)}
 
 
 # ---------- services and the journal (services.py): root's view, so admins only ----------

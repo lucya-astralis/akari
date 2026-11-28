@@ -1,0 +1,2 @@
+# a server role: a metapackage that only brings its dependencies (roles.py)
+akari-role-container: empty-binary-package
