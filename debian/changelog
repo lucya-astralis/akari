@@ -1,3 +1,17 @@
+akari (0.23.0) trixie; urgency=medium
+
+  * Server roles, as Windows Server has them: what the machine is for, added
+    and taken away as a whole. A role is a metapackage, akari-role-<id>;
+    adding installs it, taking it away removes what came only for it, data
+    and configuration stay. apt runs in akarid's unit, its log shows.
+  * Server-Manager: the machine at a glance, its roles with their services,
+    ports and app, the roles to add, and what comes next (game servers,
+    cloud gaming, media server, VPN).
+  * First roles: Container host (Docker and Compose; what was set up by hand
+    is adopted) and File server (Samba, wsdd2).
+
+ -- Akari OS <packages@lucya.systems>  Sat, 28 Nov 2026 20:00:00 +0100
+
 akari (0.22.0) trixie; urgency=medium
 
   * Widgets in fixed sizes, as on macOS: small, medium and large on a grid

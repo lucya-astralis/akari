@@ -8,7 +8,8 @@
 (() => {
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const t = s => Akari.t(s);
-  const dot = a => a === 'active' ? 'is-ok' : a === 'failed' ? 'is-err' : ['activating', 'deactivating', 'reloading'].includes(a) ? 'is-warn' : '';
+  // a service's state as Facet's status: the dot alone says it, the name stays readable
+  const status = a => a === 'active' ? 'f-status' : a === 'failed' ? 'f-status f-status--err' : 'f-status f-status--warn';
 
   Akari.register('roles', {
     title: 'Server-Manager', icon: 'i-box', art: 'roles', size: [920, 640], order: 71, dock: false,
@@ -33,15 +34,20 @@
           : !data.admin ? ''
           : here ? `${r.app ? `<button class="f-btn f-btn--sm" data-open-role="${esc(r.app)}">${t('Öffnen')}</button>` : ''}<button class="f-btn f-btn--sm f-btn--ghost" data-role="${r.id}" data-act="remove" ${anyBusy ? 'disabled' : ''}>${t('Entfernen')}</button>`
           : `<button class="f-btn f-btn--sm f-btn--primary" data-role="${r.id}" data-act="add" ${anyBusy ? 'disabled' : ''}><svg><use href="#i-plus"/></svg>${t('Hinzufügen')}</button>`;
-        return `<div class="rm__role${soon ? ' is-soon' : ''}${here ? ' is-here' : ''}">
+        const facts = here && (r.services?.length || r.ports?.length) ? `<span class="rm__facts" translate="no">
+            ${(r.services || []).map(s => `<span class="${status(s.active)}" title="${esc(s.active)}">${esc(s.name.replace(/\.service$/, ''))}</span>`).join('')}
+            ${(r.ports || []).map(p => `<span class="f-kbd">${esc(p)}</span>`).join('')}</span>` : '';
+        return `<div class="rm__role${soon ? ' is-soon' : ''}">
           <svg class="rm__art"><use href="#${esc(r.icon)}"/></svg>
-          <div class="rm__txt"><b>${esc(t(r.name))}</b><small>${esc(t(r.summary))}</small>
-            ${here && r.services?.length ? `<span class="rm__svcs">${r.services.map(s => `<span class="rm__svc" translate="no"><i class="dk__dot ${dot(s.active)}"></i>${esc(s.name.replace(/\.service$/, ''))}</span>`).join('')}</span>` : ''}
-            ${here && r.ports?.length ? `<span class="rm__ports" translate="no">${r.ports.map(p => `<code>${esc(p)}</code>`).join('')}</span>` : ''}
-            ${here && r.adopted ? `<span class="f-dim rm__note">${t('Schon von Hand eingerichtet: als Rolle übernommen.')}</span>` : ''}
-          </div>
-          <div class="rm__acts">${acts}</div></div>`;
+          <span class="rm__txt"><b>${esc(t(r.name))}${here && r.adopted ? ` <span class="f-badge" title="${esc(t('Schon von Hand eingerichtet: als Rolle übernommen.'))}">${t('übernommen')}</span>` : ''}</b>
+            <small>${esc(t(r.summary))}</small>${facts}</span>
+          <span class="rm__acts">${acts}</span></div>`;
       };
+
+      // a section: its label with the count, then its roles as rows of one group (Facet: no cards in cards)
+      const section = (label, list, empty = '') => `<section class="f-group rm__sec">
+          <span class="f-label grp__label">${t(label)}${list.length ? ` · ${list.length}` : ''}</span>
+          ${list.length ? `<div class="grp rm__list">${list.map(card).join('')}</div>` : empty}</section>`;
 
       const draw = () => {
         if (!data) { win.body.innerHTML = `<div class="dk__empty"><p>${t('Akari antwortet nicht.')}</p></div>`; return; }
@@ -51,19 +57,18 @@
         const apt = data.apt || {}, failed = apt.last && !apt.last.ok && !apt.running && String(apt.last.job).startsWith('role:');
         const keepScroll = win.body.scrollTop;
         win.body.innerHTML = `
-          <header class="rm__head"><div><h2 class="f-h2">${t('Server-Manager')}</h2><p class="f-dim">${t('Wofür dieser Rechner da ist: Rollen, die man als Ganzes hinzufügt und wieder entfernt.')}</p></div></header>
-          ${sum ? `<dl class="f-metrics f-metrics--grid rm__sum grp">
-            <div class="f-metric"><dt>${t('Rechner')}</dt><dd class="f-metric__value f-metric__value--plain" translate="no">${esc(Akari.system?.hostname || '–')}</dd></div>
-            <div class="f-metric"><dt>${t('Last')}</dt><dd class="f-metric__value f-metric__value--plain">${sum.load ? sum.load[0].toLocaleString(Akari.locale(), { maximumFractionDigits: 2 }) : '–'}</dd><dd class="f-metric__note">${sum.cores} ${t(sum.cores === 1 ? 'Kern' : 'Kerne')}</dd></div>
-            <div class="f-metric"><dt>${t('Speicher')}</dt><dd class="f-metric__value f-metric__value--plain">${sum.mem ? `${Math.round(sum.mem.used / sum.mem.total * 100)} %` : '–'}</dd></div>
-            <div class="f-metric"><dt>${t('Platte')}</dt><dd class="f-metric__value f-metric__value--plain">${sum.disk ? `${Math.round(sum.disk.used / sum.disk.total * 100)} %` : '–'}</dd></div>
-          </dl>` : ''}
+          <header class="rm__head f-group"><h2 class="f-h2">${t('Server-Manager')}</h2><p class="f-dim">${t('Wofür dieser Rechner da ist: Rollen, die man als Ganzes hinzufügt und wieder entfernt.')}</p></header>
+          ${sum ? `<div class="f-stats rm__sum">
+            <div><span class="f-label">${t('Rechner')}</span><span class="f-kpi__v" translate="no">${esc(Akari.system?.hostname || '–')}</span></div>
+            <div><span class="f-label">${t('Last')}</span><span class="f-kpi__v">${sum.load ? sum.load[0].toLocaleString(Akari.locale(), { maximumFractionDigits: 2 }) : '–'} <small>${sum.cores} ${t(sum.cores === 1 ? 'Kern' : 'Kerne')}</small></span></div>
+            <div><span class="f-label">${t('Speicher')}</span><span class="f-kpi__v">${sum.mem ? Math.round(sum.mem.used / sum.mem.total * 100) : '–'} <small>%</small></span></div>
+            <div><span class="f-label">${t('Platte')}</span><span class="f-kpi__v">${sum.disk ? Math.round(sum.disk.used / sum.disk.total * 100) : '–'} <small>%</small></span></div>
+          </div>` : ''}
           ${(apt.running && String(apt.running).startsWith('role:')) || failed ? `<div class="grp rm__apt"><div class="opt"><span class="opt__txt"><b>${t(failed ? 'Das hat nicht geklappt.' : 'apt arbeitet')}</b><small>${t(failed ? 'Das Protokoll steht unten.' : 'Du kannst das Fenster schließen, es läuft weiter.')}</small></span></div>
             <pre class="up__log">${esc((apt.log || []).join('\n'))}</pre></div>` : ''}
-          <span class="f-label grp__label">${t('Rollen auf diesem Rechner')}</span>
-          <div class="rm__list">${here.map(card).join('') || `<p class="f-dim rm__none">${t('Noch keine. Unten lassen sich welche hinzufügen.')}</p>`}</div>
-          ${add.length ? `<span class="f-label grp__label">${t('Rollen hinzufügen')}</span><div class="rm__list">${add.map(card).join('')}</div>` : ''}
-          ${soon.length ? `<span class="f-label grp__label">${t('Bald')}</span><div class="rm__list">${soon.map(card).join('')}</div>` : ''}
+          ${section('Rollen auf diesem Rechner', here, `<p class="f-dim rm__none">${t('Noch keine. Unten lassen sich welche hinzufügen.')}</p>`)}
+          ${add.length ? section('Rollen hinzufügen', add) : ''}
+          ${soon.length ? section('Bald', soon) : ''}
           ${data.admin ? '' : `<p class="f-dim rm__none">${t('Rollen hinzufügen und entfernen dürfen Konten, die verwalten.')}</p>`}`;
         win.body.scrollTop = keepScroll;
       };

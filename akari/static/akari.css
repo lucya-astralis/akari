@@ -1780,19 +1780,18 @@ button.w-mon__item{ cursor:pointer }
 :root[data-motion] .win.is-snapping, :root[data-motion] .snap-ghost{ transition:none }
 
 /* ---------- Server-Manager (apps/roles.js): the machine's roles ---------- */
-.rm{ padding:var(--s-6) var(--s-7) var(--s-6); overflow:auto }
-.rm__head{ margin-bottom:var(--s-4) } .rm__head .f-h2{ margin:0 0 var(--s-1) } .rm__head p{ margin:0 }
-.rm__sum{ padding:var(--s-4) var(--s-5); margin-bottom:var(--s-2) }
-.rm__list{ display:grid; gap:var(--s-2) }
-.rm__role{ display:grid; grid-template-columns:auto minmax(0, 1fr) auto; align-items:center; gap:var(--s-4); padding:var(--s-4) var(--s-5);
-  border-radius:var(--r-card); background:var(--card); border:var(--hair) solid var(--line) }
-.rm__role.is-here{ box-shadow:inset 3px 0 0 var(--acc) }
-.rm__role.is-soon{ opacity:.55 } .rm__role.is-soon .rm__art{ filter:grayscale(1) }
-.rm__art{ width:44px; height:44px }
-.rm__txt{ display:grid; gap:4px; min-width:0 } .rm__txt small{ color:var(--text-dim); font-size:var(--fs-text-sm) }
-.rm__svcs, .rm__ports{ display:flex; flex-wrap:wrap; gap:var(--s-2) var(--s-3); margin-top:2px }
-.rm__svc{ display:inline-flex; align-items:center; gap:6px; font:400 12px/1.2 var(--mono); color:var(--text-dim) }
-.rm__ports code{ font-size:11px; padding:1px 6px; border-radius:var(--r-small); background:var(--surface-2); color:var(--text-dim) }
+.rm{ display:grid; gap:var(--s-6); align-content:start; padding:var(--s-6) var(--s-7) var(--s-7); overflow:auto }
+.rm__head .f-h2, .rm__head p{ margin:0 }
+.rm__sum .f-kpi__v{ font-size:18px }
+.rm__sec .grp__label{ margin:0 }
+.rm__role{ display:grid; grid-template-columns:auto minmax(0, 1fr) auto; align-items:center; gap:var(--s-4); padding:var(--s-4) var(--s-5) }
+.rm__role.is-soon .rm__art, .rm__role.is-soon .rm__txt{ opacity:.5 } .rm__role.is-soon .rm__art{ filter:grayscale(1) }
+.rm__art{ width:40px; height:40px }
+.rm__txt{ display:grid; gap:2px; min-width:0 }
+.rm__txt b{ display:flex; align-items:center; gap:var(--s-2); font-weight:500 }
+.rm__txt small{ color:var(--text-dim); font-size:var(--fs-text-sm) }
+.rm__facts{ display:flex; flex-wrap:wrap; align-items:center; gap:var(--s-2) var(--s-4); margin-top:var(--s-2) }
+.rm__facts .f-kbd{ font-size:11px }
 .rm__acts{ display:flex; align-items:center; gap:var(--s-2) }
-.rm__none{ margin:0 }
-.rm__apt{ margin:var(--s-3) 0 } .rm__apt .up__log{ margin:0 var(--s-4) var(--s-4) }
+.rm__none{ margin:0; padding:0 var(--s-1) }
+.rm__apt .up__log{ margin:0 }
