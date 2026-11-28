@@ -45,3 +45,38 @@ def test_network_from_ip(monkeypatch):
     n = host.network()
     assert n["interfaces"] == [{"name": "ens3", "up": True, "mac": "52:54:00:12:34:56", "addresses": ["10.0.2.15/24"]}]
     assert n["gateway"] == "10.0.2.2" and n["url"] == "https://10.0.2.15/"
+
+
+def test_automatic_updates_are_written_to_akaris_own_file(monkeypatch, tmp_path):
+    from akari import host
+    monkeypatch.setattr(host, "AUTO", tmp_path / "99akari-auto-upgrades")
+    monkeypatch.setattr(host.shutil, "which", lambda name: "/usr/bin/" + name)
+    monkeypatch.setattr(host, "_run", lambda *cmd, **kw: 'APT::Periodic::Unattended-Upgrade "1";\n')
+    host.set_auto_updates(True)
+    assert 'APT::Periodic::Unattended-Upgrade "1";' in (tmp_path / "99akari-auto-upgrades").read_text()
+    host.set_auto_updates(False)
+    assert 'APT::Periodic::Unattended-Upgrade "0";' in (tmp_path / "99akari-auto-upgrades").read_text()
+
+
+def test_no_automatic_updates_without_unattended_upgrades(monkeypatch):
+    import pytest
+    from akari import host
+    monkeypatch.setattr(host.shutil, "which", lambda name: None)
+    with pytest.raises(host.HostError):
+        host.set_auto_updates(True)
+
+
+def test_only_known_keyboard_layouts(monkeypatch, tmp_path):
+    import pytest
+    from akari import host
+    f = tmp_path / "keyboard"
+    f.write_text('XKBMODEL="pc105"\nXKBLAYOUT="us"\nXKBVARIANT="intl"\nXKBOPTIONS="compose:ralt"\n')
+    monkeypatch.setattr(host, "KEYBOARD", f)
+    monkeypatch.setattr(host.console, "redraw", lambda: None)
+    for bad in ("", "xx", "de; rm", "DE"):
+        with pytest.raises(host.HostError):
+            host.set_keyboard(bad)
+    assert host.keyboard()["layout"] == "us"
+    assert host.set_keyboard("de")["layout"] == "de"
+    text = f.read_text()
+    assert 'XKBLAYOUT="de"' in text and 'XKBVARIANT=""' in text and 'XKBOPTIONS="compose:ralt"' in text and 'XKBMODEL="pc105"' in text

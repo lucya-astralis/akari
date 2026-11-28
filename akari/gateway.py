@@ -483,6 +483,38 @@ async def host_update(body: JobIn, request: Request) -> dict:
     return {**await asyncio.to_thread(host.updates), "admin": acct.admin}
 
 
+@app.get("/api/host/autoupdates")
+async def host_auto(request: Request) -> dict:
+    acct = _me(request)
+    return {**await asyncio.to_thread(host.auto_updates), "admin": acct.admin}
+
+
+class OnIn(BaseModel):
+    on: bool
+
+
+@app.put("/api/host/autoupdates")
+async def host_set_auto(body: OnIn, request: Request) -> dict:
+    acct = _admin(request)
+    return {**await asyncio.to_thread(_host_call, host.set_auto_updates, body.on), "admin": acct.admin}
+
+
+@app.get("/api/host/keyboard")
+async def host_keyboard(request: Request) -> dict:
+    acct = _me(request)
+    return {**await asyncio.to_thread(host.keyboard), "admin": acct.admin}
+
+
+class KeyboardIn(BaseModel):
+    layout: str
+
+
+@app.put("/api/host/keyboard")
+async def host_set_keyboard(body: KeyboardIn, request: Request) -> dict:
+    acct = _admin(request)
+    return {**await asyncio.to_thread(_host_call, host.set_keyboard, body.layout), "admin": acct.admin}
+
+
 # ---------- Docker (docker.py): the socket is root, so admins only ----------
 
 async def _dk(coro):

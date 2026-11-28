@@ -1,0 +1,7 @@
+// Akari OS: what automatic updates install (Einstellungen → Updates → Automatisch).
+// Debian's own file covers the security updates; these add Debian's point-release
+// updates and Akari's own archive, so Akari keeps itself up to date too.
+Unattended-Upgrade::Origins-Pattern {
+	"origin=Debian,codename=${distro_codename}-updates";
+	"origin=Akari OS,suite=stable";
+};

@@ -69,7 +69,7 @@ def _matrix(text: str) -> list[list[bool]]:
 def _qr(text: str) -> str:
     """The code in half blocks, two modules a character: light modules lit, dark ones the console's
     black, so it reads as a printed code. The quiet zone is the same on every side; with an odd
-    number of rows the last half row is light too (part of the margin below)."""
+    number of rows the last half row is the console's black, so the margin below is no wider."""
     m = _matrix(text)
     if not m:
         return ""
@@ -77,7 +77,7 @@ def _qr(text: str) -> str:
     light = [[True] * n for _ in range(QUIET)] + [[True] * QUIET + [not d for d in row] + [True] * QUIET for row in m] \
         + [[True] * n for _ in range(QUIET)]
     if len(light) % 2:
-        light.append([True] * n)
+        light.append([False] * n)      # the console's black: a light half row here made the margin below wider
     glyph = {(True, True): "█", (True, False): "▀", (False, True): "▄", (False, False): " "}
     return "\n".join("".join(glyph[(a, b)] for a, b in zip(light[i], light[i + 1])) for i in range(0, len(light), 2)) + "\n"
 

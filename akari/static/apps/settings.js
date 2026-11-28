@@ -35,7 +35,9 @@
         if (page === 'konten') loadAccounts();
         if (page === 'schreibtisch') loadDesks();
         if (page === 'ssh') loadSsh();
-        if (page === 'software') { loadSoftware(); loadUpdates(); }
+        if (page === 'software') loadSoftware();
+        if (page === 'updates') { loadUpdates(); loadAuto(); }
+        if (page === 'tastatur') loadKeyboard();
         if (page === 'konto') fillMe();
         if (page === 'lucent') loadLucent();
         requestAnimationFrame(() => Facet.layout());
@@ -83,7 +85,20 @@
         $('[data-mag-out="amount"]', el).textContent = `${Akari.t('bis')} ${100 + amount} %`;
         $('[data-mag-out="range"]', el).textContent = `${reach.toLocaleString(Akari.locale(), { maximumFractionDigits: 1 })} ${Akari.t('Symbole zu jeder Seite')}`;
         // with a picture as background, Nova's options mean nothing: they go
-        $$('[data-nova-opt]', el).forEach(o => { o.hidden = !!P.wallpaperV; });
+        $$('[data-nova-opt]', el).forEach(o => { o.hidden = Akari.wallSource() !== 'nova'; });
+        $('[data-nova-grp]', el).hidden = Akari.wallSource() !== 'nova';
+        const src = Akari.wallSource(), D = Akari.desk;
+        if (D) $('[data-walls]', el).innerHTML = [
+          `<button class="wall wall--nova" role="radio" data-wall="nova" aria-checked="${src === 'nova'}"><span class="wall__pic"></span><span class="wall__name">Nova</span></button>`,
+          ...D.WALLS.map(([id, name]) => `<button class="wall" role="radio" data-wall="${id}" aria-checked="${src === id}"><img class="wall__pic" src="/assets/wallpapers/${id}-t.webp" alt="" loading="lazy" decoding="async"><span class="wall__name" translate="no">${esc(Akari.t(name))}</span></button>`),
+          P.wallpaperV ? `<button class="wall" role="radio" data-wall="own" aria-checked="${src === 'own'}"><img class="wall__pic" src="${D.wallUrl('own')}" alt=""><span class="wall__name">${esc(Akari.t('Eigenes Bild'))}</span></button>`
+            : `<button class="wall wall--add" data-wall-pick><span class="wall__pic"><svg><use href="#i-plus"/></svg></span><span class="wall__name">${esc(Akari.t('Eigenes Bild'))}</span></button>`,
+        ].join('');
+        // the weather in the clock
+        const wx = $('[data-pref-on="weather"]', el); if (wx) wx.checked = P.weather !== false;
+        $$('[data-wx-opt]', el).forEach(o => { o.hidden = P.weather === false; });
+        const wp = $('[data-wx-place-in]', el); if (wp && document.activeElement !== wp) wp.value = P.weatherPlace || '';
+        const wu = $(`input[name="weatherUnit"][value="${P.weatherUnit === 'f' ? 'f' : 'c'}"]`, el); if (wu) wu.checked = true;
         // each widget, on or off
         const W = Akari.desk?.WIDGETS || {}, on = Akari.desk?.enabledWidgets() || [];
         $('[data-widget-list]', el).innerHTML = Object.entries(W).map(([id, w]) => `
@@ -106,6 +121,9 @@
         if (i.name === 'novaLogo') return Akari.set('novaLogo', i.value);
         if (i.name === 'lang') return window.AkariI18n?.set(i.value);
         if (i.dataset.widget) return i.checked ? Akari.desk?.addWidget(i.dataset.widget) : Akari.desk?.removeWidget(i.dataset.widget);
+        if (i.name === 'weatherUnit') return Akari.set('weatherUnit', i.value);
+        if (i.matches('[data-wx-place-in]')) return Akari.set('weatherPlace', i.value.trim().slice(0, 80));
+        if (i.dataset.prefOn) return Akari.set(i.dataset.prefOn, i.checked);       // on unless switched off
         if (i.dataset.pref) Akari.set(i.dataset.pref, i.checked);
       });
       // Eigene: a hue to pick; it shows while dragging and is kept when let go
@@ -283,6 +301,7 @@
       /* background picture, arrangement */
       el.addEventListener('click', e => {
         if (e.target.closest('[data-wall-pick]')) Akari.desk?.pickWallpaper();
+        const wt = e.target.closest('[data-wall]'); if (wt) Akari.desk?.setWall(wt.dataset.wall);
         if (e.target.closest('[data-wall-drop]')) Akari.desk?.dropWallpaper();
         if (e.target.closest('[data-reset-layout]')) { Akari.set('layout', { icons: {}, widgets: {} }); Akari.set('hiddenIcons', []); Akari.set('widgetsOff', []); }
       });
@@ -300,7 +319,7 @@
       };
 
       /* updates: apt in a unit of its own; while it runs, look again every two seconds */
-      let upTimer = null;
+      let upTimer = null, wasRunning = null;
       const loadUpdates = async () => {
         clearTimeout(upTimer);
         let r; try { r = await Akari.api('/api/host/updates', { quiet: true }); } catch { return; }
@@ -320,7 +339,9 @@
         const log = $('[data-up-log]', el);
         log.hidden = !(r.running || failed) || !r.log.length;
         log.textContent = r.log.join('\n');
-        if (r.running && el.isConnected && !$('.page[data-page="software"]', el).hidden) upTimer = setTimeout(loadUpdates, 2000);
+        if (r.running && el.isConnected && !$('.page[data-page="updates"]', el).hidden) upTimer = setTimeout(loadUpdates, 2000);
+        if (!r.running && wasRunning === 'auto') loadAuto();       // unattended-upgrades was just installed
+        wasRunning = r.running;
       };
       el.addEventListener('click', async e => {
         const b = e.target.closest('[data-up-job]'); if (!b) return;
@@ -330,6 +351,45 @@
         }
         try { await Akari.api('/api/host/updates', { method: 'POST', json: { job: b.dataset.upJob } }); } catch {}
         loadUpdates();
+      });
+
+      /* automatic updates (unattended-upgrades, host.py): on or off, for accounts that manage */
+      const loadAuto = async () => {
+        let r; try { r = await Akari.api('/api/host/autoupdates', { quiet: true }); } catch { return; }
+        const box = $('[data-auto]', el);
+        box.checked = r.on;
+        box.disabled = !r.admin || !r.installed;
+        $('[data-auto-install]', el).hidden = !(r.admin && !r.installed);
+        $('[data-auto-switch]', el).hidden = r.admin && !r.installed;
+        $('[data-auto-state]', el).textContent = Akari.t(!r.installed
+          ? 'Dafür fehlt unattended-upgrades. Einrichten installiert es aus Debian.'
+          : r.on ? 'Jeden Tag: Sicherheitsupdates, Debians Updates und Akari selbst. Wann neu gestartet wird, entscheidest du.'
+          : 'Aus: Updates kommen nur, wenn du oben auf Suchen und Installieren gehst.');
+      };
+      el.addEventListener('change', async e => {
+        if (!e.target.matches('[data-auto]')) return;
+        try { await Akari.api('/api/host/autoupdates', { method: 'PUT', json: { on: e.target.checked } }); } catch {}
+        loadAuto();
+      });
+      el.addEventListener('click', async e => {
+        if (!e.target.closest('[data-auto-install]')) return;
+        try { await Akari.api('/api/host/updates', { method: 'POST', json: { job: 'auto' } }); } catch {}
+        loadUpdates();
+      });
+
+      /* the keyboard of the machine (host.py: localectl) */
+      const loadKeyboard = async () => {
+        let r; try { r = await Akari.api('/api/host/keyboard', { quiet: true }); } catch { return; }
+        const sel = $('[data-kb]', el);
+        sel.innerHTML = r.layouts.map(l => `<option value="${esc(l.id)}"${l.id === r.layout ? ' selected' : ''}>${esc(Akari.t(l.name))}</option>`).join('')
+          + (r.layout && !r.layouts.some(l => l.id === r.layout) ? `<option value="${esc(r.layout)}" selected>${esc(r.layout)}</option>` : '');
+        sel.disabled = !r.admin;
+        $('[data-kb-state]', el).textContent = Akari.t(r.admin ? 'Gilt sofort an der Konsole, wenn dort niemand angemeldet ist, sonst ab der nächsten Anmeldung.' : 'Ändern dürfen Konten, die verwalten.');
+      };
+      el.addEventListener('change', async e => {
+        if (!e.target.matches('[data-kb]')) return;
+        try { await Akari.api('/api/host/keyboard', { method: 'PUT', json: { layout: e.target.value } }); } catch {}
+        loadKeyboard();
       });
 
       /* the machine: name, processor, disks, power */

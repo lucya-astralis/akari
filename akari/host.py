@@ -214,6 +214,8 @@ JOBS = {
                 "upgrade", "--with-new-pkgs"],
     # Docker from Debian, for the Docker app (docker.py): the engine and compose
     "docker": ["apt-get", "-y", "install", "docker.io", "docker-compose"],
+    # automatic updates, where the installer left them out
+    "auto": ["apt-get", "-y", "install", "unattended-upgrades"],
 }
 
 
@@ -285,3 +287,78 @@ def start(job: str) -> None:
     _check("systemd-run", f"--unit={UNIT}", "--quiet", "--service-type=exec",
            "--property=Nice=10", *ENV, *JOBS[job])
     _save(job=job, started=time.time() - 1)
+
+
+# ---------- automatic updates ----------
+# unattended-upgrades does the work, every day; Akari only says whether. Its own
+# file (Debian's 20auto-upgrades stays as the installer wrote it) comes last, so
+# it wins. What it installs (Debian's security and updates, Akari's archive) is
+# set by the package (/etc/apt/apt.conf.d/52akari-unattended-upgrades).
+
+AUTO = Path(os.environ.get("AKARI_AUTO_UPGRADES", "/etc/apt/apt.conf.d/99akari-auto-upgrades"))
+
+
+def _periodic(key: str) -> str | None:
+    m = re.search(rf'APT::Periodic::{key} "([^"]*)"', _run("apt-config", "dump", f"APT::Periodic::{key}"))
+    return m.group(1) if m else None
+
+
+def auto_updates() -> dict:
+    installed = bool(shutil.which("unattended-upgrade"))
+    return {"installed": installed, "on": installed and _periodic("Unattended-Upgrade") not in (None, "0", "")}
+
+
+def set_auto_updates(on: bool) -> dict:
+    if on and not shutil.which("unattended-upgrade"):
+        raise HostError("unattended-upgrades fehlt. Erst installieren.")
+    v = "1" if on else "0"
+    AUTO.parent.mkdir(parents=True, exist_ok=True)
+    tmp = AUTO.with_suffix(".tmp")
+    tmp.write_text("// Akari OS: Einstellungen → Updates → Automatisch (host.py)\n"
+                   f'APT::Periodic::Update-Package-Lists "{v}";\nAPT::Periodic::Unattended-Upgrade "{v}";\n', encoding="utf-8")
+    os.chmod(tmp, 0o644)
+    os.replace(tmp, AUTO)
+    return auto_updates()
+
+
+# ---------- the keyboard ----------
+# The system's layout, /etc/default/keyboard, as Debian's installer writes it:
+# the console on the machine (kmscon reads it when it starts) and new X
+# sessions. Written here, not through localectl: Debian's systemd-localed keeps
+# it in /etc/vconsole.conf and makes a wrong console keymap of it. Model and
+# options stay as they are. The desktop in the browser types with the
+# browser's own keyboard.
+
+KEYBOARD = Path(os.environ.get("AKARI_KEYBOARD", "/etc/default/keyboard"))
+
+LAYOUTS = [("de", "Deutsch"), ("ch", "Deutsch (Schweiz)"), ("at", "Deutsch (Österreich)"), ("us", "Englisch (USA)"),
+           ("gb", "Englisch (UK)"), ("fr", "Französisch"), ("es", "Spanisch"), ("it", "Italienisch"), ("nl", "Niederländisch"),
+           ("pl", "Polnisch"), ("se", "Schwedisch"), ("no", "Norwegisch"), ("dk", "Dänisch"), ("fi", "Finnisch"),
+           ("pt", "Portugiesisch"), ("cz", "Tschechisch"), ("jp", "Japanisch"), ("ru", "Russisch")]
+_LAYOUT = re.compile(r"^[a-z]{2,3}$")
+
+
+def _keyboard_file() -> str:
+    with contextlib.suppress(OSError):
+        return KEYBOARD.read_text(encoding="utf-8")
+    return ""
+
+
+def keyboard() -> dict:
+    m = re.search(r'^XKBLAYOUT="?([^"\n]*)"?', _keyboard_file(), re.M)
+    return {"layout": m.group(1).split(",")[0] if m and m.group(1) else None, "layouts": [{"id": i, "name": n} for i, n in LAYOUTS]}
+
+
+def set_keyboard(layout: str) -> dict:
+    if not _LAYOUT.match(layout or "") or layout not in dict(LAYOUTS):
+        raise HostError("Unbekanntes Tastaturlayout.")
+    text = _keyboard_file() or 'XKBMODEL="pc105"\nXKBLAYOUT=""\nXKBVARIANT=""\nXKBOPTIONS=""\nBACKSPACE="guess"\n'
+    for key, value in (("XKBLAYOUT", layout), ("XKBVARIANT", "")):
+        line = f'{key}="{value}"'
+        text = re.sub(rf"^{key}=.*$", line, text, flags=re.M) if re.search(rf"^{key}=", text, re.M) else text.rstrip("\n") + f"\n{line}\n"
+    tmp = KEYBOARD.with_suffix(".akari.tmp")
+    tmp.write_text(text, encoding="utf-8")
+    os.chmod(tmp, 0o644)
+    os.replace(tmp, KEYBOARD)
+    console.redraw()            # the console takes it on its next start, which happens now if nobody is signed in there
+    return keyboard()

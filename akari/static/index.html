@@ -208,6 +208,7 @@
   <symbol id="i-desks" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="3.5" y="7.5" width="12" height="10" rx="2"/><path d="M8.5 7.5V6.5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"/></g></symbol>
   <symbol id="i-clock" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></g></symbol>
   <symbol id="i-info" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5M12 7.8h.01"/></g></symbol>
+  <symbol id="i-keyboard" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M6.5 10h.01M10 10h.01M14 10h.01M17.5 10h.01M6.5 13.8h.01M17.5 13.8h.01M9.5 14h5"/></g></symbol>
   <symbol id="i-sliders" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></g></symbol>
   <symbol id="i-bell" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/></symbol>
   <symbol id="i-battery" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" d="M3.5 7.5h15v9h-15zM20.5 10.5v3"/></symbol>
@@ -422,6 +423,8 @@
         <a class="f-nav__item" href="#konto" data-page="konto" data-keys="name konto passwort anmeldung"><svg><use href="#i-user"/></svg>Konto</a>
         <a class="f-nav__item" href="#konten" data-page="konten" data-keys="konten benutzer anlegen löschen verwalten admin" data-admin hidden><svg><use href="#i-users"/></svg>Konten</a>
         <a class="f-nav__item" href="#software" data-page="software" data-keys="software pakete apt sudo installieren programme updates aktualisieren upgrade"><svg><use href="#i-box"/></svg>Software</a>
+        <a class="f-nav__item" href="#updates" data-page="updates" data-keys="updates aktualisieren upgrade automatisch apt sicherheit"><svg><use href="#i-refresh"/></svg>Updates</a>
+        <a class="f-nav__item" href="#tastatur" data-page="tastatur" data-keys="tastatur keyboard layout belegung konsole sprache"><svg><use href="#i-keyboard"/></svg>Tastatur</a>
         <a class="f-nav__item" href="#netzwerk" data-page="netzwerk" data-keys="netzwerk network ip adresse dns gateway router mac lan"><svg><use href="#i-net"/></svg>Netzwerk</a>
         <a class="f-nav__item" href="#zeit" data-page="zeit" data-keys="datum uhrzeit zeit zeitzone ntp uhr"><svg><use href="#i-clock"/></svg>Datum &amp; Uhrzeit</a>
         <a class="f-nav__item" href="#ssh" data-page="ssh" data-keys="ssh schlüssel key fernzugriff terminal port passwort"><svg><use href="#i-term"/></svg>SSH</a>
@@ -464,7 +467,8 @@
           </div>
         </div>
         <span class="f-label grp__label">Hintergrund</span>
-        <div class="grp">
+        <div class="walls" data-walls role="radiogroup" aria-label="Hintergrund"></div>
+        <div class="grp" data-nova-grp>
           <div class="opt" data-nova-opt><span class="opt__txt"><b>Nova als Hintergrund</b><small>Aus: ein schlichter Grund.</small></span><label class="f-switch"><input type="checkbox" data-pref="wallpaper"><i></i><span class="sr">Nova als Hintergrund</span></label></div>
           <div class="opt" data-nova-opt>
             <span class="opt__txt"><b>Licht von</b><small>Woher Novas Strahlen kommen.</small></span>
@@ -561,6 +565,20 @@
         </div>
         <span class="f-label grp__label">Widgets</span>
         <div class="grp" data-widget-list></div>
+        <span class="f-label grp__label">Wetter</span>
+        <div class="grp">
+          <div class="opt"><span class="opt__txt"><b>Wetter in der Uhr</b><small>Von Open-Meteo. Gefragt wird mit nichts als dem Ort.</small></span><label class="f-switch"><input type="checkbox" data-pref-on="weather"><i></i><span class="sr">Wetter in der Uhr</span></label></div>
+          <div class="opt" data-wx-opt><span class="opt__txt"><b>Ort</b><small>Leer: die Stadt aus der Zeitzone des Rechners.</small></span>
+            <input class="f-input wx__place" data-wx-place-in placeholder="Berlin" maxlength="80" autocomplete="off" spellcheck="false"></div>
+          <div class="opt" data-wx-opt>
+            <span class="opt__txt"><b>Einheit</b></span>
+            <div class="f-seg" role="radiogroup" aria-label="Einheit">
+              <span class="f-seg__thumb"></span>
+              <input type="radio" name="weatherUnit" id="wu-c" value="c"><label for="wu-c">°C</label>
+              <input type="radio" name="weatherUnit" id="wu-f" value="f"><label for="wu-f">°F</label>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section class="page" data-page="konto" hidden>
@@ -614,7 +632,13 @@
         <div class="grp">
           <div class="opt"><span class="opt__txt"><b>Alle Programme zeigen</b><small>Auch Terminal-Programme wie htop, XTerm und die Einstellungen anderer Desktops im Startmenü. Sonst startest du sie im Terminal.</small></span><label class="f-switch"><input type="checkbox" data-pref="showAllApps"><i></i><span class="sr">Alle Programme zeigen</span></label></div>
         </div>
-        <span class="f-label grp__label">Updates</span>
+        <p class="f-dim page__lede" data-sw-count></p>
+      </section>
+
+      <section class="page" data-page="updates" hidden>
+        <header class="page__head"><button class="f-btn f-btn--ghost f-btn--icon page__back" data-back aria-label="Zurück"><svg><use href="#i-back"/></svg></button><h2 class="f-h2">Updates</h2></header>
+        <p class="f-dim page__lede">Akari OS und Debian kommen über apt: Debians Sicherheitsupdates, seine Updates und Akaris eigene Paketquelle.</p>
+        <span class="f-label grp__label">Jetzt</span>
         <div class="grp" data-up>
           <div class="opt">
             <span class="opt__txt"><b data-up-title>–</b><small data-up-state>–</small></span>
@@ -626,7 +650,20 @@
           <div class="up__list" data-up-list hidden></div>
           <pre class="up__log" data-up-log hidden></pre>
         </div>
-        <p class="f-dim page__lede" data-sw-count></p>
+        <span class="f-label grp__label">Automatisch</span>
+        <div class="grp">
+          <div class="opt"><span class="opt__txt"><b>Automatisch aktualisieren</b><small data-auto-state>Jeden Tag: Sicherheitsupdates, Debians Updates und Akari selbst. Wann neu gestartet wird, entscheidest du.</small></span>
+            <span class="opt__acts"><button class="f-btn f-btn--sm" data-auto-install hidden>Einrichten</button><label class="f-switch" data-auto-switch><input type="checkbox" data-auto><i></i><span class="sr">Automatisch aktualisieren</span></label></span></div>
+        </div>
+      </section>
+
+      <section class="page" data-page="tastatur" hidden>
+        <header class="page__head"><button class="f-btn f-btn--ghost f-btn--icon page__back" data-back aria-label="Zurück"><svg><use href="#i-back"/></svg></button><h2 class="f-h2">Tastatur</h2></header>
+        <p class="f-dim page__lede">Die Belegung des Rechners: für die Konsole am Gerät und Linux-Programme. Im Browser tippst du mit der Tastatur deines eigenen Geräts.</p>
+        <div class="grp">
+          <div class="opt"><span class="opt__txt"><b>Belegung</b><small data-kb-state>–</small></span>
+            <select class="f-input f-select kb__pick" data-kb aria-label="Belegung"></select></div>
+        </div>
       </section>
 
       <section class="page" data-page="netzwerk" hidden>

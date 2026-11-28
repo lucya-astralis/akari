@@ -48,7 +48,7 @@
   let saveT;
   const save = () => {
     if (!prefsLoaded) return;
-    try { localStorage.setItem('akari-prefs-last', JSON.stringify({ tint: P.tint, nova: novaSide(), wallpaper: P.wallpaper !== false && !P.wallpaperV, cursors: P.cursors !== false, tintH: P.tintH })); } catch {}
+    try { localStorage.setItem('akari-prefs-last', JSON.stringify({ tint: P.tint, nova: novaSide(), wallpaper: P.wallpaper !== false && !wallImage(), cursors: P.cursors !== false, tintH: P.tintH })); } catch {}
     clearTimeout(saveT);
     saveT = setTimeout(() => api('/api/prefs', { method: 'PUT', json: P, quiet: true }).catch(() => {}), 400);
   };
@@ -65,6 +65,10 @@
     };
     Facet.layout.akari = true;
   }
+  // what the desk shows: Nova, the account's own picture, or one of Akari's (desk.js WALLS).
+  // Before there was a choice, an uploaded picture simply won.
+  const wallSource = () => P.wall || (P.wallpaperV ? 'own' : 'nova');
+  const wallImage = () => { const w = wallSource(); return w !== 'nova' && (w !== 'own' || !!P.wallpaperV); };
   const novaSide = () => (['left', 'right', 'both'].includes(P.nova) ? P.nova : (P.mirror ? 'right' : 'left'));
   const flag = (name, on, val = '') => on ? root.setAttribute(name, val) : root.removeAttribute(name);
   const apply = () => {
@@ -790,7 +794,7 @@
     $$('[data-qpref]', popQuick).forEach(b => b.setAttribute('aria-pressed', qOn(b.dataset.qpref)));
     $('[data-qc-dnd]', popQuick).textContent = t(P.dnd ? 'An' : 'Aus');
     // Nova: means nothing under a picture of one's own
-    $('[data-qc-nova]', popQuick).hidden = !!P.wallpaperV;
+    $('[data-qc-nova]', popQuick).hidden = wallImage();
     $('[data-qc-wall]', popQuick).checked = P.wallpaper !== false;
     $('[data-qc-nova-opts]', popQuick).classList.toggle('is-off', P.wallpaper === false);
     const nv = $(`input[name="qnova"][value="${novaSide()}"]`, popQuick); if (nv) nv.checked = true;
@@ -1195,7 +1199,7 @@
   };
 
   window.Akari = {
-    novaSide, mediaLocal, api, register, unregister, open, close, focus, ask, notify, color, on, emit, fmtBytes, t, locale, closePops, menu: menuAt, minimise, avatar, recent, previewMagnify,
+    novaSide, wallSource, wallImage, mediaLocal, api, register, unregister, open, close, focus, ask, notify, color, on, emit, fmtBytes, t, locale, closePops, menu: menuAt, minimise, avatar, recent, previewMagnify,
     clip: { set: clipSet, read: clipRead, sink: clipSink, get text() { return CLIP; } },
     get prefs() { return P; }, set, get system() { return SYS; }, get me() { return ME; }, loadSystem, loadSession, windows: () => [...WINS],
   };
@@ -1238,7 +1242,7 @@
     // Nova from the right, chosen before there was "nova" (0.6.1: mirror): stays right, not the new default
     if (remote && !remote.nova && remote.mirror) P.nova = 'right';
     prefsLoaded = true;
-    try { localStorage.setItem('akari-prefs-last', JSON.stringify({ tint: P.tint, nova: novaSide(), wallpaper: P.wallpaper !== false && !P.wallpaperV, cursors: P.cursors !== false, tintH: P.tintH })); } catch {}
+    try { localStorage.setItem('akari-prefs-last', JSON.stringify({ tint: P.tint, nova: novaSide(), wallpaper: P.wallpaper !== false && !wallImage(), cursors: P.cursors !== false, tintH: P.tintH })); } catch {}
     Facet.setTheme(P.theme || 'system');
     apply();
     emit('prefs');

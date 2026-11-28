@@ -147,9 +147,11 @@
     storm: () => `${CLOUD(14)}<path d="m12 15-2 4h4l-2 4"/>`,
   };
   const weather = async el => {
-    const r = await Akari.api(`/api/weather?place=${encodeURIComponent(Akari.prefs.weatherPlace || '')}`, { quiet: true }).catch(() => null);
     const b = $('[data-wx-place]', el);
     if (!b) return;
+    if (Akari.prefs.weather === false) { b.hidden = true; return; }      // Einstellungen → Schreibtisch → Wetter
+    const r = await Akari.api(`/api/weather?place=${encodeURIComponent(Akari.prefs.weatherPlace || '')}&unit=${Akari.prefs.weatherUnit === 'f' ? 'f' : 'c'}`, { quiet: true }).catch(() => null);
+    if (Akari.prefs.weather === false) { b.hidden = true; return; }
     b.hidden = !r?.ok;
     if (!r?.ok) { el.wxAt = Date.now() - 14 * 60e3; return; }     // not reached: again in a minute, not in fifteen
     $('.w-wx__icon', b).innerHTML = (WX[r.kind] || WX.cloudy)(r.day);
@@ -306,11 +308,18 @@
   };
 
   /* ---------- the background picture ---------- */
+  // Akari's own, all drawn (design/wallpapers/make.py): id, name, light or dark
+  const WALLS = [
+    ['orikaia', 'Orikaia Prime', 'dark'], ['concordia', 'Concordia', 'dark'], ['mitternacht', 'Mitternacht', 'dark'],
+    ['aurora', 'Aurora', 'light'], ['glas', 'Glas', 'light'],
+  ];
+  const wallUrl = w => w === 'own' ? `/api/wallpaper?v=${Akari.prefs.wallpaperV}` : `/assets/wallpapers/${w}.webp`;
   const wallpaper = () => {
-    const v = Akari.prefs.wallpaperV, desk = $('#desk');
-    document.documentElement.toggleAttribute('data-wall-image', !!v);
-    desk.style.setProperty('--wall', v ? `url("/api/wallpaper?v=${v}")` : 'none');
+    const w = Akari.wallSource(), image = Akari.wallImage(), desk = $('#desk');
+    document.documentElement.toggleAttribute('data-wall-image', image);
+    desk.style.setProperty('--wall', image ? `url("${wallUrl(w)}")` : 'none');
   };
+  const setWall = w => Akari.set('wall', w);
   const pickWallpaper = () => {
     const inp = document.createElement('input');
     inp.type = 'file'; inp.accept = 'image/jpeg,image/png,image/webp,image/gif';
@@ -320,6 +329,7 @@
       try {
         const r = await Akari.api('/api/wallpaper', { method: 'POST', body: fd });
         Akari.set('wallpaperV', r.v);
+        setWall('own');
       } catch {}
     };
     inp.click();
@@ -327,6 +337,7 @@
   const dropWallpaper = async () => {
     await Akari.api('/api/wallpaper', { method: 'DELETE', quiet: true }).catch(() => {});
     Akari.set('wallpaperV', 0);
+    if (Akari.wallSource() === 'own') setWall('nova');
   };
 
   /* ---------- right-click on the surface, icons, widgets ---------- */
@@ -369,8 +380,13 @@
     ]);
   });
 
-  Akari.desk = { pickWallpaper, dropWallpaper, addWidget, removeWidget, enabledWidgets: enabled, WIDGETS };
-  Akari.on('prefs', () => { wallpaper(); placeIcons(); renderWidgets(); });
+  Akari.desk = { pickWallpaper, dropWallpaper, setWall, WALLS, wallUrl, addWidget, removeWidget, enabledWidgets: enabled, WIDGETS };
+  let wxSeen = '';
+  Akari.on('prefs', () => {
+    wallpaper(); placeIcons(); renderWidgets();
+    const P = Akari.prefs, now = `${P.weather}|${P.weatherPlace || ''}|${P.weatherUnit || 'c'}`;
+    if (now !== wxSeen) { wxSeen = now; const c = $('.widget--clock'); if (c) { c.wxAt = Date.now(); weather(c); } }
+  });
   addEventListener('resize', () => { placeIcons(); renderWidgets(); });
   document.addEventListener('visibilitychange', () => { if (!document.hidden) pollPerf(); });
   const start = () => { wallpaper(); iconsReady(); renderWidgets(); };

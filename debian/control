@@ -32,7 +32,7 @@ Depends: ${misc:Depends},
          qrencode,
          libjs-xterm,
          novnc
-Recommends: akari-shell
+Recommends: akari-shell, unattended-upgrades
 Description: desktop in the browser for a Linux machine (akarid)
  Akari OS puts a desktop in the browser on top of a Debian system: windows,
  a terminal, files, music and Linux apps (each in its own Xvnc, shown with

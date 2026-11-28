@@ -196,4 +196,7 @@ def lines() -> list[str]:
 
 
 if __name__ == "__main__":
+    # a clean screen first: the login prompt and the QR code above it are done with
+    if COLOUR:
+        print("\033[H\033[2J", end="")
     print("\n".join(lines()))

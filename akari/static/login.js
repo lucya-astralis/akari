@@ -66,6 +66,9 @@
     $('#password').focus();
   };
 
+  // a new sign-in gets Willkommen again (apps/welcome.js remembers per tab that it was shown;
+  // signing out and in again in the same tab is a new sign-in, not a reload)
+  const welcomeAgain = () => { try { sessionStorage.removeItem('akari-welcomed'); } catch {} };
   /* which desktop: after the password, or from "Desktop wechseln" */
   const enter = () => { document.body.classList.add('is-leaving'); setTimeout(() => location.replace('/'), 380); };
   const ago = t => {
@@ -145,6 +148,7 @@
     $('#login').classList.add('is-busy');
     try {
       const who = await post('/api/login', { name: $('#username').value, password: $('#password').value });
+      welcomeAgain();
       await chooser(who, false);
     } catch (err) {
       $('#pw-field').classList.add('is-error');
@@ -177,6 +181,7 @@
     $('#setup-msg').textContent = 'Lege Konto und Home an …';
     try {
       const who = await post('/api/login/setup', { token, name: F['name'].value, fullname: F.fullname.value, password: F.password.value });
+      welcomeAgain();
       await chooser(who, false);
     } catch (err) {
       $('#setup-msg').textContent = err.message;

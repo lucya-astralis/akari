@@ -33,6 +33,7 @@ override_dh_auto_install:
 	install -D -m 644 system/pam.d/akari $(A)/etc/pam.d/akari
 	install -D -m 440 system/sudoers.d/akari $(A)/etc/sudoers.d/akari
 	install -D -m 755 system/motd/10-akari $(A)/etc/update-motd.d/10-akari
+	install -D -m 644 system/apt/52akari-unattended-upgrades $(A)/etc/apt/apt.conf.d/52akari-unattended-upgrades
 	# --- akari-shell: oh-my-zsh, powerlevel10k, gitstatusd, fonts, zsh and fastfetch setup ---
 	install -d $(S)/usr/share/oh-my-zsh $(S)/usr/share/powerlevel10k
 	cp -r vendor/oh-my-zsh/. $(S)/usr/share/oh-my-zsh/

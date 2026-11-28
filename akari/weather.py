@@ -54,7 +54,8 @@ async def _place(c: httpx.AsyncClient, name: str) -> dict | None:
 
 
 @router.get("/weather")
-async def weather(place: str = "") -> dict:
+async def weather(place: str = "", unit: str = "c") -> dict:
+    fahrenheit = unit == "f"
     name = place.strip()[:80] or zone_city()
     if not name:
         return {"ok": False}
@@ -63,11 +64,12 @@ async def weather(place: str = "") -> dict:
             p = await _place(c, name)
             if not p:
                 return {"ok": False, "place": name}
-            key = (round(p["lat"], 2), round(p["lon"], 2))
+            key = (round(p["lat"], 2), round(p["lon"], 2), fahrenheit)
             hit = _weather.get(key)
             if not hit or time.time() - hit[0] > TTL:
                 r = await c.get(FORECAST, params={"latitude": p["lat"], "longitude": p["lon"], "timezone": "auto",
-                                                  "current": "temperature_2m,weather_code,is_day"})
+                                                  "current": "temperature_2m,weather_code,is_day",
+                                                  **({"temperature_unit": "fahrenheit"} if fahrenheit else {})})
                 r.raise_for_status()
                 cur = r.json()["current"]
                 hit = (time.time(), {"temp": round(cur["temperature_2m"]), "kind": kind(int(cur["weather_code"])), "day": bool(cur.get("is_day", 1))})

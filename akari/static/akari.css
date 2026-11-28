@@ -1657,3 +1657,18 @@ body{ touch-action:manipulation; -webkit-tap-highlight-color:transparent }
 :root[data-phone] .wl__foot .f-check{ flex-basis:100%; order:3 }
 :root[data-phone] .wl__facts{ grid-template-columns:minmax(0, 1fr) }
 :root[data-motion] .wl *, .wl.is-calm *{ animation:none !important }
+
+/* ---------- Einstellungen → Darstellung: the backgrounds as a gallery ---------- */
+.walls{ display:grid; grid-template-columns:repeat(auto-fill, minmax(132px, 1fr)); gap:var(--s-3); margin-bottom:var(--s-4) }
+.wall{ display:grid; gap:var(--s-2); padding:0; border:0; background:none; color:var(--text-dim); font:500 var(--fs-text-sm)/1.2 var(--sans); text-align:left; cursor:pointer }
+.wall__pic{ display:grid; place-items:center; width:100%; aspect-ratio:16 / 9; object-fit:cover; border-radius:var(--r-inner);
+  box-shadow:0 0 0 var(--hair) var(--line) inset, var(--shadow-4); background:var(--surface-2); transition:box-shadow var(--dur-1) var(--ease), transform var(--dur-2) var(--spring) }
+.wall:hover .wall__pic{ transform:translateY(-1px) }
+.wall[aria-checked="true"]{ color:var(--text) }
+.wall[aria-checked="true"] .wall__pic{ box-shadow:0 0 0 2px var(--acc), var(--shadow-4) }
+.wall--nova .wall__pic{ background:radial-gradient(120% 90% at 0% 0%, color-mix(in oklch, var(--acc) 55%, transparent), transparent 60%),
+  linear-gradient(115deg, transparent 38%, color-mix(in oklch, var(--acc) 35%, #fff) 40%, transparent 42%), var(--bg) }
+.wall--add .wall__pic{ color:var(--text-dim); border:1.5px dashed var(--line-strong); box-shadow:none; background:none }
+.wall--add .wall__pic svg{ width:20px; height:20px }
+.kb__pick{ min-width:200px; max-width:260px }
+.wx__place{ width:min(220px, 100%) }
