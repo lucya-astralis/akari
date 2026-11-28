@@ -1,3 +1,13 @@
+akari (0.19.1) trixie; urgency=medium
+
+  * The console shows the address and QR code right after boot: akarid
+    starts kmscon on tty1 again when the text changes and nobody is signed
+    in there (kmscon reads it only when it starts, before DHCP was done).
+  * Sidebars: one element everywhere (Facet 1.9), the chosen entry a card
+    one step above the bar, light and dark; Music uses it too.
+
+ -- Akari OS <packages@lucya.systems>  Sat, 28 Nov 2026 10:00:00 +0100
+
 akari (0.19.0) trixie; urgency=medium
 
   * The clock widget shows the weather beside the time: from Open-Meteo,
