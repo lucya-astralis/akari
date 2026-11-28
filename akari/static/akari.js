@@ -67,7 +67,9 @@
   }
   // what the desk shows: Nova, the account's own picture, or one of Akari's (desk.js WALLS).
   // Before there was a choice, an uploaded picture simply won.
-  const wallSource = () => P.wall || (P.wallpaperV ? 'own' : 'nova');
+  // (0.20's bitmaps are gone: a choice of one of them is Nova again)
+  const WALL_IDS = ['nova', 'own', 'sternenkarte', 'himmelsatlas', 'astralis', 'astralis-plan'];
+  const wallSource = () => WALL_IDS.includes(P.wall) ? P.wall : (P.wallpaperV ? 'own' : 'nova');
   const wallImage = () => { const w = wallSource(); return w !== 'nova' && (w !== 'own' || !!P.wallpaperV); };
   const novaSide = () => (['left', 'right', 'both'].includes(P.nova) ? P.nova : (P.mirror ? 'right' : 'left'));
   const flag = (name, on, val = '') => on ? root.setAttribute(name, val) : root.removeAttribute(name);

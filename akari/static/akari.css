@@ -1094,6 +1094,8 @@ img.app-art, img.win__icon{ object-fit:contain; border-radius:22% }
 .desk__spectrum::after{ mix-blend-mode:screen; opacity:.28 }
 /* the app icons keep their own colours, as they do in the bar */
 :root[data-tint="spectrum"] .icons, :root[data-tint="spectrum"] .widgets{ z-index:2 }
+/* a picture of one's own choosing keeps its colours: the rainbow is for Nova */
+:root[data-wall-image] .desk__spectrum{ display:none }
 /* …and the windows stay above them (the bar and its menus are far higher still) */
 :root[data-tint="spectrum"] .windows{ z-index:3 }
 .swatch--spectrum{ background:linear-gradient(115deg, oklch(.80 .12 20), oklch(.86 .12 90), oklch(.84 .11 165), oklch(.80 .10 230), oklch(.78 .12 300)) }

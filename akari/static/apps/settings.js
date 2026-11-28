@@ -90,7 +90,7 @@
         const src = Akari.wallSource(), D = Akari.desk;
         if (D) $('[data-walls]', el).innerHTML = [
           `<button class="wall wall--nova" role="radio" data-wall="nova" aria-checked="${src === 'nova'}"><span class="wall__pic"></span><span class="wall__name">Nova</span></button>`,
-          ...D.WALLS.map(([id, name]) => `<button class="wall" role="radio" data-wall="${id}" aria-checked="${src === id}"><img class="wall__pic" src="/assets/wallpapers/${id}-t.webp" alt="" loading="lazy" decoding="async"><span class="wall__name" translate="no">${esc(Akari.t(name))}</span></button>`),
+          ...D.WALLS.map(([id, name]) => `<button class="wall" role="radio" data-wall="${id}" aria-checked="${src === id}"><img class="wall__pic" src="${D.wallUrl(id)}" alt="" loading="lazy" decoding="async"><span class="wall__name" translate="no">${esc(name)}</span></button>`),
           P.wallpaperV ? `<button class="wall" role="radio" data-wall="own" aria-checked="${src === 'own'}"><img class="wall__pic" src="${D.wallUrl('own')}" alt=""><span class="wall__name">${esc(Akari.t('Eigenes Bild'))}</span></button>`
             : `<button class="wall wall--add" data-wall-pick><span class="wall__pic"><svg><use href="#i-plus"/></svg></span><span class="wall__name">${esc(Akari.t('Eigenes Bild'))}</span></button>`,
         ].join('');

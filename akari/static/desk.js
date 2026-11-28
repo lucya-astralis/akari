@@ -308,12 +308,14 @@
   };
 
   /* ---------- the background picture ---------- */
-  // Akari's own, all drawn (design/wallpapers/make.py): id, name, light or dark
+  // Akari's own, all drawn and all vector (design/wallpapers/charts.py, station.py): sharp at any size;
+  // what matters sits in the middle, the ground goes on to every edge. id, name (English, in every
+  // language, as names are), light or dark
   const WALLS = [
-    ['orikaia', 'Orikaia Prime', 'dark'], ['concordia', 'Concordia', 'dark'], ['mitternacht', 'Mitternacht', 'dark'],
-    ['aurora', 'Aurora', 'light'], ['glas', 'Glas', 'light'],
+    ['sternenkarte', 'Star Chart', 'dark'], ['himmelsatlas', 'Sky Atlas', 'light'],
+    ['astralis', 'Astralis', 'dark'], ['astralis-plan', 'Astralis Plan', 'light'],
   ];
-  const wallUrl = w => w === 'own' ? `/api/wallpaper?v=${Akari.prefs.wallpaperV}` : `/assets/wallpapers/${w}.webp`;
+  const wallUrl = w => w === 'own' ? `/api/wallpaper?v=${Akari.prefs.wallpaperV}` : `/assets/wallpapers/${w}.svg`;
   const wallpaper = () => {
     const w = Akari.wallSource(), image = Akari.wallImage(), desk = $('#desk');
     document.documentElement.toggleAttribute('data-wall-image', image);
