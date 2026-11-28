@@ -1,3 +1,16 @@
+akari (0.22.0) trixie; urgency=medium
+
+  * Widgets in fixed sizes, as on macOS: small, medium and large on a grid
+    of their own, a preview while dragging, a taken place makes room; the
+    size from the widget's menu, the gallery shows which it has.
+  * Windows snap: to an edge half the screen, to a corner a quarter, to the
+    top maximised, with a preview; pulled out, a window gets its size back.
+    Ctrl+Alt+arrows do the same.
+  * Windows arrive without bouncing: opening, restoring, snapping and the
+    minimised tiles move on a curve that does not overshoot.
+
+ -- Akari OS <packages@lucya.systems>  Sat, 28 Nov 2026 16:00:00 +0100
+
 akari (0.21.0) trixie; urgency=medium
 
   * akari-server, brought by akari-desktop: btop, ncdu, tmux, rsync, jq,
