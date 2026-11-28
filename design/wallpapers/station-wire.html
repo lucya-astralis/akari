@@ -3,7 +3,7 @@
      station/js folder next to this page, serve the folder with a server that
      takes POST /save (writes the body to a file), open the page: it builds the
      station from parts.js, finds the edges where the hull folds, projects them
-     from a three-quarter view and posts them, near to far in four paths. -->
+     isometrically (and, as before, in perspective) and posts them, near to far in four paths. -->
 <meta charset="utf-8">
 <title>wire</title>
 <body style="background:#111;color:#ccc;font:14px monospace">
@@ -65,7 +65,11 @@ function edges(geo, thresholdDeg) {
   return out;
 }
 
-function draw({ dir, fov, box, threshold, name }) {
+// isometric: no perspective, the three axes at the same scale. The ship's axis (+Z, the bow)
+// runs up to the right, +X (starboard) down to the right, +Y up; nearer is larger x + y + z
+const iso = (v) => [(v.z - v.x) * Math.cos(Math.PI / 6), (v.x + v.z) * Math.sin(Math.PI / 6) * -1 - v.y, -(v.x + v.y + v.z)];
+
+function draw({ dir, fov, box, threshold, name, isometric = false }) {
   const cam = view(dir, fov);
   const segs = [];
   const a = new THREE.Vector3(), b = new THREE.Vector3();
@@ -75,6 +79,11 @@ function draw({ dir, fov, box, threshold, name }) {
     for (let i = 0; i < p.length; i += 6) {
       a.set(p[i], p[i + 1], p[i + 2]).applyMatrix4(o.matrixWorld);
       b.set(p[i + 3], p[i + 4], p[i + 5]).applyMatrix4(o.matrixWorld);
+      if (isometric) {
+        const [ax, ay, ad] = iso(a), [bx, by, bd] = iso(b);
+        segs.push([ax, ay, bx, by, (ad + bd) / 2]);
+        continue;
+      }
       const da = a.distanceTo(cam.position), db = b.distanceTo(cam.position);
       const pa = a.clone().project(cam), pb = b.clone().project(cam);
       segs.push([pa.x, -pa.y, pb.x, -pb.y, (da + db) / 2]);
@@ -106,6 +115,7 @@ function draw({ dir, fov, box, threshold, name }) {
 
 const shots = {
   side: draw({ name: 'side', dir: [1, 0.42, 0.38], fov: 14, box: [700, 470, 2440, 1200], threshold: 28 }),
+  iso: draw({ name: 'iso', dir: [1, 1, 1], fov: 14, box: [700, 470, 2440, 1200], threshold: 28, isometric: true }),
 };
 shots.length = ship.bounds.front - ship.bounds.back;
 await fetch('/save', { method: 'POST', body: JSON.stringify(shots) });

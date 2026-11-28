@@ -7,7 +7,7 @@ astralis-plan.svg (a light plan on paper).
 EDGES.json comes from station-wire.html: it builds the station from
 sc-branding's own station/js/parts.js (copy that js folder next to the page
 and serve the folder), takes every edge where the hull folds, projects them
-from a three-quarter view and posts them back, sorted near to far into four
+isometrically (no perspective, the three axes at one scale) and posts them back, sorted near to far into four
 paths. This script only lays them out: a ground, a fine grid, the ship, and a
 title block. Everything that matters sits inside what a 4:3 screen still shows (x 640 to
 3200); the ground and grid go on to every edge, so wider screens see more
@@ -26,13 +26,24 @@ MONO = "ui-monospace, SFMono-Regular, Menlo, monospace"
 
 
 def grid(minor: str, major: str) -> list[str]:
-    o = [f'<g fill="none" stroke="{minor}" stroke-width="1">']
-    o += [f'<path d="{"".join(f"M{x} 0V{H}" for x in range(0, W + 1, 48))}{"".join(f"M0 {y}H{W}" for y in range(0, H + 1, 48))}"/>']
-    o.append("</g>")
-    o.append(f'<g fill="none" stroke="{major}" stroke-width="1.4">')
-    o.append(f'<path d="{"".join(f"M{x} 0V{H}" for x in range(0, W + 1, 240))}{"".join(f"M0 {y}H{W}" for y in range(0, H + 1, 240))}"/>')
-    o.append("</g>")
-    return o
+    """An isometric grid, as the drawing is: lines at +30°, -30° and upright."""
+    import math
+    t = math.tan(math.radians(30))
+    def lines(step: int) -> str:
+        d = []
+        for x in range(0, W + 1, step):                       # upright
+            d.append(f"M{x} 0V{H}")
+        span = W * t
+        c = -span
+        k = step / math.cos(math.radians(30))                 # spacing along y for slanted lines
+        while c < H + span:
+            d.append(f"M0 {c:.1f}L{W} {c + W * t:.1f}")       # falling to the right (+30°)
+            d.append(f"M0 {c + W * t:.1f}L{W} {c:.1f}")       # rising to the right (-30°)
+            c += k
+        return "".join(d)
+    step = 60
+    return [f'<g fill="none" stroke="{minor}" stroke-width="1"><path d="{lines(step)}"/></g>',
+            f'<g fill="none" stroke="{major}" stroke-width="1.4"><path d="{lines(step * 5)}"/></g>']
 
 
 def wallpaper(paths: list[str], length: float, dark: bool) -> str:
@@ -60,7 +71,7 @@ def wallpaper(paths: list[str], length: float, dark: bool) -> str:
              f'<text x="640" y="1780" font-size="44" letter-spacing="10" font-weight="600">LSV-01 ASTRALIS</text>'
              f'<text x="640" y="1832" font-size="26" letter-spacing="6" fill="{dim}">LONG-RANGE STATION · ORIKAIA PRIME · SHINSEI CONCORDIA</text>'
              f'<text x="3200" y="1780" font-size="26" letter-spacing="6" fill="{dim}" text-anchor="end">2 RINGS · 24 MODULES · 1 G AT 3.7 RPM</text>'
-             f'<text x="3200" y="1832" font-size="26" letter-spacing="6" fill="{dim}" text-anchor="end">LENGTH {round(length)} M · SHEET 1 / 1</text>'
+             f'<text x="3200" y="1832" font-size="26" letter-spacing="6" fill="{dim}" text-anchor="end">ISOMETRIC · LENGTH {round(length)} M · SHEET 1 / 1</text>'
              f'</g>')
     o.append("</svg>")
     return "\n".join(o)
@@ -72,5 +83,5 @@ if __name__ == "__main__":
     shots = json.loads(Path(sys.argv[1]).read_text())
     OUT.mkdir(parents=True, exist_ok=True)
     for name, dark in (("astralis", True), ("astralis-plan", False)):
-        (OUT / f"{name}.svg").write_text(wallpaper(shots["side"], shots["length"], dark), encoding="utf-8")
+        (OUT / f"{name}.svg").write_text(wallpaper(shots["iso"], shots["length"], dark), encoding="utf-8")
         print(name, (OUT / f"{name}.svg").stat().st_size // 1024, "KB")
