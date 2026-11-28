@@ -28,7 +28,7 @@ from starlette.background import BackgroundTask
 from websockets.asyncio.client import unix_connect
 from websockets.exceptions import ConnectionClosed
 
-from . import accounts, agents, auth, avatars, config, console, docker, host, lucent, software, ssh
+from . import accounts, agents, auth, avatars, config, console, docker, host, lucent, services, software, ssh
 
 # style-src allows inline styles: xterm.js writes its theme into a <style> element.
 CSP = ("default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; "
@@ -483,6 +483,16 @@ async def host_update(body: JobIn, request: Request) -> dict:
     return {**await asyncio.to_thread(host.updates), "admin": acct.admin}
 
 
+@app.get("/api/host/summary")
+async def host_summary(request: Request) -> dict:
+    acct = _me(request)
+    out = await asyncio.to_thread(host.summary)
+    # which services failed is root's business; how many is everyone's
+    if not acct.admin:
+        out["failed"] = len(out.get("failed") or [])
+    return {**out, "admin": acct.admin}
+
+
 @app.get("/api/host/autoupdates")
 async def host_auto(request: Request) -> dict:
     acct = _me(request)
@@ -513,6 +523,49 @@ class KeyboardIn(BaseModel):
 async def host_set_keyboard(body: KeyboardIn, request: Request) -> dict:
     acct = _admin(request)
     return {**await asyncio.to_thread(_host_call, host.set_keyboard, body.layout), "admin": acct.admin}
+
+
+# ---------- services and the journal (services.py): root's view, so admins only ----------
+
+def _sv(fn, *a):
+    try:
+        return fn(*a)
+    except services.ServiceError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.get("/api/services")
+async def services_list(request: Request) -> dict:
+    _admin(request)
+    return {"services": await asyncio.to_thread(_sv, services.units)}
+
+
+@app.get("/api/services/journal")
+async def services_journal(request: Request, priority: str = "warning", lines: int = 300, boot: bool = True) -> dict:
+    _admin(request)
+    return {"entries": await asyncio.to_thread(_sv, services.journal, priority, lines, boot)}
+
+
+@app.get("/api/services/{name}")
+async def services_detail(name: str, request: Request) -> dict:
+    _admin(request)
+    return await asyncio.to_thread(_sv, services.detail, name)
+
+
+@app.get("/api/services/{name}/log")
+async def services_log(name: str, request: Request, lines: int = 300) -> dict:
+    _admin(request)
+    return {"entries": await asyncio.to_thread(_sv, services.log, name, lines)}
+
+
+class ServiceActIn(BaseModel):
+    action: str
+
+
+@app.post("/api/services/{name}")
+async def services_act(name: str, body: ServiceActIn, request: Request) -> dict:
+    _admin(request)
+    return await asyncio.to_thread(_sv, services.act, name, body.action)
 
 
 # ---------- Docker (docker.py): the socket is root, so admins only ----------

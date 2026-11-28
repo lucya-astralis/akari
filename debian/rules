@@ -6,6 +6,7 @@ include /usr/share/dpkg/architecture.mk
 GITSTATUS_ARCH := $(if $(filter arm64,$(DEB_HOST_ARCH)),aarch64,x86_64)
 A := debian/akari
 S := debian/akari-shell
+V := debian/akari-server
 D := debian/akari-desktop
 
 %:
@@ -34,6 +35,13 @@ override_dh_auto_install:
 	install -D -m 440 system/sudoers.d/akari $(A)/etc/sudoers.d/akari
 	install -D -m 755 system/motd/10-akari $(A)/etc/update-motd.d/10-akari
 	install -D -m 644 system/apt/52akari-unattended-upgrades $(A)/etc/apt/apt.conf.d/52akari-unattended-upgrades
+	# --- akari-server: the settings for a machine that serves ---
+	install -D -m 644 system/server/sysctl-akari-server.conf $(V)/usr/lib/sysctl.d/90-akari-server.conf
+	install -D -m 644 system/server/journald-akari.conf $(V)/usr/lib/systemd/journald.conf.d/50-akari.conf
+	install -D -m 644 system/server/logind-akari-server.conf $(V)/usr/lib/systemd/logind.conf.d/50-akari-server.conf
+	install -D -m 644 system/server/sleep-akari-server.conf $(V)/usr/lib/systemd/sleep.conf.d/50-akari-server.conf
+	install -D -m 644 system/server/zram-generator.conf $(V)/etc/systemd/zram-generator.conf
+	install -D -m 644 system/server/fail2ban-akari.conf $(V)/etc/fail2ban/jail.d/akari.conf
 	# --- akari-shell: oh-my-zsh, powerlevel10k, gitstatusd, fonts, zsh and fastfetch setup ---
 	install -d $(S)/usr/share/oh-my-zsh $(S)/usr/share/powerlevel10k
 	cp -r vendor/oh-my-zsh/. $(S)/usr/share/oh-my-zsh/

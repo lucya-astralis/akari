@@ -255,6 +255,26 @@
     return [...APPS.values()].filter(a => a.dock).sort((a, b) => a.order - b.order).map(a => a.id);
   };
   const isPinned = id => pinned().includes(id);
+  // the desktop and the start menu hold whatever one puts there, any app: until one does,
+  // what they held before (apps that asked for the desktop, less the hidden; the bar's pins)
+  const deskIcons = () => Array.isArray(P.deskIcons) ? P.deskIcons.filter(id => APPS.has(id))
+    : [...APPS.values()].filter(a => a.desk && !(P.hiddenIcons || []).includes(a.id)).sort((a, b) => a.order - b.order).map(a => a.id);
+  const onDesk = id => deskIcons().includes(id);
+  const toDesk = (id, on) => set('deskIcons', on ? [...deskIcons().filter(x => x !== id), id] : deskIcons().filter(x => x !== id));
+  const startPins = () => Array.isArray(P.startPins) ? P.startPins.filter(id => APPS.has(id)) : pinned();
+  const inStart = id => startPins().includes(id);
+  const toStart = (id, on) => set('startPins', on ? [...startPins().filter(x => x !== id), id] : startPins().filter(x => x !== id));
+  // one menu for an app wherever it shows: start menu, all apps, bar, desktop
+  const appMenu = (id, extra = []) => {
+    const a = APPS.get(id);
+    if (!a) return [];
+    return [
+      ...extra,
+      inStart(id) ? { label: 'Im Startmenü lösen', icon: 'i-x', act: () => toStart(id, false) } : { label: 'Im Startmenü anheften', icon: 'i-plus', act: () => toStart(id, true) },
+      isPinned(id) ? { label: 'Von der Leiste lösen', icon: 'i-x', act: () => pin(id, false) } : { label: 'An die Leiste heften', icon: 'i-plus', act: () => pin(id, true) },
+      onDesk(id) ? { label: 'Vom Schreibtisch nehmen', icon: 'i-x', act: () => toDesk(id, false) } : { label: 'Auf den Schreibtisch legen', icon: 'i-plus', act: () => toDesk(id, true) },
+    ];
+  };
   const pin = (id, on) => {
     const list = pinned().filter(x => x !== id);
     if (on) list.push(id);
@@ -317,10 +337,12 @@
     markRunning();
   };
 
-  let showAll = null;
+  let showAll = null, launchLists = null;
   on('prefs', () => {
     if (!APPS.size) return;
     if (showAll !== !!P.showAllApps) { showAll = !!P.showAllApps; return renderLaunchers(); }
+    const lists = JSON.stringify([P.startPins, P.deskIcons, P.hiddenIcons]);
+    if (lists !== launchLists) { launchLists = lists; return renderLaunchers(); }
     renderDock();
   });   // pinned apps changed elsewhere (another tab, a reset)
 
@@ -330,7 +352,7 @@
     const grid = $('#launch-apps');
     grid.innerHTML = '';
     // the start menu shows what is pinned (as the bar does), every app is one click further
-    const pins = pinned().map(id => APPS.get(id)).filter(a => a && a.launch !== false);
+    const pins = startPins().map(id => APPS.get(id)).filter(a => a && a.launch !== false);
     (pins.length ? pins : apps.filter(a => a.launch !== false && !a.extra).slice(0, 10)).forEach((a, i) => {
       const b = document.createElement('button');
       b.className = 'launch__app'; b.dataset.app = a.id; b.setAttribute('role', 'menuitem'); b.style.setProperty('--i', i);
@@ -351,7 +373,7 @@
     }
     const icons = $('#icons');
     icons.innerHTML = '';
-    apps.filter(a => a.desk).forEach((a, i) => {
+    deskIcons().map(id => APPS.get(id)).forEach((a, i) => {
       const b = document.createElement('button');
       b.className = 'icon'; b.dataset.app = a.id; b.style.setProperty('--i', i);
       b.innerHTML = `<span class="icon__img">${artHtml(a)}</span><span class="icon__name"></span>`;
@@ -986,9 +1008,7 @@
         a.multi && { label: 'Neues Fenster', icon: 'i-plus', act: () => open(a.id, {}, { fresh: true }) },
         ...(ws.length > 1 ? ['-', ...ws.map(w => ({ label: w.title, icon: w.minimised ? 'i-min' : 'i-window', act: () => focus(w) }))] : []),
         '-',
-        isPinned(a.id)
-          ? { label: 'Von der Leiste lösen', icon: 'i-x', act: () => pin(a.id, false) }
-          : { label: 'An die Leiste heften', icon: 'i-plus', act: () => pin(a.id, true) },
+        ...appMenu(a.id),
         ws.length && '-',
         ws.length && { label: 'Alle minimieren', icon: 'i-min', act: () => ws.forEach(minimise) },
         ws.length && { label: ws.length > 1 ? 'Alle schließen' : 'Schließen', icon: 'i-x', danger: true, act: () => ws.forEach(w => close(w)) },
@@ -1015,15 +1035,10 @@
         { label: 'Schließen', icon: 'i-x', danger: true, act: () => close(w) },
       ]);
     }
-    const launchApp = e.target.closest('.launch__app');
-    if (launchApp) {
+    const launchApp = e.target.closest('.launch__app, .launch__item[data-app], .home__app');
+    if (launchApp && APPS.has(launchApp.dataset.app)) {
       const id = launchApp.dataset.app;
-      return menuAt(e, [
-        { label: 'Öffnen', icon: 'i-chev', act: () => { closePops(); open(id); } },
-        isPinned(id)
-          ? { label: 'Von der Leiste lösen', icon: 'i-x', act: () => pin(id, false) }
-          : { label: 'An die Leiste heften', icon: 'i-plus', act: () => pin(id, true) },
-      ]);
+      return menuAt(e, appMenu(id, [{ label: 'Öffnen', icon: 'i-chev', act: () => { closePops(); open(id); } }, '-']));
     }
     // the taskbar itself: size, position, hiding
     if (e.target.closest('.tb')) {
@@ -1201,7 +1216,7 @@
   };
 
   window.Akari = {
-    novaSide, wallSource, wallImage, mediaLocal, api, register, unregister, open, close, focus, ask, notify, color, on, emit, fmtBytes, t, locale, closePops, menu: menuAt, minimise, avatar, recent, previewMagnify,
+    novaSide, wallSource, wallImage, appMenu, toDesk, mediaLocal, api, register, unregister, open, close, focus, ask, notify, color, on, emit, fmtBytes, t, locale, closePops, menu: menuAt, minimise, avatar, recent, previewMagnify,
     clip: { set: clipSet, read: clipRead, sink: clipSink, get text() { return CLIP; } },
     get prefs() { return P; }, set, get system() { return SYS; }, get me() { return ME; }, loadSystem, loadSession, windows: () => [...WINS],
   };

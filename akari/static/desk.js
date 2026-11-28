@@ -170,7 +170,7 @@
   });
   const WIDGETS = {
     clock: {
-      title: 'Uhr', size: [270, 0],
+      title: 'Uhr', icon: 'i-clock', desc: 'Uhrzeit, Datum und das Wetter.', size: [270, 0],
       // the time on the left, the weather on the right (weather.py, Open-Meteo; a click picks the place)
       html: `<div class="w-clock__now"><time class="w-clock__time"></time><span class="w-clock__date"></span></div>
         <button class="w-wx" data-wx-place hidden><svg class="w-wx__icon" viewBox="0 0 24 24" aria-hidden="true"></svg><b class="w-wx__temp"></b><small class="w-wx__place" translate="no"></small></button>`,
@@ -182,7 +182,7 @@
       },
     },
     perf: {
-      title: 'Auslastung', size: [240, 0],
+      title: 'Auslastung', icon: 'i-pulse', desc: 'Prozessor, Speicher und Netz, live.', size: [240, 0],
       html: `<div class="w-perf__row"><span>CPU</span><b data-v="cpu">–</b></div>
         <svg class="w-perf__spark" viewBox="0 0 100 30" preserveAspectRatio="none"><path data-line/></svg>
         <div class="w-perf__row"><span data-l="mem">Speicher</span><b data-v="mem">–</b></div>
@@ -190,11 +190,11 @@
         <div class="w-perf__row w-perf__net"><span>↓ <b data-v="rx">–</b></span><span>↑ <b data-v="tx">–</b></span></div>`,
     },
     note: {
-      title: 'Notiz', size: [240, 0],
+      title: 'Notiz', icon: 'i-note', desc: 'Ein Zettel für schnelle Notizen.', size: [240, 0],
       html: '<textarea class="w-note__text" spellcheck="false" placeholder="Notiz …" aria-label="Notiz" translate="no"></textarea>',
     },
     calendar: {
-      title: 'Kalender', size: [250, 0],
+      title: 'Kalender', icon: 'i-clock', desc: 'Der Monat auf einen Blick.', size: [250, 0],
       html: '<b class="w-cal__title"></b><div class="w-cal__grid"></div>',
       tick(el) {
         const now = new Date(), y = now.getFullYear(), m = now.getMonth(), key = `${y}-${m}-${now.getDate()}`;
@@ -210,12 +210,33 @@
       },
     },
     storage: {
-      title: 'Speicherplatz', size: [240, 0],
+      title: 'Speicherplatz', icon: 'i-drive', desc: 'Wie voll Home und Datenträger sind.', size: [240, 0],
       html: `<div class="w-perf__row"><span>Home</span><b data-v="home">–</b></div>
         <div class="w-perf__row"><span>Datenträger</span><b data-v="disk">–</b></div>
         <div class="f-meter"><b data-m="disk"></b></div>`,
     },
   };
+  // the machine as a server: refreshed every ten seconds while they are on the desktop (pollMon)
+  Object.assign(WIDGETS, {
+    server: {
+      title: 'Server', icon: 'i-cpu', desc: 'Last, Laufzeit, Speicher, Platte, Updates und Dienste.', size: [250, 0],
+      html: `<div class="w-perf__row"><span>${t('Last')}</span><b data-v="load">–</b></div>
+        <div class="w-perf__row"><span>${t('Läuft seit')}</span><b data-v="up">–</b></div>
+        <div class="w-perf__row"><span>${t('Speicher')}</span><b data-v="mem">–</b></div><div class="f-meter"><b data-m="mem"></b></div>
+        <div class="w-perf__row"><span>${t('Platte')}</span><b data-v="disk">–</b></div><div class="f-meter"><b data-m="disk"></b></div>
+        <button class="w-mon__row" data-open-app="settings" data-args='{"page":"updates"}'><span>${t('Updates')}</span><b data-v="updates">–</b></button>
+        <button class="w-mon__row" data-open-app="services"><span>${t('Dienste')}</span><b data-v="failed">–</b></button>`,
+    },
+    containers: {
+      title: 'Container', icon: 'i-box', desc: 'Was in Docker läuft, die ersten fünf mit Zustand.', size: [250, 0], admin: true,
+      html: `<button class="w-mon__head" data-open-app="docker"><b data-v="count">–</b><small>${t('Container laufen')}</small></button><div class="w-mon__list" data-list></div>`,
+    },
+    services: {
+      title: 'Dienste', icon: 'i-list', desc: 'Fehlgeschlagene Dienste, oder dass alles läuft.', size: [250, 0], admin: true,
+      html: `<button class="w-mon__head" data-open-app="services"><b data-v="state">–</b><small data-v="sub"></small></button><div class="w-mon__list" data-list></div>`,
+    },
+  });
+  const allowed = id => WIDGETS[id] && (!WIDGETS[id].admin || Akari.me?.admin);
   const DEFAULT_ON = ['clock', 'perf'];          // the note is one click away (Widgets), not there from the start
   const DEFAULT_POS = { clock: [24, 24], perf: [24, 150], note: [24, 330] };
   const host = $('#widgets');
@@ -223,7 +244,7 @@
 
   // which widgets are on this desktop (0.4 kept a list of the ones taken away instead)
   const enabled = () => Array.isArray(Akari.prefs.widgetsOn)
-    ? Akari.prefs.widgetsOn.filter(id => WIDGETS[id])
+    ? Akari.prefs.widgetsOn.filter(allowed)
     : DEFAULT_ON.filter(id => !(Akari.prefs.widgetsOff || []).includes(id));
   const addWidget = id => {
     if (enabled().includes(id)) return;
@@ -270,9 +291,13 @@
       const p = layout().widgets?.[id] || DEFAULT_POS[id] || [24, 24];
       requestAnimationFrame(() => place(el, ...clamp(p[0], p[1], el)));
     }
-    tickWidgets(); pollPerf();
+    tickWidgets(); pollPerf(); pollMon();
   };
-  host.addEventListener('click', e => { const x = e.target.closest('[data-wx]'); if (x) removeWidget(x.closest('.widget').dataset.w); });
+  host.addEventListener('click', e => {
+    const x = e.target.closest('[data-wx]'); if (x) return removeWidget(x.closest('.widget').dataset.w);
+    const o = e.target.closest('[data-open-app]');
+    if (o) { let a = {}; try { a = JSON.parse(o.dataset.args || '{}'); } catch {} Akari.open(o.dataset.openApp, a); }
+  });
   const tickWidgets = () => {
     if (host.hidden) return;
     for (const id of ['clock', 'calendar']) { const el = $(`.widget--${id}`, host); if (el) WIDGETS[id].tick(el); }
@@ -306,6 +331,52 @@
     } catch {}
     perfT = setTimeout(pollPerf, 2000);
   };
+
+  /* the server widgets: one round of questions for all of them */
+  let monT;
+  const ago = s => { const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
+    return d ? `${d} ${t(d === 1 ? 'Tag' : 'Tage')}, ${h} h` : h ? `${h} h ${m} min` : `${m} min`; };
+  const pct = (u, tot) => `${(u / tot * 100).toFixed(1)}%`;
+  const pollMon = async () => {
+    clearTimeout(monT);
+    const sv = $('.widget--server', host), ct = $('.widget--containers', host), se = $('.widget--services', host);
+    if ((!sv && !ct && !se) || host.hidden || document.hidden) { monT = setTimeout(pollMon, 10000); return; }
+    const [sum, dk, list] = await Promise.all([
+      sv || se ? Akari.api('/api/host/summary', { quiet: true }).catch(() => null) : null,
+      ct ? Akari.api('/api/docker', { quiet: true }).catch(() => null) : null,
+      se ? Akari.api('/api/services', { quiet: true }).catch(() => null) : null,
+    ]);
+    if (sv && sum) {
+      $('[data-v="load"]', sv).textContent = sum.load ? `${sum.load[0].toLocaleString(Akari.locale(), { maximumFractionDigits: 2 })} · ${sum.cores} ${t(sum.cores === 1 ? 'Kern' : 'Kerne')}` : '–';
+      $('[data-v="up"]', sv).textContent = sum.uptime != null ? ago(sum.uptime) : '–';
+      if (sum.mem) { $('[data-v="mem"]', sv).textContent = `${Akari.fmtBytes(sum.mem.used)} / ${Akari.fmtBytes(sum.mem.total)}`; $('[data-m="mem"]', sv).style.setProperty('--v', pct(sum.mem.used, sum.mem.total)); }
+      if (sum.disk) { $('[data-v="disk"]', sv).textContent = `${Akari.fmtBytes(sum.disk.used)} / ${Akari.fmtBytes(sum.disk.total)}`; $('[data-m="disk"]', sv).style.setProperty('--v', pct(sum.disk.used, sum.disk.total)); }
+      const u = sum.updates, f = Array.isArray(sum.failed) ? sum.failed.length : sum.failed;
+      const ue = $('[data-v="updates"]', sv); ue.textContent = u == null ? '–' : u ? `${u} ${t('verfügbar')}` : t('aktuell'); ue.className = u ? 'is-warn' : u === 0 ? 'is-ok' : '';
+      const fe = $('[data-v="failed"]', sv); fe.textContent = f == null ? '–' : f ? `${f} ${t('fehlgeschlagen')}` : t('alle laufen'); fe.className = f ? 'is-err' : f === 0 ? 'is-ok' : '';
+    }
+    if (ct) {
+      const rows = dk?.containers_list;
+      if (!dk || !dk.running) {
+        $('[data-v="count"]', ct).textContent = '–';
+        $('[data-list]', ct).innerHTML = `<p class="w-mon__none">${t(dk && !dk.installed ? 'Docker ist nicht eingerichtet.' : 'Docker antwortet nicht.')}</p>`;
+      } else {
+        const on = rows.filter(c => c.state === 'running').length;
+        $('[data-v="count"]', ct).textContent = `${on} / ${rows.length}`;
+        $('[data-list]', ct).innerHTML = rows.slice(0, 5).map(c => `<div class="w-mon__item"><i class="dk__dot ${c.state === 'running' ? 'is-ok' : c.state === 'restarting' || c.state === 'paused' ? 'is-warn' : c.state === 'dead' ? 'is-err' : ''}"></i><span translate="no">${escHtml(c.name)}</span><small>${escHtml(c.status.replace(/ \(.*\)$/, ''))}</small></div>`).join('')
+          || `<p class="w-mon__none">${t('Noch keine Container.')}</p>`;
+      }
+    }
+    if (se && list) {
+      const failed = list.services.filter(x => x.active === 'failed'), running = list.services.filter(x => x.active === 'active' && x.sub === 'running').length;
+      $('[data-v="state"]', se).textContent = failed.length ? `${failed.length} ${t('fehlgeschlagen')}` : t('Alles in Ordnung');
+      $('[data-v="state"]', se).className = failed.length ? 'is-err' : 'is-ok';
+      $('[data-v="sub"]', se).textContent = `${running} ${t('Dienste laufen')}`;
+      $('[data-list]', se).innerHTML = failed.slice(0, 5).map(x => `<button class="w-mon__item" data-open-app="services" data-args='${escHtml(JSON.stringify({ service: x.name }))}'><i class="dk__dot is-err"></i><span translate="no">${escHtml(x.name.replace(/\.service$/, ''))}</span></button>`).join('');
+    }
+    monT = setTimeout(pollMon, 10000);
+  };
+  const escHtml = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   /* ---------- the background picture ---------- */
   // Akari's own, all drawn and all vector (design/wallpapers/charts.py, station.py): sharp at any size;
@@ -348,12 +419,11 @@
     const icon = e.target.closest('.icon'), wid = e.target.closest('.widget');
     if (icon) {
       const id = icon.dataset.app;
-      return Akari.menu(e, [
+      return Akari.menu(e, Akari.appMenu(id, [
         { label: 'Öffnen', icon: 'i-chev', act: () => Akari.open(id) },
         { label: 'Neues Fenster', icon: 'i-plus', act: () => Akari.open(id, {}, { fresh: true }) },
         '-',
-        { label: 'Vom Schreibtisch nehmen', icon: 'i-x', act: () => Akari.set('hiddenIcons', [...(Akari.prefs.hiddenIcons || []), id]) },
-      ]);
+      ]));
     }
     if (wid) {
       const id = wid.dataset.w;
@@ -361,7 +431,6 @@
         { label: 'Widget entfernen', icon: 'i-x', act: () => removeWidget(id) },
       ]);
     }
-    const missing = Object.keys(WIDGETS).filter(id => !enabled().includes(id));
     Akari.menu(e, [
       { label: 'Neues Terminal', icon: 'i-term', hint: '⌃⇧T', act: () => Akari.open('terminal', {}, { fresh: true }) },
       { label: 'Neue Textdatei', icon: 'i-edit', act: () => Akari.open('editor', {}, { fresh: true }) },
@@ -370,16 +439,42 @@
       { label: 'Hintergrund ändern …', icon: 'i-image', act: pickWallpaper },
       Akari.prefs.wallpaperV && { label: 'Bild entfernen', icon: 'i-trash', act: dropWallpaper },
       '-',
-      // widgets: each one that is not on the desktop can be added from here
-      ...missing.map(id => ({ label: `${t('Widget hinzufügen')}: ${t(WIDGETS[id].title)}`, icon: 'i-plus', act: () => addWidget(id) })),
+      { label: 'Widgets …', icon: 'i-plus', act: () => Akari.open('widgets') },
       enabled().length && { label: Akari.prefs.widgets === false ? 'Widgets zeigen' : 'Widgets ausblenden', icon: 'i-pulse', act: () => Akari.set('widgets', Akari.prefs.widgets === false) },
-      { label: 'Alle Symbole zeigen', icon: 'i-eye', disabled: !Akari.prefs.hiddenIcons?.length, act: () => Akari.set('hiddenIcons', []) },
+      { label: 'Symbole wie am Anfang', icon: 'i-eye', disabled: !Array.isArray(Akari.prefs.deskIcons) && !Akari.prefs.hiddenIcons?.length,
+        act: () => { Akari.set('hiddenIcons', []); Akari.set('deskIcons', null); } },
       '-',
       { label: Akari.prefs.grid === false ? 'Am Raster ausrichten' : 'Frei anordnen', icon: 'i-dock', act: () => Akari.set('grid', Akari.prefs.grid === false) },
       { label: 'Anordnung zurücksetzen', icon: 'i-refresh', act: () => { Akari.set('layout', { icons: {}, widgets: {} }); } },
       '-',
       { label: 'Einstellungen', icon: 'i-gear', act: () => Akari.open('settings') },
     ]);
+  });
+
+  Akari.register('widgets', {
+    title: 'Widgets', icon: 'i-pulse', size: [620, 520], order: 96, dock: false, launch: false, center: true,
+    create(win) {
+      win.body.classList.add('wg');
+      const draw = () => {
+        const on = enabled();
+        win.body.innerHTML = `<header class="wg__head"><h2 class="f-h2">${t('Widgets')}</h2><p class="f-dim">${t('Auf den Schreibtisch, was du im Blick haben willst. Verschieben mit der Maus, entfernen mit dem ×.')}</p></header>
+          <div class="wg__grid">${Object.entries(WIDGETS).filter(([id]) => allowed(id)).map(([id, w]) => `
+            <div class="wg__card${on.includes(id) ? ' is-on' : ''}"><span class="wg__icon"><svg><use href="#${w.icon || 'i-pulse'}"/></svg></span>
+              <span class="wg__txt"><b>${escHtml(t(w.title))}</b><small>${escHtml(t(w.desc || ''))}</small></span>
+              <button class="f-btn f-btn--sm ${on.includes(id) ? '' : 'f-btn--primary'}" data-wg="${id}">${t(on.includes(id) ? 'Entfernen' : 'Hinzufügen')}</button></div>`).join('')}</div>
+          <label class="f-check wg__all"><input type="checkbox" data-wg-show ${Akari.prefs.widgets !== false ? 'checked' : ''}>${t('Widgets auf dem Schreibtisch zeigen')}</label>`;
+      };
+      draw();
+      win.body.addEventListener('click', e => {
+        const b = e.target.closest('[data-wg]'); if (!b) return;
+        enabled().includes(b.dataset.wg) ? removeWidget(b.dataset.wg) : addWidget(b.dataset.wg);
+        setTimeout(draw, 450);
+      });
+      win.body.addEventListener('change', e => { if (e.target.matches('[data-wg-show]')) Akari.set('widgets', e.target.checked); });
+      const off = () => { if (win.el.isConnected) draw(); };
+      Akari.on('prefs', off);
+      return {};
+    },
   });
 
   Akari.desk = { pickWallpaper, dropWallpaper, setWall, WALLS, wallUrl, addWidget, removeWidget, enabledWidgets: enabled, WIDGETS };

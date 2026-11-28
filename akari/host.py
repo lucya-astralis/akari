@@ -362,3 +362,25 @@ def set_keyboard(layout: str) -> dict:
     os.replace(tmp, KEYBOARD)
     console.redraw()            # the console takes it on its next start, which happens now if nobody is signed in there
     return keyboard()
+
+
+# ---------- at a glance, for the Server widget ----------
+
+def summary() -> dict:
+    """Load, uptime, memory, the root disk, waiting updates and failed services, cheaply (every few seconds)."""
+    from . import services                  # here, not at the top: services imports nothing of ours, but stays optional
+    out: dict = {"cores": os.cpu_count() or 1}
+    with contextlib.suppress(OSError):
+        out["load"] = list(os.getloadavg())
+    with contextlib.suppress(OSError, ValueError):
+        out["uptime"] = int(float(Path("/proc/uptime").read_text().split()[0]))
+    with contextlib.suppress(OSError, ValueError, KeyError):
+        info = {l.split(":")[0]: int(l.split()[1]) * 1024 for l in Path("/proc/meminfo").read_text().splitlines()}
+        out["mem"] = {"total": info["MemTotal"], "used": info["MemTotal"] - info["MemAvailable"]}
+    with contextlib.suppress(OSError):
+        d = shutil.disk_usage("/")
+        out["disk"] = {"total": d.total, "used": d.used}
+    out["updates"] = _state().get("count")
+    with contextlib.suppress(Exception):
+        out["failed"] = services.failed()
+    return out

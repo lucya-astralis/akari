@@ -101,7 +101,7 @@
         const wu = $(`input[name="weatherUnit"][value="${P.weatherUnit === 'f' ? 'f' : 'c'}"]`, el); if (wu) wu.checked = true;
         // each widget, on or off
         const W = Akari.desk?.WIDGETS || {}, on = Akari.desk?.enabledWidgets() || [];
-        $('[data-widget-list]', el).innerHTML = Object.entries(W).map(([id, w]) => `
+        $('[data-widget-list]', el).innerHTML = Object.entries(W).filter(([, w]) => !w.admin || Akari.me?.admin).map(([id, w]) => `
           <div class="opt"><span class="opt__txt"><b>${esc(Akari.t(w.title))}</b></span>
             <label class="f-switch"><input type="checkbox" data-widget="${id}"${on.includes(id) ? ' checked' : ''}><i></i><span class="sr">${esc(Akari.t(w.title))}</span></label></div>`).join('');
         $$('[data-swatches] button', el).forEach(b => b.setAttribute('aria-checked', b.dataset.tint === P.tint));

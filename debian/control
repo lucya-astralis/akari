@@ -48,6 +48,7 @@ Architecture: all
 Depends: ${misc:Depends},
          akari (= ${binary:Version}),
          akari-shell (>= ${source:Version}),
+         akari-server (= ${binary:Version}),
          tigervnc-standalone-server,
          matchbox-window-manager,
          x11-xserver-utils,
@@ -95,6 +96,34 @@ Description: Akari OS desktop: akari with its apps, fonts and cursors
  .
  It also has the Akari cursor theme for X, made from the same pictures the
  browser shows, and makes it the default.
+
+Package: akari-server
+Architecture: all
+Depends: ${misc:Depends},
+         btop,
+         ncdu,
+         tmux,
+         rsync,
+         jq,
+         lsof,
+         iotop,
+         sysstat,
+         smartmontools,
+         lm-sensors,
+         ethtool,
+         fail2ban,
+         systemd-zram-generator,
+         unattended-upgrades
+Description: Akari OS as a server: tools and settings for a machine that serves
+ The tools a server wants at hand: btop, ncdu, tmux, rsync, jq, lsof, iotop,
+ sysstat, smartmontools, lm-sensors and ethtool.
+ .
+ And the settings: fail2ban shuts out whoever guesses SSH passwords; swap in
+ compressed RAM (zram) before any disk; TCP with BBR and fair queueing; a
+ journal that survives restarts (at most 1 GB, a month); no suspend or
+ hibernation, also not when a laptop's lid closes. All of them are files of
+ their own, in /usr/lib where systemd allows it, so a file of the same name in
+ /etc overrides them.
 
 Package: akari-shell
 Architecture: amd64 arm64

@@ -37,6 +37,7 @@ COLOURS = {
     "window":   ("#48e2c8", "#0a7f7b"),
     "docker":   ("#4fb8ff", "#1550c8"),
     "welcome":  ("#c3a2ff", "#e0468f"),
+    "services": ("#8be8c8", "#1d7f8f"),
 }
 
 BACK = 'fill="#fff" fill-opacity=".24" stroke="#fff" stroke-opacity=".5" stroke-width=".8"'
@@ -86,6 +87,11 @@ MOTIF = {
     "welcome": f'''<g transform="translate(13 14) scale(.37)"><path d="M71.64 36L95.64 36L69.79 100L45.79 100Z" {BACK}/>
     <path d="M40.4 0L51.4 0L11 100L0 100Z" {FRONT}/><path d="M51.14 14L75.14 14L40.39 100L16.39 100Z" {FRONT}/></g>
     <path d="M48 11.5l1.6 4.4 4.4 1.6-4.4 1.6-1.6 4.4-1.6-4.4-4.4-1.6 4.4-1.6z" {FRONT}/>''',
+    # a rack: two units frosted, the top one clear, each with its light
+    "services": f'''<rect x="13" y="13" width="38" height="11" rx="3.5" {FRONT}/>
+    <rect x="13" y="27" width="38" height="11" rx="3.5" {BACK}/><rect x="13" y="41" width="38" height="11" rx="3.5" {BACK}/>
+    <circle cx="20" cy="18.5" r="2.1" fill="#1d7f8f"/><path d="M27 18.5h17" stroke="#1d7f8f" stroke-opacity=".45" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="20" cy="32.5" r="2.1" fill="#fff"/><circle cx="20" cy="46.5" r="2.1" fill="#fff"/>''',
     # any other program: a window
     "window": f'''<rect x="12" y="15" width="40" height="34" rx="6" {BACK}/>
     <path d="M12 21a6 6 0 0 1 6-6h28a6 6 0 0 1 6 6v4H12z" {FRONT}/>

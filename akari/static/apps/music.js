@@ -32,7 +32,7 @@
     set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
   };
   const NAV = [
-    ['home', 'i-home', 'Start'], ['search', 'i-search', 'Suche'], ['added', 'i-plus', 'Neu hinzugefügt'],
+    ['home', 'i-home', 'Startseite'], ['search', 'i-search', 'Suche'], ['added', 'i-plus', 'Neu hinzugefügt'],
     ['artists', 'i-users', 'Künstler'], ['albums', 'i-disc', 'Alben'], ['songs', 'i-list', 'Titel'], ['favs', 'i-heart', 'Favoriten'],
   ];
 

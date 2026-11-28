@@ -152,6 +152,13 @@ def docker() -> str:
     return ""
 
 
+def services() -> str:
+    """Whether all of systemd's services are well (Dienste app: which are not)."""
+    out = _run("systemctl", "list-units", "--type=service", "--state=failed", "--no-legend", "--plain")
+    n = len([l for l in out.splitlines() if l.strip()])
+    return f"{OK}alle in Ordnung{RESET}" if not n else f"{WARN}{n} fehlgeschlagen{RESET}{DIM} · Dienste{RESET}"
+
+
 def lucent() -> str:
     p = _json(STATE / "lucent.json")
     if not p.get("issuer"):
@@ -182,6 +189,7 @@ def lines() -> list[str]:
         ("Platte", disk("/")),
         ("Updates", updates()),
         ("Im Desktop", accounts()),
+        ("Dienste", services()),
         ("Docker", docker()),
         ("Lucent", lucent()),
     ]

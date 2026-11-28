@@ -1,0 +1,16 @@
+#!/bin/sh
+set -e
+#DEBHELPER#
+# the settings take effect now rather than at the next boot, where that is safe:
+# the network and memory values, the journal on disk, swap in RAM, fail2ban's jail.
+# logind and the sleep settings are read when next asked.
+if [ "$1" = configure ]; then
+	sysctl -q -p /usr/lib/sysctl.d/90-akari-server.conf >/dev/null 2>&1 || true
+	if [ -d /run/systemd/system ]; then
+		systemctl daemon-reload >/dev/null 2>&1 || true
+		journalctl --flush >/dev/null 2>&1 || true
+		deb-systemd-invoke start systemd-zram-setup@zram0.service >/dev/null 2>&1 || true
+		deb-systemd-invoke reload-or-restart fail2ban.service >/dev/null 2>&1 || true
+	fi
+fi
+exit 0
