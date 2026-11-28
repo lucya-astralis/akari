@@ -542,7 +542,72 @@
     anim(w.el, tl ? 'is-restoring' : 'is-opening');
   };
 
-  const toggleMax = w => { w.el.classList.toggle('is-max'); requestAnimationFrame(() => Facet.layout()); };
+  const toggleMax = w => { unsnap(w, false); w.el.classList.toggle('is-max'); requestAnimationFrame(() => Facet.layout()); };
+
+  /* snapping: a window dragged to an edge takes half the screen, to a corner a quarter;
+     the preview shows where while the pointer is there. Pulled out again, it gets back the
+     size it had. Ctrl+Alt+arrows do the same from the keyboard. */
+  const SNAP_GAP = 8, SNAP_EDGE = 14;
+  const snapGhost = document.createElement('div');
+  snapGhost.className = 'snap-ghost';
+  snapGhost.hidden = true;
+  const snapRect = zone => {
+    const a = $('#windows').getBoundingClientRect(), G = SNAP_GAP;
+    const hw = (a.width - 3 * G) / 2, hh = (a.height - 3 * G) / 2;
+    const L = G, R = 2 * G + hw, T = G, B = 2 * G + hh, H = a.height - 2 * G;
+    return {
+      left: [L, T, hw, H], right: [R, T, hw, H],
+      'top-left': [L, T, hw, hh], 'top-right': [R, T, hw, hh], 'bottom-left': [L, B, hw, hh], 'bottom-right': [R, B, hw, hh],
+      max: [0, 0, a.width, a.height],
+    }[zone];
+  };
+  const zoneAt = (cx, cy) => {
+    const a = $('#windows').getBoundingClientRect(), x = cx - a.left, y = cy - a.top;
+    const side = x < SNAP_EDGE ? 'left' : x > a.width - SNAP_EDGE ? 'right' : null;
+    if (side) return y < a.height / 4 ? `top-${side}` : y > a.height * 3 / 4 ? `bottom-${side}` : side;
+    if (y < 6) return 'max';
+    return null;
+  };
+  const showSnap = zone => {
+    if (!zone) { snapGhost.classList.remove('is-on'); setTimeout(() => { if (!snapGhost.classList.contains('is-on')) snapGhost.hidden = true; }, 200); return; }
+    if (!snapGhost.isConnected) $('#windows').append(snapGhost);
+    const [x, y, wd, ht] = snapRect(zone);
+    snapGhost.hidden = false;
+    Object.assign(snapGhost.style, { left: `${x}px`, top: `${y}px`, width: `${wd}px`, height: `${ht}px` });
+    requestAnimationFrame(() => snapGhost.classList.add('is-on'));
+  };
+  const snapTo = (w, zone) => {
+    const el = w.el;
+    if (zone === 'max') { if (!el.classList.contains('is-max')) toggleMax(w); return; }
+    el.classList.remove('is-max');
+    if (!w.snap) w.restoreRect = { width: el.style.width, height: el.style.height, left: el.style.left, top: el.style.top };
+    w.snap = zone;
+    const [x, y, wd, ht] = snapRect(zone);
+    el.classList.add('is-snapping');
+    Object.assign(el.style, { left: `${x}px`, top: `${y}px`, width: `${wd}px`, height: `${ht}px` });
+    el.dataset.snap = zone;
+    setTimeout(() => el.classList.remove('is-snapping'), 260);
+    requestAnimationFrame(() => { Facet.layout(); w.hooks.resize?.(); });
+  };
+  // back to the size it had before it snapped; keepPlace false: only forget the snap
+  const unsnap = (w, keepPlace = true) => {
+    if (!w.snap) return;
+    const r = w.restoreRect;
+    w.snap = null; delete w.el.dataset.snap;
+    if (keepPlace && r) Object.assign(w.el.style, { width: r.width, height: r.height });
+  };
+  addEventListener('resize', () => WINS.forEach(w => { if (w.snap) snapTo(w, w.snap); }));
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey && e.altKey) || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key) || narrow.matches) return;
+    const w = front(); if (!w) return;
+    e.preventDefault();
+    if (e.key === 'ArrowUp') return snapTo(w, 'max');
+    if (e.key === 'ArrowDown') { if (w.el.classList.contains('is-max')) return toggleMax(w); if (w.snap) { const r = w.restoreRect; unsnap(w); if (r) Object.assign(w.el.style, { left: r.left, top: r.top }); } return; }
+    const side = e.key === 'ArrowLeft' ? 'left' : 'right';
+    // pressed again on the same side: a half becomes the upper quarter, then the lower, then the half again
+    const cycle = { [side]: `top-${side}`, [`top-${side}`]: `bottom-${side}`, [`bottom-${side}`]: side };
+    snapTo(w, cycle[w.snap] || side);
+  });
 
   const bindWin = w => {
     const el = w.el, bar = $('[data-drag]', el), grip = $('[data-grip]', el);
@@ -561,6 +626,7 @@
       const area = $('#windows').getBoundingClientRect();
       const r0 = el.getBoundingClientRect();
       const start = { x: e.clientX, y: e.clientY, r: r0, area };
+      let pull = handle === bar && !!w.snap;                      // a snapped window comes out once it really moves
       if (handle === bar && el.classList.contains('is-max')) {   // pull a maximised window out under the pointer
         const fx = (e.clientX - area.left) / area.width;
         el.classList.remove('is-max');
@@ -571,11 +637,35 @@
       }
       handle.setPointerCapture(e.pointerId);
       el.classList.add('is-dragging');
-      const move = ev => onMove(ev, start);
-      const up = () => { el.classList.remove('is-dragging'); handle.removeEventListener('pointermove', move); w.hooks.focus?.(); };
-      handle.addEventListener('pointermove', move);
-      handle.addEventListener('pointerup', up, { once: true });
-      handle.addEventListener('pointercancel', up, { once: true });
+      let zone = null;
+      const move = ev => {
+        if (pull) {
+          if (Math.hypot(ev.clientX - start.x, ev.clientY - start.y) < 5) return;
+          pull = false;
+          const b = el.getBoundingClientRect(), fx = (start.x - b.left) / b.width;
+          unsnap(w);
+          const r = el.getBoundingClientRect();
+          el.style.left = `${start.x - area.left - r.width * fx}px`;
+          start.r = el.getBoundingClientRect();
+        }
+        onMove(ev, start);
+        if (handle !== bar) return;
+        const z = zoneAt(ev.clientX, ev.clientY);
+        if (z !== zone) { zone = z; showSnap(z); }
+      };
+      // on the page, not the handle: a release at the screen's very edge (where one snaps) can miss the handle
+      let ended = false;
+      const up = () => {
+        if (ended) return;
+        ended = true;
+        removeEventListener('pointermove', move); removeEventListener('pointerup', up); removeEventListener('pointercancel', up);
+        el.classList.remove('is-dragging'); w.hooks.focus?.();
+        if (zone) snapTo(w, zone);
+        showSnap(null); zone = null;
+      };
+      addEventListener('pointermove', move);
+      addEventListener('pointerup', up);
+      addEventListener('pointercancel', up);
     });
     drag(bar, (ev, s) => {
       const x = Math.min(s.area.width - 80, Math.max(80 - s.r.width, s.r.left - s.area.left + ev.clientX - s.x));
@@ -583,6 +673,7 @@
       el.style.left = `${x}px`; el.style.top = `${y}px`;
     });
     drag(grip, (ev, s) => {
+      if (w.snap) { w.snap = null; delete el.dataset.snap; }
       el.style.width = `${Math.max(320, s.r.width + ev.clientX - s.x)}px`;
       el.style.height = `${Math.max(220, s.r.height + ev.clientY - s.y)}px`;
     });

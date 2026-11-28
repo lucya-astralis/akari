@@ -77,16 +77,18 @@ button{ font:inherit; color:inherit }
   border-radius:var(--r-overlay); box-shadow:var(--shadow-28); overflow:hidden;
   transform-origin:var(--ox, 50%) var(--oy, 100%);
   transition:box-shadow var(--dur-2) var(--ease), opacity var(--dur-1) var(--ease) }
+/* windows move without bouncing: Facet's spring overshoots, a window should arrive and stay */
+:root{ --win-ease:cubic-bezier(.22, 1, .36, 1) }
 .win.is-front{ box-shadow:var(--shadow-64) }
 .win:not(.is-front) .win__title{ color:var(--text-dim) }
-.win.is-opening{ animation:win-in var(--dur-3) var(--spring) both }
+.win.is-opening{ animation:win-in var(--dur-3) var(--win-ease) both }
 .win.is-closing{ animation:win-out var(--dur-2) var(--ease) both; pointer-events:none }
 .win.is-minimising{ animation:win-min var(--dur-3) var(--ease-io) both; pointer-events:none }
 .win.is-max{ left:0 !important; top:0 !important; width:100% !important; height:calc(100% - var(--dock-icon) - 3 * var(--s-3)) !important; border-radius:0 }
 :root[data-autohide] .win.is-max{ height:100% !important }
 .win.is-max .win__grip{ display:none }
 .win.is-dragging{ transition:none; cursor:grabbing }
-@keyframes win-in{ from{ opacity:0; transform:translateY(14px) scale(.94) } }
+@keyframes win-in{ from{ opacity:0; transform:translateY(8px) scale(.97) } }
 @keyframes win-out{ to{ opacity:0; transform:scale(.96) } }
 @keyframes win-min{ to{ opacity:0; transform:translate(var(--mx-to, 0), var(--my-to, 60vh)) scale(.12) } }
 
@@ -610,7 +612,7 @@ body.is-leaving .desk{ transition:opacity var(--dur-2) var(--ease), filter var(-
   translate:0 -50%; background:#ff5f57; box-shadow:calc(var(--dock-icon) * .1) 0 0 #febc2e, calc(var(--dock-icon) * .2) 0 0 #28c840 }
 .min__frame .app-art{ width:52%; height:52%; margin-top:10% }
 .min__win.is-waiting{ visibility:hidden }
-.min__win:not(.is-waiting){ animation:min-in var(--dur-3) var(--spring) both }
+.min__win:not(.is-waiting){ animation:min-in var(--dur-3) var(--win-ease) both }
 .min__win.is-leaving{ pointer-events:none; animation:dock-out var(--dur-3) var(--ease-out) forwards }
 @keyframes min-in{ from{ opacity:0; transform:scale(.6) } }
 
@@ -974,7 +976,7 @@ body.is-leaving .desk{ transition:opacity var(--dur-2) var(--ease), filter var(-
 @keyframes pop-out-top{ to{ opacity:0; transform:translateY(-8px) scale(.96) } }
 
 /* a minimised window comes back out of its dock icon */
-.win.is-restoring{ animation:win-restore var(--dur-3) var(--spring) both }
+.win.is-restoring{ animation:win-restore var(--dur-3) var(--win-ease) both }
 @keyframes win-restore{ from{ opacity:0; transform:translate(var(--mx-to, 0), var(--my-to, 60vh)) scale(.12) } }
 
 /* the taskbar's popovers appear above the magnified icons */
@@ -1416,7 +1418,7 @@ body{ touch-action:manipulation; -webkit-tap-highlight-color:transparent }
 :root[data-phone] .win__nav--close{ order:9 }
 :root[data-phone] .win__nav svg{ width:22px; height:22px }
 :root[data-phone] .win__nav:active{ transform:scale(.88); background:var(--surface-2) }
-:root[data-phone] .win.is-opening{ animation:phone-in var(--dur-3) var(--spring) both }
+:root[data-phone] .win.is-opening{ animation:phone-in var(--dur-3) var(--win-ease) both }
 @keyframes phone-in{ from{ opacity:0; transform:translateY(28px) scale(.97) } }
 /* the start menu's grid: columns never grow with a long app name (ImageMagick …), the name is cut */
 .launch__apps{ grid-template-columns:repeat(5, minmax(0, 1fr)) }
@@ -1724,3 +1726,55 @@ button.w-mon__item{ cursor:pointer }
 .wg__all{ margin-top:var(--s-5) }
 .grp__labelrow{ display:flex; align-items:center; justify-content:space-between; margin-top:var(--s-5) }
 .grp__labelrow .grp__label{ margin:0 }
+
+/* ---------- widgets in fixed sizes (desk.js: s 158×158, m 332×158, l 332×332) ---------- */
+.widget[data-size]{ overflow:hidden; box-sizing:border-box }
+.desk-cell--widget{ border-radius:var(--r-overlay) }
+/* clock: small stacks the weather under the time */
+.widget--clock[data-size="s"]{ flex-direction:column; align-items:flex-start; justify-content:space-between }
+.widget--clock[data-size="s"] .w-clock__time{ font-size:40px }
+.widget--clock[data-size="s"] .w-wx{ grid-template-columns:auto auto auto; justify-items:start; margin:0; padding:0; text-align:left }
+.widget--clock[data-size="s"] .w-wx__temp{ font-size:var(--fs-300) }
+.widget--clock[data-size="s"] .w-wx__icon{ width:20px; height:20px }
+.widget--clock[data-size="s"] .w-wx__place{ grid-column:auto }
+/* load: small without the network, large with a tall curve */
+.widget--perf{ display:grid; align-content:space-between }
+.widget--perf[data-size="s"] .w-perf__net{ display:none }
+.widget--perf[data-size="l"] .w-perf__spark{ height:150px }
+/* note: the slip fills the widget */
+.widget--note[data-size] .w-note__text{ height:100%; min-height:0; resize:none }
+/* calendar: small is a compact month */
+.widget--calendar[data-size="s"]{ padding:var(--s-3) }
+.widget--calendar[data-size="s"] .w-cal__title{ font-size:var(--fs-200) }
+.widget--calendar[data-size="s"] .w-cal__grid{ font-size:10px; gap:0 }
+.widget--calendar[data-size="s"] .w-cal__grid span{ padding:1px 0 }
+.widget--calendar[data-size="s"] .w-cal__grid .is-dow{ font-size:9px }
+.widget--calendar[data-size="l"] .w-cal__grid{ font-size:var(--fs-300); gap:var(--s-1) }
+.widget--calendar[data-size="l"] .w-cal__grid span{ padding:var(--s-2) 0 }
+/* server: medium is six figures in two columns, large the full rows */
+.widget--server[data-size="m"]{ grid-template-columns:1fr 1fr; column-gap:var(--s-5); align-content:center }
+.widget--server[data-size="m"] .f-meter{ display:none }
+.widget--server[data-size="l"]{ align-content:space-between }
+/* containers and services: small is the number alone */
+.widget--containers[data-size="s"], .widget--services[data-size="s"]{ align-content:center }
+.widget--containers[data-size="s"] .w-mon__head b, .widget--services[data-size="s"] .w-mon__head b{ font-size:34px }
+.widget--containers[data-size="s"] .w-mon__list, .widget--services[data-size="s"] .w-mon__list{ display:none }
+/* the gallery shows a widget's sizes as little tiles */
+.wg__sizes{ display:flex; align-items:flex-end; gap:4px; margin-top:var(--s-1) }
+.wg__size{ display:block; height:12px; border-radius:3px; background:var(--acc-soft); border:1px solid var(--acc-line) }
+.wg__size--s{ width:12px } .wg__size--m{ width:26px } .wg__size--l{ width:26px; height:26px }
+.widget--calendar[data-size="s"]{ display:grid; align-content:start; gap:4px }
+.widget--calendar[data-size="s"] .w-cal__grid span{ padding:0; line-height:14px }
+.widget--storage[data-size="s"] .w-perf__row b{ font-size:12px }
+.widget--storage[data-size="s"]{ display:grid; align-content:center; gap:var(--s-2) }
+
+/* ---------- snapping windows (akari.js: snapTo) ---------- */
+.snap-ghost{ position:absolute; z-index:0; border-radius:var(--r-overlay); pointer-events:none; opacity:0; transform:scale(.97);
+  background:color-mix(in oklch, var(--acc) 14%, transparent); border:1.5px solid var(--acc-line);
+  -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
+  transition:opacity var(--dur-1) var(--ease-out), transform var(--dur-2) var(--win-ease), left var(--dur-2) var(--win-ease), top var(--dur-2) var(--win-ease),
+    width var(--dur-2) var(--win-ease), height var(--dur-2) var(--win-ease) }
+.snap-ghost.is-on{ opacity:1; transform:none }
+.win.is-snapping{ transition:left var(--dur-2) var(--win-ease), top var(--dur-2) var(--win-ease), width var(--dur-2) var(--win-ease), height var(--dur-2) var(--win-ease) }
+@media (prefers-reduced-motion: reduce){ .win.is-snapping, .snap-ghost{ transition:none } }
+:root[data-motion] .win.is-snapping, :root[data-motion] .snap-ghost{ transition:none }

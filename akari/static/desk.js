@@ -89,6 +89,17 @@
     saveLayout(l);
   };
 
+  const wghost = document.createElement('div');
+  wghost.className = 'desk-cell desk-cell--widget';
+  wghost.hidden = true;
+  $('#icons').before(wghost);
+  const showWGhost = (el, x, y) => {
+    const [gx, gy] = wXY(wNearest(x, y));
+    wghost.hidden = false;
+    wghost.style.width = `${el.offsetWidth}px`; wghost.style.height = `${el.offsetHeight}px`;
+    wghost.style.transform = `translate(${gx}px, ${gy}px)`;
+  };
+
   /* ---------- dragging: icons and widgets alike ---------- */
   let dragged = false;
   const draggable = (el, kind, key) => {
@@ -103,6 +114,7 @@
         const [x, y] = clamp(ev.clientX - a.left - dx, ev.clientY - a.top - dy, el);
         place(el, x, y);
         if (kind === 'icons') showGhost(x, y);
+        if (kind === 'widgets') showWGhost(el, x, y);
       };
       const up = () => {
         removeEventListener('pointermove', move);
@@ -113,11 +125,10 @@
         dragged = true; setTimeout(() => { dragged = false; }, 0);
         const x = parseFloat(el.style.left), y = parseFloat(el.style.top);
         if (kind === 'icons') return dropIcon(el, x, y);
-        const [sx2, sy2] = clamp(snap(x), snap(y), el);
-        place(el, sx2, sy2);
-        const l = structuredClone(layout());
-        (l[kind] ||= {})[key] = [sx2, sy2];
-        saveLayout(l);
+        wghost.hidden = true;
+        const cells = wCells({ id: key, cell: wNearest(x, y) });
+        place(el, ...wXY(cells[key]));
+        saveWidgetCells(cells);
       };
       addEventListener('pointermove', move);
       addEventListener('pointerup', up);
@@ -170,7 +181,7 @@
   });
   const WIDGETS = {
     clock: {
-      title: 'Uhr', icon: 'i-clock', desc: 'Uhrzeit, Datum und das Wetter.', size: [270, 0],
+      title: 'Uhr', icon: 'i-clock', desc: 'Uhrzeit, Datum und das Wetter.', sizes: ['s', 'm'], def: 'm',
       // the time on the left, the weather on the right (weather.py, Open-Meteo; a click picks the place)
       html: `<div class="w-clock__now"><time class="w-clock__time"></time><span class="w-clock__date"></span></div>
         <button class="w-wx" data-wx-place hidden><svg class="w-wx__icon" viewBox="0 0 24 24" aria-hidden="true"></svg><b class="w-wx__temp"></b><small class="w-wx__place" translate="no"></small></button>`,
@@ -182,7 +193,7 @@
       },
     },
     perf: {
-      title: 'Auslastung', icon: 'i-pulse', desc: 'Prozessor, Speicher und Netz, live.', size: [240, 0],
+      title: 'Auslastung', icon: 'i-pulse', desc: 'Prozessor, Speicher und Netz, live.', sizes: ['s', 'm', 'l'], def: 's',
       html: `<div class="w-perf__row"><span>CPU</span><b data-v="cpu">–</b></div>
         <svg class="w-perf__spark" viewBox="0 0 100 30" preserveAspectRatio="none"><path data-line/></svg>
         <div class="w-perf__row"><span data-l="mem">Speicher</span><b data-v="mem">–</b></div>
@@ -190,11 +201,11 @@
         <div class="w-perf__row w-perf__net"><span>↓ <b data-v="rx">–</b></span><span>↑ <b data-v="tx">–</b></span></div>`,
     },
     note: {
-      title: 'Notiz', icon: 'i-note', desc: 'Ein Zettel für schnelle Notizen.', size: [240, 0],
+      title: 'Notiz', icon: 'i-note', desc: 'Ein Zettel für schnelle Notizen.', sizes: ['s', 'm', 'l'], def: 's',
       html: '<textarea class="w-note__text" spellcheck="false" placeholder="Notiz …" aria-label="Notiz" translate="no"></textarea>',
     },
     calendar: {
-      title: 'Kalender', icon: 'i-clock', desc: 'Der Monat auf einen Blick.', size: [250, 0],
+      title: 'Kalender', icon: 'i-clock', desc: 'Der Monat auf einen Blick.', sizes: ['s', 'l'], def: 's',
       html: '<b class="w-cal__title"></b><div class="w-cal__grid"></div>',
       tick(el) {
         const now = new Date(), y = now.getFullYear(), m = now.getMonth(), key = `${y}-${m}-${now.getDate()}`;
@@ -210,7 +221,7 @@
       },
     },
     storage: {
-      title: 'Speicherplatz', icon: 'i-drive', desc: 'Wie voll Home und Datenträger sind.', size: [240, 0],
+      title: 'Speicherplatz', icon: 'i-drive', desc: 'Wie voll Home und Datenträger sind.', sizes: ['s', 'm'], def: 's',
       html: `<div class="w-perf__row"><span>Home</span><b data-v="home">–</b></div>
         <div class="w-perf__row"><span>Datenträger</span><b data-v="disk">–</b></div>
         <div class="f-meter"><b data-m="disk"></b></div>`,
@@ -219,7 +230,7 @@
   // the machine as a server: refreshed every ten seconds while they are on the desktop (pollMon)
   Object.assign(WIDGETS, {
     server: {
-      title: 'Server', icon: 'i-cpu', desc: 'Last, Laufzeit, Speicher, Platte, Updates und Dienste.', size: [250, 0],
+      title: 'Server', icon: 'i-cpu', desc: 'Last, Laufzeit, Speicher, Platte, Updates und Dienste.', sizes: ['m', 'l'], def: 'l',
       html: `<div class="w-perf__row"><span>${t('Last')}</span><b data-v="load">–</b></div>
         <div class="w-perf__row"><span>${t('Läuft seit')}</span><b data-v="up">–</b></div>
         <div class="w-perf__row"><span>${t('Speicher')}</span><b data-v="mem">–</b></div><div class="f-meter"><b data-m="mem"></b></div>
@@ -228,17 +239,54 @@
         <button class="w-mon__row" data-open-app="services"><span>${t('Dienste')}</span><b data-v="failed">–</b></button>`,
     },
     containers: {
-      title: 'Container', icon: 'i-box', desc: 'Was in Docker läuft, die ersten fünf mit Zustand.', size: [250, 0], admin: true,
+      title: 'Container', icon: 'i-box', desc: 'Was in Docker läuft, mit Zustand.', sizes: ['s', 'm', 'l'], def: 'm', admin: true,
       html: `<button class="w-mon__head" data-open-app="docker"><b data-v="count">–</b><small>${t('Container laufen')}</small></button><div class="w-mon__list" data-list></div>`,
     },
     services: {
-      title: 'Dienste', icon: 'i-list', desc: 'Fehlgeschlagene Dienste, oder dass alles läuft.', size: [250, 0], admin: true,
+      title: 'Dienste', icon: 'i-list', desc: 'Fehlgeschlagene Dienste, oder dass alles läuft.', sizes: ['s', 'm'], def: 's', admin: true,
       html: `<button class="w-mon__head" data-open-app="services"><b data-v="state">–</b><small data-v="sub"></small></button><div class="w-mon__list" data-list></div>`,
     },
   });
   const allowed = id => WIDGETS[id] && (!WIDGETS[id].admin || Akari.me?.admin);
   const DEFAULT_ON = ['clock', 'perf'];          // the note is one click away (Widgets), not there from the start
-  const DEFAULT_POS = { clock: [24, 24], perf: [24, 150], note: [24, 330] };
+  /* widgets in fixed sizes on a grid of their own, as on macOS: small one cell, medium two wide,
+     large two by two. Each owns a cell {c, r} for its top left corner; one that is dropped where
+     another lies takes the place, and the other moves to the nearest free one. */
+  const WCELL = 158, WGAP = 16, WPAD = 16;
+  const SPAN = { s: [1, 1], m: [2, 1], l: [2, 2] };
+  const sizeOf = id => { const w = WIDGETS[id], v = (Akari.prefs.widgetSizes || {})[id]; return w.sizes.includes(v) ? v : w.def; };
+  const px = n => n * WCELL + (n - 1) * WGAP;
+  const wDims = () => { const a = area(); return { cols: Math.max(2, Math.floor((a.width - WPAD * 2 + WGAP) / (WCELL + WGAP))), rows: Math.max(2, Math.floor((a.height - WPAD * 2 + WGAP) / (WCELL + WGAP))) }; };
+  const wXY = ({ c, r }) => [WPAD + c * (WCELL + WGAP), WPAD + r * (WCELL + WGAP)];
+  const wNearest = (x, y) => { const { cols, rows } = wDims(); return { c: Math.max(0, Math.min(cols - 1, Math.round((x - WPAD) / (WCELL + WGAP)))), r: Math.max(0, Math.min(rows - 1, Math.round((y - WPAD) / (WCELL + WGAP)))) }; };
+  // where every widget sits: the one just dropped first, then saved places, then the nearest free cells
+  const wCells = (first = null) => {
+    const { cols, rows } = wDims(), l = layout().widgets || {}, taken = new Set(), out = {};
+    const fits = (id, { c, r }) => {
+      const [w, h] = SPAN[sizeOf(id)];
+      if (c < 0 || r < 0 || c + w > cols || r + h > rows + 4) return false;     // below the screen is allowed a little: it scrolls nowhere, but it is not lost
+      for (let i = 0; i < w; i++) for (let j = 0; j < h; j++) if (taken.has(`${c + i}:${r + j}`)) return false;
+      return true;
+    };
+    const take = (id, { c, r }) => { const [w, h] = SPAN[sizeOf(id)]; for (let i = 0; i < w; i++) for (let j = 0; j < h; j++) taken.add(`${c + i}:${r + j}`); out[id] = { c, r }; };
+    const near = (id, want) => {
+      let best = null, bd = Infinity;
+      for (let r = 0; r < rows + 4; r++) for (let c = 0; c < cols; c++) {
+        if (!fits(id, { c, r })) continue;
+        const d = Math.hypot(c - want.c, (r - want.r) * 1.2);
+        if (d < bd) { bd = d; best = { c, r }; }
+      }
+      return best || { c: 0, r: rows };
+    };
+    const saved = id => { const p = l[id]; return p && typeof p.c === 'number' ? p : Array.isArray(p) ? wNearest(p[0], p[1]) : null; };   // before 0.22: pixels
+    const on = enabled();
+    const order = first ? [first.id, ...on.filter(id => id !== first.id)] : on;
+    for (const id of order) {
+      const want = first && id === first.id ? first.cell : saved(id) || { c: 0, r: 0 };
+      take(id, fits(id, want) ? want : near(id, want));
+    }
+    return out;
+  };
   const host = $('#widgets');
   const cpuHist = [];
 
@@ -249,14 +297,14 @@
   const addWidget = id => {
     if (enabled().includes(id)) return;
     // a new widget goes under the lowest one in the left column, or top left
-    const a = area();
-    const bottom = Math.max(0, ...$$('.widget', host).map(w => w.getBoundingClientRect().bottom - a.top));
-    const l = structuredClone(layout());
-    (l.widgets ||= {})[id] = [24, bottom ? snap(bottom + 16) : 24];
-    Akari.set('layout', l);
-    Akari.set('widgetsOn', [...enabled(), id]);
+    Akari.set('widgetsOn', [...enabled(), id]);      // wCells finds it the nearest free place
     if (Akari.prefs.widgets === false) Akari.set('widgets', true);
   };
+  const setWidgetSize = (id, sz) => {
+    Akari.set('widgetSizes', { ...(Akari.prefs.widgetSizes || {}), [id]: sz });
+    saveWidgetCells(wCells({ id, cell: wCells()[id] || { c: 0, r: 0 } }));    // it keeps its corner, the others make room
+  };
+  const saveWidgetCells = cells => { const l = structuredClone(layout()); l.widgets = { ...cells }; saveLayout(l); };
   const removeWidget = id => {
     const el = $(`.widget[data-w="${id}"]`, host);
     const go = () => Akari.set('widgetsOn', enabled().filter(x => x !== id));
@@ -278,7 +326,7 @@
         el.className = `widget widget--${id} f-glass f-glass--hi`;
         el.dataset.w = id;
         el.setAttribute('aria-label', t(w.title));
-        el.style.width = `${w.size[0]}px`;
+
         el.innerHTML = `${w.html}<button class="widget__x" aria-label="${t('Widget entfernen')}" data-wx><svg><use href="#i-x"/></svg></button>`;
         host.append(el);
         draggable(el, 'widgets', id);
@@ -288,8 +336,14 @@
           let tmo; ta.addEventListener('input', () => { clearTimeout(tmo); tmo = setTimeout(() => Akari.set('note', ta.value.slice(0, 4000)), 500); });
         }
       }
-      const p = layout().widgets?.[id] || DEFAULT_POS[id] || [24, 24];
-      requestAnimationFrame(() => place(el, ...clamp(p[0], p[1], el)));
+      const sz = sizeOf(id), [cw, ch] = SPAN[sz];
+      el.dataset.size = sz;
+      el.style.width = `${px(cw)}px`; el.style.height = `${px(ch)}px`;
+    }
+    const cells = wCells();
+    for (const id of on) {
+      const el = $(`.widget[data-w="${id}"]`, host);
+      if (el && !el.classList.contains('is-dragging')) place(el, ...wXY(cells[id]));
     }
     tickWidgets(); pollPerf(); pollMon();
   };
@@ -363,7 +417,7 @@
       } else {
         const on = rows.filter(c => c.state === 'running').length;
         $('[data-v="count"]', ct).textContent = `${on} / ${rows.length}`;
-        $('[data-list]', ct).innerHTML = rows.slice(0, 5).map(c => `<div class="w-mon__item"><i class="dk__dot ${c.state === 'running' ? 'is-ok' : c.state === 'restarting' || c.state === 'paused' ? 'is-warn' : c.state === 'dead' ? 'is-err' : ''}"></i><span translate="no">${escHtml(c.name)}</span><small>${escHtml(c.status.replace(/ \(.*\)$/, ''))}</small></div>`).join('')
+        $('[data-list]', ct).innerHTML = rows.slice(0, { s: 0, m: 3, l: 9 }[ct.dataset.size] ?? 3).map(c => `<div class="w-mon__item"><i class="dk__dot ${c.state === 'running' ? 'is-ok' : c.state === 'restarting' || c.state === 'paused' ? 'is-warn' : c.state === 'dead' ? 'is-err' : ''}"></i><span translate="no">${escHtml(c.name)}</span><small>${escHtml(c.status.replace(/ \(.*\)$/, ''))}</small></div>`).join('')
           || `<p class="w-mon__none">${t('Noch keine Container.')}</p>`;
       }
     }
@@ -372,7 +426,7 @@
       $('[data-v="state"]', se).textContent = failed.length ? `${failed.length} ${t('fehlgeschlagen')}` : t('Alles in Ordnung');
       $('[data-v="state"]', se).className = failed.length ? 'is-err' : 'is-ok';
       $('[data-v="sub"]', se).textContent = `${running} ${t('Dienste laufen')}`;
-      $('[data-list]', se).innerHTML = failed.slice(0, 5).map(x => `<button class="w-mon__item" data-open-app="services" data-args='${escHtml(JSON.stringify({ service: x.name }))}'><i class="dk__dot is-err"></i><span translate="no">${escHtml(x.name.replace(/\.service$/, ''))}</span></button>`).join('');
+      $('[data-list]', se).innerHTML = failed.slice(0, { s: 0, m: 3, l: 8 }[se.dataset.size] ?? 3).map(x => `<button class="w-mon__item" data-open-app="services" data-args='${escHtml(JSON.stringify({ service: x.name }))}'><i class="dk__dot is-err"></i><span translate="no">${escHtml(x.name.replace(/\.service$/, ''))}</span></button>`).join('');
     }
     monT = setTimeout(pollMon, 10000);
   };
@@ -427,7 +481,11 @@
     }
     if (wid) {
       const id = wid.dataset.w;
+      const now = sizeOf(id), NAMES = { s: 'Klein', m: 'Mittel', l: 'Groß' };
       return Akari.menu(e, [
+        ...WIDGETS[id].sizes.map(sz => ({ label: NAMES[sz], icon: sz === now ? 'i-chev' : 'i-min', disabled: sz === now, act: () => setWidgetSize(id, sz) })),
+        '-',
+        { label: 'Widgets …', icon: 'i-plus', act: () => Akari.open('widgets') },
         { label: 'Widget entfernen', icon: 'i-x', act: () => removeWidget(id) },
       ]);
     }
@@ -460,7 +518,8 @@
         win.body.innerHTML = `<header class="wg__head"><h2 class="f-h2">${t('Widgets')}</h2><p class="f-dim">${t('Auf den Schreibtisch, was du im Blick haben willst. Verschieben mit der Maus, entfernen mit dem ×.')}</p></header>
           <div class="wg__grid">${Object.entries(WIDGETS).filter(([id]) => allowed(id)).map(([id, w]) => `
             <div class="wg__card${on.includes(id) ? ' is-on' : ''}"><span class="wg__icon"><svg><use href="#${w.icon || 'i-pulse'}"/></svg></span>
-              <span class="wg__txt"><b>${escHtml(t(w.title))}</b><small>${escHtml(t(w.desc || ''))}</small></span>
+              <span class="wg__txt"><b>${escHtml(t(w.title))}</b><small>${escHtml(t(w.desc || ''))}</small>
+                <span class="wg__sizes">${w.sizes.map(sz => `<i class="wg__size wg__size--${sz}" title="${t({ s: 'Klein', m: 'Mittel', l: 'Groß' }[sz])}"></i>`).join('')}</span></span>
               <button class="f-btn f-btn--sm ${on.includes(id) ? '' : 'f-btn--primary'}" data-wg="${id}">${t(on.includes(id) ? 'Entfernen' : 'Hinzufügen')}</button></div>`).join('')}</div>
           <label class="f-check wg__all"><input type="checkbox" data-wg-show ${Akari.prefs.widgets !== false ? 'checked' : ''}>${t('Widgets auf dem Schreibtisch zeigen')}</label>`;
       };
