@@ -1,3 +1,18 @@
+akari (0.20.0) trixie; urgency=medium
+
+  * Einstellungen: Updates as a page of its own, with automatic updates
+    (unattended-upgrades; Debian's updates and Akari's archive too);
+    Tastatur, the machine's layout, for the console at once; backgrounds
+    as a gallery with five drawn wallpapers (Orikaia Prime and Concordia
+    from Shinsei Concordia, Mitternacht, Aurora, Glas); the weather in the
+    clock on or off, its place and unit.
+  * The console: a clean screen before the welcome after login; the QR
+    code's margin below no wider than above.
+  * Willkommen appears after every sign-in, also in a tab someone signed
+    out of before.
+
+ -- Akari OS <packages@lucya.systems>  Sat, 28 Nov 2026 13:00:00 +0100
+
 akari (0.19.1) trixie; urgency=medium
 
   * The console shows the address and QR code right after boot: akarid
